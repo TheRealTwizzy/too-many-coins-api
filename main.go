@@ -244,6 +244,7 @@ func main() {
 		}
 
 		playerStore.ApplyPurchase(price)
+		economy.IncrementStars()
 		coins, stars := playerStore.Get()
 
 		json.NewEncoder(w).Encode(BuyStarResponse{

@@ -7,16 +7,18 @@ import (
 )
 
 type EconomyState struct {
-	mu                  sync.Mutex
-	globalCoinPool      int
-	dailyEmissionTarget int
-	emissionRemainder   float64
+	mu                   sync.Mutex
+	globalCoinPool       int
+	globalStarsPurchased int
+	dailyEmissionTarget  int
+	emissionRemainder    float64
 }
 
 var economy = &EconomyState{
-	globalCoinPool:      0,
-	dailyEmissionTarget: 1000,
-	emissionRemainder:   0,
+	globalCoinPool:       0,
+	globalStarsPurchased: 0,
+	dailyEmissionTarget:  1000,
+	emissionRemainder:    0,
 }
 
 func (e *EconomyState) emitCoins(amount int) {
@@ -48,6 +50,18 @@ func (e *EconomyState) persist(seasonID string, db *sql.DB) {
 	if err != nil {
 		log.Println("Economy persist error:", err)
 	}
+}
+
+func (e *EconomyState) IncrementStars() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.globalStarsPurchased++
+}
+
+func (e *EconomyState) StarsPurchased() int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.globalStarsPurchased
 }
 
 func (e *EconomyState) load(seasonID string, db *sql.DB) error {
