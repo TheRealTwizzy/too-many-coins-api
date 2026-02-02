@@ -53,7 +53,7 @@
 	}
 	
 	const devBanner = document.getElementById("dev-banner");
-	if (devBanner && isLocal && devMinutes > 0) {
+	if (devBanner && IS_DEV && devMinutes > 0) {
   		devBanner.innerText = `DEV MODE: +${devMinutes} minutes elapsed`;
 	}
 
