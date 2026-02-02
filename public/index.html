@@ -34,6 +34,25 @@
 	<div id="seasons">Loading seasons…</div>
 	
 	<script>
+// Ensure persistent player ID (one per browser)
+let playerId = localStorage.getItem("playerId");
+if (!playerId) {
+	playerId = crypto.randomUUID();
+	localStorage.setItem("playerId", playerId);
+}
+// Load authoritative player state from server
+fetch(`/player?playerId=${playerId}`)
+	.then(res => res.json())
+	.then(data => {
+		playerCoins = data.playerCoins;
+		playerStars = data.playerStars;
+
+		localStorage.setItem("playerCoins", playerCoins.toString());
+		localStorage.setItem("playerStars", playerStars.toString());
+
+		coinsDiv.innerText = `Your coins: ${playerCoins}`;
+		starsDiv.innerText = `Your stars: ${playerStars}`;
+	});
 
 	const params = new URLSearchParams(window.location.search);
 	const devMinutes = parseInt(params.get("devMinutes"), 10) || 0;
@@ -162,7 +181,8 @@
 								"Content-Type": "application/json"
 							},
 							body: JSON.stringify({
-								seasonId: season.seasonId
+								seasonId: season.seasonId,
+								playerId: playerId
 							})
 						});
 

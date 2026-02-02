@@ -118,6 +118,25 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+	mux.HandleFunc("/player", func(w http.ResponseWriter, r *http.Request) {
+		playerID := r.URL.Query().Get("playerId")
+		if playerID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		player, err := LoadOrCreatePlayer(db, playerID)
+		if err != nil {
+			log.Println("Failed to load player:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"playerCoins": player.Coins,
+			"playerStars": player.Stars,
+		})
+	})
 
 	mux.HandleFunc("/seasons", func(w http.ResponseWriter, r *http.Request) {
 		type SeasonView struct {
