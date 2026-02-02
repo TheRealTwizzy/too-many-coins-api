@@ -154,23 +154,40 @@
 
 			const buyButton = div.querySelector(".buy-star-btn");
 			if (buyButton) {
-				buyButton.addEventListener("click", () => {
-					const STAR_PRICE = starPrice;
+				buyButton.addEventListener("click", async () => {
+					try {
+						const res = await fetch("/buy-star", {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json"
+							},
+							body: JSON.stringify({
+								seasonId: season.seasonId
+							})
+						});
 
-					if (playerCoins < STAR_PRICE) {
-						alert("Not enough coins to buy a star.");
-						return;
+						const data = await res.json();
+
+						if (!data.ok) {
+							alert(data.error || "Purchase failed");
+							return;
+						}
+
+						// Update local UI state from server response
+						playerCoins = data.playerCoins;
+						playerStars = data.playerStars;
+
+						localStorage.setItem("playerCoins", playerCoins.toString());
+						localStorage.setItem("playerStars", playerStars.toString());
+
+						location.reload();
+					} catch (err) {
+						console.error(err);
+						alert("Network error while purchasing star");
 					}
-
-					playerCoins -= STAR_PRICE;
-					playerStars += 1;
-
-					localStorage.setItem("playerCoins", playerCoins.toString());
-					localStorage.setItem("playerStars", playerStars.toString());
-
-					location.reload();
 				});
 			}
+
 
 			container.appendChild(div);
 			

@@ -12,6 +12,18 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type BuyStarRequest struct {
+	SeasonID string `json:"seasonId"`
+}
+
+type BuyStarResponse struct {
+	OK            bool   `json:"ok"`
+	Error         string `json:"error,omitempty"`
+	StarPricePaid int    `json:"starPricePaid,omitempty"`
+	PlayerCoins   int    `json:"playerCoins,omitempty"`
+	PlayerStars   int    `json:"playerStars,omitempty"`
+}
+
 func main() {
 
 	env := os.Getenv("APP_ENV")
@@ -182,6 +194,63 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"recommendedSeasonId": recommendedSeasonID,
 			"seasons":             responseSeasons,
+		})
+	})
+	mux.HandleFunc("/buy-star", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req BuyStarRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(BuyStarResponse{
+				OK:    false,
+				Error: "INVALID_REQUEST",
+			})
+			return
+		}
+
+		if req.SeasonID == "" {
+			json.NewEncoder(w).Encode(BuyStarResponse{
+				OK:    false,
+				Error: "INVALID_SEASON",
+			})
+			return
+		}
+
+		// Compute current star price server-side
+		now := time.Now().UTC()
+		seasonStart := now.Add(-21 * 24 * time.Hour) // matches seasons list
+		seasonLength := 28 * 24 * time.Hour
+		elapsed := now.Sub(seasonStart)
+		remaining := seasonLength - elapsed
+		if remaining < 0 {
+			remaining = 0
+		}
+
+		price := ComputeStarPrice(
+			economy.CoinsInCirculation(),
+			int64(remaining.Seconds()),
+		)
+
+		if !playerStore.CanAfford(price) {
+			json.NewEncoder(w).Encode(BuyStarResponse{
+				OK:    false,
+				Error: "NOT_ENOUGH_COINS",
+			})
+			return
+		}
+
+		playerStore.ApplyPurchase(price)
+		coins, stars := playerStore.Get()
+
+		json.NewEncoder(w).Encode(BuyStarResponse{
+			OK:            true,
+			StarPricePaid: price,
+			PlayerCoins:   coins,
+			PlayerStars:   stars,
 		})
 	})
 
