@@ -131,10 +131,9 @@
 				<input id="username" placeholder="Username" />
 				<input id="password" type="password" placeholder="Password" />
 			</div>
-			<input id="display-name" placeholder="Display name (signup)" />
 			<div class="row">
 				<button class="primary" id="login-btn">Log in</button>
-				<button id="signup-btn">Sign up</button>
+				<a class="muted" href="/signup.html">Create account</a>
 			</div>
 			<div class="muted">Alpha accounts are local to this test.</div>
 		</div>
@@ -143,15 +142,15 @@
 
 	<div id="toast" class="toast" style="display:none;"></div>
 
-	<div class="grid">
-		<div class="card" id="profile-card" style="display:none;">
+	<div class="grid" id="player-panels" style="display:none;">
+		<div class="card" id="profile-card">
 			<div class="label">Profile</div>
 			<div id="profile-name"></div>
 			<input id="profile-display" placeholder="Display name" />
 			<button id="profile-save">Save</button>
 		</div>
 
-		<div class="card" id="player-stats" style="display:none;">
+		<div class="card" id="player-stats">
 			<div class="label">Your stats</div>
 			<div id="player-coins" class="label"></div>
 			<div id="player-stars" class="label"></div>
@@ -192,6 +191,7 @@ const profileName = document.getElementById("profile-name");
 const profileDisplay = document.getElementById("profile-display");
 const profileSave = document.getElementById("profile-save");
 const playerStats = document.getElementById("player-stats");
+const playerPanels = document.getElementById("player-panels");
 const coinsDiv = document.getElementById("player-coins");
 const starsDiv = document.getElementById("player-stars");
 const onboarding = document.getElementById("onboarding");
@@ -240,8 +240,7 @@ async function loadAuth() {
 		authStatus.innerText = "Log in to save your profile.";
 		authForms.style.display = "block";
 		logoutBtn.style.display = "none";
-		profileCard.style.display = "none";
-		playerStats.style.display = "none";
+		playerPanels.style.display = "none";
 		feedbackCard.style.display = "none";
 		actionsCard.style.display = "none";
 		statPill.style.display = "none";
@@ -254,10 +253,9 @@ async function loadAuth() {
 	authStatus.innerText = `Logged in as ${data.displayName}`;
 	authForms.style.display = "none";
 	logoutBtn.style.display = "block";
-	profileCard.style.display = "block";
 	profileName.innerText = `@${data.username}`;
 	profileDisplay.value = data.displayName;
-	playerStats.style.display = "block";
+	playerPanels.style.display = "grid";
 	feedbackCard.style.display = "block";
 	actionsCard.style.display = "block";
 	statPill.style.display = "inline-flex";
@@ -368,23 +366,6 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 	track("login", {});
 });
 
-document.getElementById("signup-btn").addEventListener("click", async () => {
-	const username = document.getElementById("username").value;
-	const password = document.getElementById("password").value;
-	const displayName = document.getElementById("display-name").value;
-	const res = await apiFetch("/auth/signup", {
-		method: "POST",
-		body: JSON.stringify({ username, password, displayName })
-	});
-	const data = await res.json();
-	if (!data.ok) {
-		setToast(data.error || "Signup failed", "error");
-		return;
-	}
-	await loadAuth();
-	await refreshPlayer();
-	track("signup", {});
-});
 
 logoutBtn.addEventListener("click", async () => {
 	await apiFetch("/auth/logout", { method: "POST" });
