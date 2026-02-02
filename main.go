@@ -141,11 +141,20 @@ func runPassiveDrip(db *sql.DB) {
 			continue
 		}
 
+		allowed, err := IsPlayerAllowedByIP(db, playerID)
+		if err != nil {
+			log.Println("drip ip check failed:", err)
+			continue
+		}
+		if !allowed {
+			continue
+		}
+
 		if !economy.TryDistributeCoins(1) {
 			return
 		}
 
-		_, err := db.Exec(`
+		_, err = db.Exec(`
 			UPDATE players
 			SET coins = coins + 1,
 			    last_active_at = $2

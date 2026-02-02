@@ -68,6 +68,17 @@ func playerHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		if ip := getClientIP(r); ip != "" {
+			isNew, err := RecordPlayerIP(db, playerID, ip)
+			if err != nil {
+				log.Println("Failed to record player IP:", err)
+			} else if isNew {
+				if err := ApplyIPDampeningDelay(db, playerID, ip); err != nil {
+					log.Println("Failed to apply IP dampening delay:", err)
+				}
+			}
+		}
+
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"playerCoins": player.Coins,
 			"playerStars": player.Stars,
@@ -170,6 +181,15 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 			economy.CoinsInCirculation(),
 			28*24*3600,
 		)
+
+		dampenedPrice, err := ComputeDampenedStarPrice(db, req.PlayerID, price)
+		if err != nil {
+			json.NewEncoder(w).Encode(BuyStarResponse{
+				OK: false, Error: "INTERNAL_ERROR",
+			})
+			return
+		}
+		price = dampenedPrice
 
 		if player.Coins < int64(price) {
 			json.NewEncoder(w).Encode(BuyStarResponse{

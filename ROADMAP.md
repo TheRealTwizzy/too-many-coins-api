@@ -152,25 +152,25 @@ The project follows a principle of **server authority first**, with the frontend
 - [x] Sent with every request
 
 ### Step 12.2 — Server Trust Boundary
-- [ ] Reject malformed or empty `playerId`
-- [ ] Enforce max length / format
-- [ ] Restrict player creation to `/player`
-- [ ] Prevent implicit creation in `/buy-star`
+- [x] Reject malformed or empty `playerId`
+- [x] Enforce max length / format
+- [x] Restrict player creation to `/player`
+- [x] Prevent implicit creation in `/buy-star`
 
 ### Step 12.3 — IP Awareness
-- [ ] Extract IP from `X-Forwarded-For` / `RemoteAddr`
-- [ ] Log IP ↔ playerId associations
-- [ ] (Optional) Persist IP on player creation
+- [x] Extract IP from `X-Forwarded-For` / `RemoteAddr`
+- [x] Log IP ↔ playerId associations
+- [x] (Optional) Persist IP on player creation
 
 ### Step 12.4 — Soft Limits
-- [ ] Limit players per IP (e.g. max 2)
-- [ ] Excess players receive reduced or no drip
-- [ ] No hard bans
+- [x] Limit players per IP (e.g. max 2)
+- [x] Excess players receive reduced or no drip
+- [x] No hard bans
 
 ### Step 12.5 — Economic Dampening
-- [ ] Increase prices for excess players
-- [ ] Reduce faucet access
-- [ ] Delay eligibility
+- [x] Increase prices for excess players
+- [x] Reduce faucet access
+- [x] Delay eligibility
 
 ---
 

@@ -141,6 +141,36 @@ func ensureSchema(db *sql.DB) error {
 		return err
 	}
 
+	_, err = db.Exec(`
+		ALTER TABLE players
+		ADD COLUMN IF NOT EXISTS last_coin_grant_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+	`)
+	if err != nil {
+		return err
+	}
+
+	// 3️⃣ player_ip_associations table
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS player_ip_associations (
+			player_id TEXT NOT NULL,
+			ip TEXT NOT NULL,
+			first_seen TIMESTAMPTZ NOT NULL,
+			last_seen TIMESTAMPTZ NOT NULL,
+			PRIMARY KEY (player_id, ip)
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_player_ip_associations_ip
+		ON player_ip_associations (ip);
+	`)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

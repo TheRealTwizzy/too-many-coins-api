@@ -12,6 +12,12 @@ type Player struct {
 	LastCoinGrantAt time.Time
 }
 
+const (
+	maxPlayersPerIP            = 2
+	ipDampeningPriceMultiplier = 1.5
+	ipDampeningDelay           = 10 * time.Minute
+)
+
 func LoadOrCreatePlayer(
 	db *sql.DB,
 	playerID string,
@@ -116,6 +122,165 @@ func LoadPlayer(db *sql.DB, playerID string) (*Player, error) {
 	}
 
 	return &p, nil
+}
+
+func RecordPlayerIP(db *sql.DB, playerID string, ip string) (bool, error) {
+	if ip == "" {
+		return false, nil
+	}
+
+	var exists bool
+	err := db.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM player_ip_associations
+			WHERE player_id = $1 AND ip = $2
+		)
+	`, playerID, ip).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+
+	_, err = db.Exec(`
+		INSERT INTO player_ip_associations (
+			player_id,
+			ip,
+			first_seen,
+			last_seen
+		)
+		VALUES ($1, $2, NOW(), NOW())
+		ON CONFLICT (player_id, ip)
+		DO UPDATE SET
+			last_seen = NOW()
+	`, playerID, ip)
+
+	if err != nil {
+		return false, err
+	}
+
+	return !exists, nil
+}
+
+func ApplyIPDampeningDelay(db *sql.DB, playerID string, ip string) error {
+	if ip == "" {
+		return nil
+	}
+
+	count, err := countPlayersForIP(db, ip)
+	if err != nil {
+		return err
+	}
+
+	if count <= maxPlayersPerIP {
+		return nil
+	}
+
+	delaySeconds := int(ipDampeningDelay.Seconds())
+	_, err = db.Exec(`
+		UPDATE players
+		SET last_coin_grant_at = NOW() + ($2 * INTERVAL '1 second')
+		WHERE player_id = $1
+	`, playerID, delaySeconds)
+
+	return err
+}
+
+func IsPlayerAllowedByIP(db *sql.DB, playerID string) (bool, error) {
+	ip, err := latestIPForPlayer(db, playerID)
+	if err == sql.ErrNoRows {
+		return true, nil
+	}
+	if err != nil {
+		return true, err
+	}
+	if ip == "" {
+		return true, nil
+	}
+
+	count, err := countPlayersForIP(db, ip)
+	if err != nil {
+		return true, err
+	}
+
+	if count <= maxPlayersPerIP {
+		return true, nil
+	}
+
+	rows, err := db.Query(`
+		SELECT player_id
+		FROM player_ip_associations
+		WHERE ip = $1
+		ORDER BY first_seen ASC
+		LIMIT $2
+	`, ip, maxPlayersPerIP)
+	if err != nil {
+		return true, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return true, err
+		}
+		if id == playerID {
+			return true, nil
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return true, err
+	}
+
+	return false, nil
+}
+
+func ComputeDampenedStarPrice(db *sql.DB, playerID string, basePrice int) (int, error) {
+	allowed, err := IsPlayerAllowedByIP(db, playerID)
+	if err != nil {
+		return basePrice, err
+	}
+	if allowed {
+		return basePrice, nil
+	}
+
+	return int(float64(basePrice)*ipDampeningPriceMultiplier + 0.9999), nil
+}
+
+func latestIPForPlayer(db *sql.DB, playerID string) (string, error) {
+	var ip string
+
+	err := db.QueryRow(`
+		SELECT ip
+		FROM player_ip_associations
+		WHERE player_id = $1
+		ORDER BY last_seen DESC
+		LIMIT 1
+	`, playerID).Scan(&ip)
+
+	if err != nil {
+		return "", err
+	}
+
+	return ip, nil
+}
+
+func countPlayersForIP(db *sql.DB, ip string) (int, error) {
+	var count int
+	if ip == "" {
+		return 0, nil
+	}
+
+	err := db.QueryRow(`
+		SELECT COUNT(DISTINCT player_id)
+		FROM player_ip_associations
+		WHERE ip = $1
+	`, ip).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func UpdatePlayerBalances(
