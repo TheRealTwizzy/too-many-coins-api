@@ -122,23 +122,35 @@ func ComputeStarPrice(
 ) int {
 
 	const (
-		baseStarPrice  = 10
-		inflationScale = 1000
-		seasonSeconds  = 28 * 24 * 3600
+		BASE_STAR_PRICE      = 10
+		STAR_SCARCITY_SCALE  = 25.0
+		COIN_INFLATION_SCALE = 1000.0
+		SEASON_SECONDS       = 28 * 24 * 3600
 	)
 
-	progress := 1 - (float64(secondsRemaining) / float64(seasonSeconds))
+	// 1. Star scarcity (PRIMARY driver)
+	starsPurchased := float64(economy.StarsPurchased())
+	scarcityMultiplier := 1 + (starsPurchased / STAR_SCARCITY_SCALE)
+
+	// 2. Coin inflation (SECONDARY driver)
+	coinMultiplier := 1 + (float64(coinsInCirculation) / COIN_INFLATION_SCALE)
+
+	// 3. Time pressure (AMPLIFIER)
+	progress := 1 - (float64(secondsRemaining) / float64(SEASON_SECONDS))
 	if progress < 0 {
 		progress = 0
 	}
 	if progress > 1 {
 		progress = 1
 	}
-
 	timeMultiplier := 1 + progress
 
-	price := float64(baseStarPrice) *
-		(1 + (float64(coinsInCirculation)/inflationScale)*timeMultiplier)
+	price :=
+		float64(BASE_STAR_PRICE) *
+			scarcityMultiplier *
+			coinMultiplier *
+			timeMultiplier
 
-	return int(price + 0.9999) // ceil without math.Ceil
+	// ceil without math.Ceil
+	return int(price + 0.9999)
 }
