@@ -2,12 +2,14 @@ package main
 
 import (
 	"database/sql"
+	"time"
 )
 
 type Player struct {
-	PlayerID string
-	Coins    int64
-	Stars    int64
+	PlayerID        string
+	Coins           int64
+	Stars           int64
+	LastCoinGrantAt time.Time
 }
 
 func LoadOrCreatePlayer(
@@ -18,12 +20,34 @@ func LoadOrCreatePlayer(
 	var p Player
 
 	err := db.QueryRow(`
-		SELECT player_id, coins, stars
+		SELECT player_id, coins, stars, last_coin_grant_at
 		FROM players
 		WHERE player_id = $1
-	`, playerID).Scan(&p.PlayerID, &p.Coins, &p.Stars)
+	`, playerID).Scan(&p.PlayerID, &p.Coins, &p.Stars, &p.LastCoinGrantAt)
 
 	if err == nil {
+		now := time.Now().UTC()
+
+		elapsed := now.Sub(p.LastCoinGrantAt)
+		minutes := int64(elapsed / time.Minute)
+
+		if minutes > 0 {
+			p.Coins += minutes // 1 coin per minute
+			p.LastCoinGrantAt = now
+
+			_, err = db.Exec(`
+			UPDATE players
+			SET coins = $2,
+				last_coin_grant_at = $3,
+				last_active_at = NOW()
+			WHERE player_id = $1
+		`, p.PlayerID, p.Coins, p.LastCoinGrantAt)
+
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		// Update last_active_at
 		_, _ = db.Exec(`
 			UPDATE players
@@ -45,9 +69,10 @@ func LoadOrCreatePlayer(
 			coins,
 			stars,
 			created_at,
-			last_active_at
+			last_active_at,
+			last_coin_grant_at
 		)
-		VALUES ($1, 0, 0, NOW(), NOW())
+		VALUES ($1, 0, 0, NOW(), NOW(), NOW())
 	`, playerID)
 	if err != nil {
 		return nil, err
