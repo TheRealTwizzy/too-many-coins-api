@@ -32,7 +32,21 @@ func LoadOrCreatePlayer(
 		minutes := int64(elapsed / time.Minute)
 
 		if minutes > 0 {
-			p.Coins += minutes // 1 coin per minute
+			available := economy.AvailableCoins()
+			grant := int64(minutes)
+
+			if int(grant) > available {
+				grant = int64(available)
+			}
+
+			if grant > 0 {
+				p.Coins += grant
+				economy.mu.Lock()
+				economy.coinsDistributed += int(grant)
+				economy.mu.Unlock()
+				p.LastCoinGrantAt = now
+			}
+
 			p.LastCoinGrantAt = now
 
 			_, err = db.Exec(`

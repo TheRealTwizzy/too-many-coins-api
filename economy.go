@@ -9,6 +9,7 @@ import (
 type EconomyState struct {
 	mu                   sync.Mutex
 	globalCoinPool       int
+	coinsDistributed     int
 	globalStarsPurchased int
 	dailyEmissionTarget  int
 	emissionRemainder    float64
@@ -77,16 +78,17 @@ func (e *EconomyState) load(seasonID string, db *sql.DB) error {
 	defer e.mu.Unlock()
 
 	row := db.QueryRow(`
-		SELECT global_coin_pool, global_stars_purchased, emission_remainder
+		SELECT global_coin_pool, global_stars_purchased, coins_distributed, emission_remainder
 		FROM season_economy
 		WHERE season_id = $1
 	`, seasonID)
 
 	var pool int64
 	var stars int64
+	var distributed int64
 	var remainder float64
 
-	err := row.Scan(&pool, &stars, &remainder)
+	err := row.Scan(&pool, &stars, &distributed, &remainder)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Println("Economy: no existing state, starting fresh")
@@ -97,6 +99,7 @@ func (e *EconomyState) load(seasonID string, db *sql.DB) error {
 
 	e.globalCoinPool = int(pool)
 	e.globalStarsPurchased = int(stars)
+	e.coinsDistributed = int(distributed)
 	e.emissionRemainder = remainder
 
 	log.Println(
@@ -104,7 +107,6 @@ func (e *EconomyState) load(seasonID string, db *sql.DB) error {
 		"coins =", e.globalCoinPool,
 		"stars =", e.globalStarsPurchased,
 	)
-
 	return nil
 }
 
@@ -189,4 +191,10 @@ func ComputeStarPrice(
 
 	// ceil without math.Ceil
 	return int(price + 0.9999)
+}
+
+func (e *EconomyState) AvailableCoins() int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.globalCoinPool - e.coinsDistributed
 }
