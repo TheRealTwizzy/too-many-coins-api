@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"sync"
+	"time"
 )
 
 type EconomyState struct {
@@ -197,4 +198,25 @@ func (e *EconomyState) AvailableCoins() int {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	return e.globalCoinPool - e.coinsDistributed
+}
+
+// TryDistributeCoins attempts to give coins to players,
+// enforcing the emission cap.
+// Returns true if successful.
+func (e *EconomyState) TryDistributeCoins(amount int) bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	available := e.globalCoinPool - e.coinsDistributed
+	if available < amount {
+		return false
+	}
+
+	e.coinsDistributed += amount
+	return true
+}
+
+// CanDrip returns true if at least 60 seconds have passed
+func CanDrip(last time.Time, now time.Time) bool {
+	return now.Sub(last) >= time.Minute
 }

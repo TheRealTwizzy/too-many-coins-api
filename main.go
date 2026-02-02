@@ -2,15 +2,17 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
 )
+
+/* ======================
+   Request / Response Types
+   ====================== */
 
 type BuyStarRequest struct {
 	SeasonID string `json:"seasonId"`
@@ -25,23 +27,24 @@ type BuyStarResponse struct {
 	PlayerStars   int    `json:"playerStars,omitempty"`
 }
 
-func main() {
+/* ======================
+   main()
+   ====================== */
 
+func main() {
+	// Environment
 	env := os.Getenv("APP_ENV")
 	if env == "" {
 		env = "local"
 	}
-
 	log.Println("App environment:", env)
 
 	devMode := os.Getenv("DEV_MODE") == "true"
-
 	if devMode {
 		log.Println("⚠️  DEV MODE ENABLED")
-	} else {
-		log.Println("DEV mode disabled")
 	}
 
+	// Database
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL is not set")
@@ -51,267 +54,42 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to open database:", err)
 	}
-
 	db.SetMaxOpenConns(5)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(30 * time.Minute)
 
-	err = db.Ping()
-	if err != nil {
+	if err := db.Ping(); err != nil {
 		log.Fatal("failed to ping database:", err)
 	}
-
 	log.Println("Connected to PostgreSQL")
 
+	// Schema (local only)
 	if env == "local" {
-		err = ensureSchema(db)
-		if err != nil {
-			log.Fatal("Failed to ensure local schema:", err)
+		if err := ensureSchema(db); err != nil {
+			log.Fatal("Failed to ensure schema:", err)
 		}
 	}
 
-	err = economy.load("season-1", db)
-	if err != nil {
+	// Economy
+	if err := economy.load("season-1", db); err != nil {
 		log.Fatal("Failed to load economy state:", err)
 	}
 
 	startTickLoop(db)
 
+	// Passive drip
+	go func() {
+		ticker := time.NewTicker(time.Minute)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			runPassiveDrip(db)
+		}
+	}()
+
+	// HTTP server
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Serve index.html with injected DEV flag
-		if r.URL.Path == "/" {
-			data, err := os.ReadFile("./public/index.html")
-			if err != nil {
-				http.Error(w, "Failed to load index.html", 500)
-				return
-			}
-
-			devMode := os.Getenv("DEV_MODE") == "true"
-
-			injection := `<script>window.__DEV_MODE__ = ` +
-				func() string {
-					if devMode {
-						return "true"
-					}
-					return "false"
-				}() +
-				`;</script>`
-
-			html := strings.Replace(
-				string(data),
-				"<head>",
-				"<head>\n"+injection,
-				1,
-			)
-
-			w.Header().Set("Content-Type", "text/html")
-			w.Write([]byte(html))
-			return
-		}
-
-		// Serve all other static files normally
-		http.ServeFile(w, r, "./public"+r.URL.Path)
-	})
-
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
-	})
-	mux.HandleFunc("/player", func(w http.ResponseWriter, r *http.Request) {
-		playerID := r.URL.Query().Get("playerId")
-		if playerID == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		player, err := LoadOrCreatePlayer(db, playerID)
-		if err != nil {
-			log.Println("Failed to load player:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"playerCoins": player.Coins,
-			"playerStars": player.Stars,
-		})
-	})
-
-	mux.HandleFunc("/seasons", func(w http.ResponseWriter, r *http.Request) {
-		type SeasonView struct {
-			SeasonID              string  `json:"seasonId"`
-			SecondsRemaining      int64   `json:"secondsRemaining"`
-			CoinsInCirculation    int64   `json:"coinsInCirculation"`
-			CoinEmissionPerMinute float64 `json:"coinEmissionPerMinute"`
-			CurrentStarPrice      int     `json:"currentStarPrice"`
-		}
-
-		now := time.Now().UTC()
-
-		// Stub season start times (7-day stagger)
-		seasons := []struct {
-			id        string
-			startTime time.Time
-			coins     int64
-		}{
-			{"season-1", now.Add(-21 * 24 * time.Hour), economy.CoinsInCirculation()},
-			{"season-2", now.Add(-14 * 24 * time.Hour), 12000},
-			{"season-3", now.Add(-7 * 24 * time.Hour), 6000},
-			{"season-4", now, 1000},
-		}
-
-		const seasonLength = 28 * 24 * time.Hour
-
-		var responseSeasons []SeasonView
-		var recommendedSeasonID string
-		var maxRemaining int64 = -1
-
-		for _, s := range seasons {
-			elapsed := now.Sub(s.startTime)
-			remaining := seasonLength - elapsed
-			if remaining < 0 {
-				continue
-			}
-
-			secondsRemaining := int64(remaining.Seconds())
-
-			if secondsRemaining > maxRemaining {
-				maxRemaining = secondsRemaining
-				recommendedSeasonID = s.id
-			}
-
-			currentStarPrice := ComputeStarPrice(
-				s.coins,
-				secondsRemaining,
-			)
-
-			if currentStarPrice <= 0 {
-				log.Println("⚠️ WARNING: computed star price is non-positive:", currentStarPrice)
-			}
-
-			if devMode {
-				log.Printf(
-					"[DEV] %s price=%d coins=%d remaining=%ds\n",
-					s.id,
-					currentStarPrice,
-					s.coins,
-					secondsRemaining,
-				)
-			}
-
-			responseSeasons = append(responseSeasons, SeasonView{
-				SeasonID:              s.id,
-				SecondsRemaining:      secondsRemaining,
-				CoinsInCirculation:    s.coins,
-				CoinEmissionPerMinute: economy.EmissionPerMinute(),
-				CurrentStarPrice:      currentStarPrice,
-			})
-
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"recommendedSeasonId": recommendedSeasonID,
-			"seasons":             responseSeasons,
-		})
-	})
-	mux.HandleFunc("/buy-star", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		var req BuyStarRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(BuyStarResponse{
-				OK:    false,
-				Error: "INVALID_REQUEST",
-			})
-			return
-		}
-
-		if req.SeasonID == "" {
-			json.NewEncoder(w).Encode(BuyStarResponse{
-				OK:    false,
-				Error: "INVALID_SEASON",
-			})
-			return
-		}
-
-		// Compute current star price server-side
-		now := time.Now().UTC()
-		seasonStart := now.Add(-21 * 24 * time.Hour) // matches seasons list
-		seasonLength := 28 * 24 * time.Hour
-		elapsed := now.Sub(seasonStart)
-		remaining := seasonLength - elapsed
-		if remaining < 0 {
-			remaining = 0
-		}
-
-		price := ComputeStarPrice(
-			economy.CoinsInCirculation(),
-			int64(remaining.Seconds()),
-		)
-		if req.PlayerID == "" {
-			json.NewEncoder(w).Encode(BuyStarResponse{
-				OK:    false,
-				Error: "MISSING_PLAYER_ID",
-			})
-			return
-		}
-
-		player, err := LoadOrCreatePlayer(db, req.PlayerID)
-		if err != nil {
-			log.Println("Failed to load player:", err)
-			json.NewEncoder(w).Encode(BuyStarResponse{
-				OK:    false,
-				Error: "PLAYER_LOAD_FAILED",
-			})
-			return
-		}
-
-		if player.Coins < int64(price) {
-			json.NewEncoder(w).Encode(BuyStarResponse{
-				OK:          false,
-				Error:       "NOT_ENOUGH_COINS",
-				PlayerCoins: int(player.Coins),
-				PlayerStars: int(player.Stars),
-			})
-			return
-		}
-
-		// Apply purchase
-		player.Coins -= int64(price)
-		player.Stars += 1
-
-		err = UpdatePlayerBalances(
-			db,
-			player.PlayerID,
-			player.Coins,
-			player.Stars,
-		)
-		if err != nil {
-			log.Println("Failed to update player:", err)
-			json.NewEncoder(w).Encode(BuyStarResponse{
-				OK:    false,
-				Error: "PLAYER_UPDATE_FAILED",
-			})
-			return
-		}
-
-		// Update global economy
-		economy.IncrementStars()
-
-		json.NewEncoder(w).Encode(BuyStarResponse{
-			OK:            true,
-			StarPricePaid: price,
-			PlayerCoins:   int(player.Coins),
-			PlayerStars:   int(player.Stars),
-		})
-
-	})
+	registerRoutes(mux, db, devMode)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -319,8 +97,63 @@ func main() {
 	}
 
 	log.Println("Server starting on :" + port)
-	err = http.ListenAndServe(":"+port, mux)
+	log.Fatal(http.ListenAndServe(":"+port, mux))
+}
+
+/* ======================
+   Routes
+   ====================== */
+
+func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
+	mux.HandleFunc("/", serveIndex(devMode))
+	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/player", playerHandler(db))
+	mux.HandleFunc("/seasons", seasonsHandler(db, devMode))
+	mux.HandleFunc("/buy-star", buyStarHandler(db))
+}
+
+/* ======================
+   Background Workers
+   ====================== */
+
+func runPassiveDrip(db *sql.DB) {
+	now := time.Now().UTC()
+
+	rows, err := db.Query(`
+		SELECT player_id, last_active_at
+		FROM players
+	`)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("drip query failed:", err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var playerID string
+		var last time.Time
+
+		if err := rows.Scan(&playerID, &last); err != nil {
+			continue
+		}
+
+		if !CanDrip(last, now) {
+			continue
+		}
+
+		if !economy.TryDistributeCoins(1) {
+			return
+		}
+
+		_, err := db.Exec(`
+			UPDATE players
+			SET coins = coins + 1,
+			    last_active_at = $2
+			WHERE player_id = $1
+		`, playerID, now)
+
+		if err != nil {
+			log.Println("drip update failed:", err)
+		}
 	}
 }
