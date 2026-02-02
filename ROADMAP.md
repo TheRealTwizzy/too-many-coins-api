@@ -210,6 +210,23 @@ The project follows a principle of **server authority first**, with the frontend
 - [ ] Adjust multipliers
 - [ ] Iterate based on data
 
+### Step 16.A — Alpha Test Readiness (Core)
+- [ ] Auth: signup/login + session handling
+- [ ] Auth: profile persistence and restore on login
+- [ ] Create minimal player profile page
+- [ ] UI clarity pass (clean, minimal, no over-explaining)
+- [ ] Add basic onboarding hints (one-time, dismissible)
+- [ ] Add playtest feature flags (enable/disable faucets, sinks)
+- [ ] Add test telemetry (session length, faucet usage, purchases)
+- [ ] Add feedback capture endpoint (survey + freeform)
+
+### Step 16.B — Alpha Test Execution
+- [ ] Define Alpha 1 test goals and metrics
+- [ ] Recruit 8–15 testers (friends/family ok)
+- [ ] Run 1–2 week test cycle
+- [ ] Daily/weekly review of economy metrics
+- [ ] Compile feedback + prioritized fixes
+
 ---
 
 ## 🧱 STEP 17 — Multi-Season Support & Lobby
