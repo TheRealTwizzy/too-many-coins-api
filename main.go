@@ -154,6 +154,20 @@ func main() {
 				secondsRemaining,
 			)
 
+			if currentStarPrice <= 0 {
+				log.Println("⚠️ WARNING: computed star price is non-positive:", currentStarPrice)
+			}
+
+			if devMode {
+				log.Printf(
+					"[DEV] %s price=%d coins=%d remaining=%ds\n",
+					s.id,
+					currentStarPrice,
+					s.coins,
+					secondsRemaining,
+				)
+			}
+
 			responseSeasons = append(responseSeasons, SeasonView{
 				SeasonID:              s.id,
 				SecondsRemaining:      secondsRemaining,
