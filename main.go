@@ -172,11 +172,9 @@ func main() {
 	}
 	log.Println("Connected to PostgreSQL")
 
-	// Schema (local only)
-	if env == "local" {
-		if err := ensureSchema(db); err != nil {
-			log.Fatal("Failed to ensure schema:", err)
-		}
+	// Schema (all environments)
+	if err := ensureSchema(db); err != nil {
+		log.Fatal("Failed to ensure schema:", err)
 	}
 
 	// Economy
