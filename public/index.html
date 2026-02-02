@@ -1,67 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Too Many Coins</title>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0f1220;
-      color: #eaeaf0;
-      padding: 2rem;
-    }
-    .season {
-      border: 1px solid #2a2f55;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-    }
-    .recommended {
-      border-color: #ffd166;
-      background: rgba(255, 209, 102, 0.1);
-    }
-    .label {
-      font-size: 0.8rem;
-      color: #aaa;
-    }
-  </style>
+	<meta charset="UTF-8" />
+	<title>Too Many Coins</title>
+	<style>
+	body {
+		font-family: system-ui, sans-serif;
+		background: #0f1220;
+		color: #eaeaf0;
+		padding: 2rem;
+	}
+	.season {
+		border: 1px solid #2a2f55;
+		padding: 1rem;
+		margin-bottom: 1rem;
+		border-radius: 8px;
+	}
+	.recommended {
+		border-color: #ffd166;
+		background: rgba(255, 209, 102, 0.1);
+	}
+	.label {
+		font-size: 0.8rem;
+		color: #aaa;
+	}
+	</style>
 </head>
 <body>
-  <h1>Too Many Coins</h1>
-  <p>Select a season. Time and inflation are always moving.</p>
+	<h1>Too Many Coins</h1>
+	<p>Select a season. Time and inflation are always moving.</p>
+	<div id="player-coins" class="label"></div>
+	<div id="player-stars" class="label"></div>
+	<div id="seasons">Loading seasons…</div>
+	
+	<script>
 
-  <div id="seasons">Loading seasons…</div>
+	const params = new URLSearchParams(window.location.search);
+	const devMinutes = parseInt(params.get("devMinutes"), 10) || 0;
+	const isLocal = !window.location.hostname.includes("railway.app");
+	console.log("devMinutes =", devMinutes, "isLocal =", isLocal);
+	const joinedSeasonId = localStorage.getItem("joinedSeasonId");
+	let playerCoins = parseInt(localStorage.getItem("playerCoins"), 10);
+	const coinsDiv = document.getElementById("player-coins");
+	const starsDiv = document.getElementById("player-stars");
+	if (isNaN(playerCoins)) {
+		playerCoins = 0;
+	}
 
-  <script>
-    fetch("/seasons")
-      .then(res => res.json())
-      .then(data => {
-        const container = document.getElementById("seasons");
-        container.innerHTML = "";
+	let playerStars = parseInt(localStorage.getItem("playerStars"), 10);
+	if (isNaN(playerStars)) {
+		playerStars = 0;
+	}
+	
+	const devBanner = document.getElementById("dev-banner");
+	if (devBanner && isLocal && devMinutes > 0) {
+  		devBanner.innerText = `DEV MODE: +${devMinutes} minutes elapsed`;
+	}
 
-        data.seasons.forEach(season => {
-          const div = document.createElement("div");
-          div.className = "season";
 
-          if (season.seasonId === data.recommendedSeasonId) {
-            div.classList.add("recommended");
-          }
+	if (joinedSeasonId) {
+		coinsDiv.innerText = `Your coins: ${playerCoins}`;
+	} else {
+		coinsDiv.innerText = "";
+	}
+		
 
-          div.innerHTML = `
-            <strong>${season.seasonId}</strong>
-            ${season.seasonId === data.recommendedSeasonId ? "<span class='label'>(recommended)</span>" : ""}
-            <div class="label">Coins in circulation: ${season.coinsInCirculation}</div>
-            <div class="label">Emission / minute: ${season.coinEmissionPerMinute.toFixed(2)}</div>
-            <div class="label">Time remaining: ${Math.floor(season.secondsRemaining / 3600)} hours</div>
-          `;
+	
 
-          container.appendChild(div);
-        });
-      })
-      .catch(err => {
-        document.getElementById("seasons").innerText = "Failed to load seasons.";
-        console.error(err);
-      });
-  </script>
+	if (joinedSeasonId) {
+		starsDiv.innerText = `Your stars: ${playerStars}`;
+	} else {
+		starsDiv.innerText = "";
+	}
+
+	
+	fetch("/seasons")
+		.then(res => res.json())
+		.then(data => {
+		const container = document.getElementById("seasons");
+		container.innerHTML = "";
+
+
+		data.seasons.forEach(season => {
+			const div = document.createElement("div");
+			const isJoined = joinedSeasonId !== null;
+			const isThisSeasonJoined = season.seasonId === joinedSeasonId;
+			const totalSeconds = 28 * 24 * 3600;
+
+			let adjustedSecondsRemaining = season.secondsRemaining;
+
+			if (isLocal && devMinutes > 0) {
+  				adjustedSecondsRemaining -= devMinutes * 60;
+			}
+
+			if (adjustedSecondsRemaining < 0) {
+  				adjustedSecondsRemaining = 0;
+			}
+
+			const progress = 1 - (adjustedSecondsRemaining / totalSeconds);
+			const timeMultiplier = 1 + progress; // ranges from 1.0 to 2.0
+			const percent = Math.floor(progress * 100);
+			const baseStarPrice = 10;
+			const inflationScale = 1000;
+			let coinsInCirculation = season.coinsInCirculation;
+
+			console.log(
+  				season.seasonId,
+  				"baseCoins =", season.coinsInCirculation,
+  				"emission =", season.coinEmissionPerMinute,
+  				"devCoins =", devMinutes * season.coinEmissionPerMinute
+			);
+
+			if (isLocal && devMinutes > 0) {
+				coinsInCirculation += devMinutes * season.coinEmissionPerMinute;
+			}
+
+			console.log(
+  				season.seasonId,
+  				"effectiveCoins =", coinsInCirculation,
+  				"timeMultiplier =", timeMultiplier
+			);
+
+			const starPrice = Math.ceil(baseStarPrice *(1 + (coinsInCirculation / inflationScale) * timeMultiplier));
+			
+			let phaseLabel = "";
+			if (percent < 25) {
+				phaseLabel = "Early season: coins are cheaper";
+			} else if (percent > 75) {
+				phaseLabel = "Late season: scarcity is high";
+			}
+			div.className = "season";
+			
+			if (isJoined && !isThisSeasonJoined) {
+				div.style.opacity = "0.4";
+			}
+
+			if (season.seasonId === data.recommendedSeasonId) {
+				div.classList.add("recommended");
+			}
+			if (season.seasonId === joinedSeasonId) {
+				div.style.opacity = "0.6";
+			}
+			div.innerHTML = `
+			<strong>${season.seasonId}</strong>
+			${season.seasonId === data.recommendedSeasonId ? "<span class='label'>(recommended)</span>" : ""}
+			<div class="label">Inflation pressure amplified by time (${Math.floor(progress * 100)}% complete)</div>
+			<div class="label">Coins in circulation: ${Math.floor(coinsInCirculation)}</div>
+			<div class="label">Emission: +${season.coinEmissionPerMinute.toFixed(2)} coins / minute</div>
+			<div class="label">Star price pressure from ${Math.floor(coinsInCirculation)} coins in circulation.</div>
+			<div class="label">Time remaining: ${Math.floor(season.secondsRemaining / 3600)} hours</div>
+			<div class="label">Season progress: ${percent}%</div>
+			${phaseLabel ? `<div class="label">${phaseLabel}</div>` : ""}
+			${isThisSeasonJoined
+				? `<div class="label">You joined this season</div>
+					<button class="buy-star-btn">Buy Star (${starPrice} coins)</button>`
+				: isJoined
+					? "<div class='label'>You are locked into another season</div>"
+					: "<button class='join-btn'>Join this season</button>"
+			}
+			`;
+
+			const buyButton = div.querySelector(".buy-star-btn");
+			if (buyButton) {
+				buyButton.addEventListener("click", () => {
+					const STAR_PRICE = starPrice;
+
+					if (playerCoins < STAR_PRICE) {
+						alert("Not enough coins to buy a star.");
+						return;
+					}
+
+					playerCoins -= STAR_PRICE;
+					playerStars += 1;
+
+					localStorage.setItem("playerCoins", playerCoins.toString());
+					localStorage.setItem("playerStars", playerStars.toString());
+
+					location.reload();
+				});
+			}
+
+			container.appendChild(div);
+			
+			const button = div.querySelector(".join-btn");
+			if (button) {
+				button.addEventListener("click", () => {
+					localStorage.setItem("joinedSeasonId", season.seasonId);
+
+					// Grant starter coins ONCE
+					const STARTER_COINS = 100;
+					localStorage.setItem("playerCoins", STARTER_COINS.toString());
+
+					alert(`You joined ${season.seasonId} and received ${STARTER_COINS} coins`);
+					location.reload();
+				});
+			}
+
+		});
+		})
+		.catch(err => {
+		document.getElementById("seasons").innerText = "Failed to load seasons.";
+		console.error(err);
+		});
+	</script>
 </body>
 </html>
