@@ -37,7 +37,7 @@
 
 	const params = new URLSearchParams(window.location.search);
 	const devMinutes = parseInt(params.get("devMinutes"), 10) || 0;
-	const isLocal = !window.location.hostname.includes("railway.app");
+	const IS_DEV = window.__DEV_MODE__ === true;
 	console.log("devMinutes =", devMinutes, "isLocal =", isLocal);
 	const joinedSeasonId = localStorage.getItem("joinedSeasonId");
 	let playerCoins = parseInt(localStorage.getItem("playerCoins"), 10);
@@ -89,7 +89,7 @@
 
 			let adjustedSecondsRemaining = season.secondsRemaining;
 
-			if (isLocal && devMinutes > 0) {
+			if (IS_DEV && devMinutes > 0) {
   				adjustedSecondsRemaining -= devMinutes * 60;
 			}
 
@@ -111,7 +111,7 @@
   				"devCoins =", devMinutes * season.coinEmissionPerMinute
 			);
 
-			if (isLocal && devMinutes > 0) {
+			if (IS_DEV && devMinutes > 0) {
 				coinsInCirculation += devMinutes * season.coinEmissionPerMinute;
 			}
 
