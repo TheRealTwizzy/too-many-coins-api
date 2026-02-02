@@ -111,7 +111,7 @@
 
 			console.log(
   				season.seasonId,
-  				"effectiveCoins =", coinsInCirculation,
+  				"effectiveCoins =", season.coinsInCirculation,
   				"timeMultiplier =", timeMultiplier
 			);
 			
@@ -137,7 +137,7 @@
 			<strong>${season.seasonId}</strong>
 			${season.seasonId === data.recommendedSeasonId ? "<span class='label'>(recommended)</span>" : ""}
 			<div class="label">Inflation pressure amplified by time (${Math.floor(progress * 100)}% complete)</div>
-			<div class="label">Coins in circulation: ${Math.floor(coinsInCirculation)}</div>
+			<div class="label">Coins in circulation: ${season.coinsInCirculation}</div>
 			<div class="label">Emission: +${season.coinEmissionPerMinute.toFixed(2)} coins / minute</div>
 			<div class="label">Star price determined by global coin supply.</div>
 			<div class="label">Time remaining: ${Math.floor(season.secondsRemaining / 3600)} hours</div>
