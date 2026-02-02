@@ -212,6 +212,116 @@ The project follows a principle of **server authority first**, with the frontend
 
 ---
 
+## 🧱 STEP 17 — Multi-Season Support & Lobby
+
+- [ ] Support up to 4 concurrent seasons
+- [ ] Stagger season start dates 7 days apart
+- [ ] Allow players to join any active season
+- [ ] Season lobby view with active seasons
+- [ ] Season-specific economy isolation
+
+---
+
+## 🧱 STEP 18 — Daily Resets & Per-Player Caps
+
+- [ ] Daily reset job (UTC) runs once per season-day
+- [ ] Reset per-player daily earning totals
+- [ ] Refresh daily tasks on reset
+- [ ] Enforce per-player daily earning caps
+- [ ] Decrease caps as season progresses
+
+---
+
+## 🧱 STEP 19 — Market Pressure & Star Scaling
+
+- [ ] Track market pressure (24h vs 7d rolling averages)
+- [ ] Rate-limit pressure changes per tick
+- [ ] Apply market pressure multiplicatively to star prices
+- [ ] Implement late-season spike in final week
+- [ ] Implement non-linear bulk purchase scaling
+- [ ] Re-check price & balance at confirmation time
+- [ ] Append-only purchase log for every buy
+
+---
+
+## 🧱 STEP 20 — Anti-Abuse, Whitelisting, and Trust
+
+- [ ] Enforce one active player per IP per season by default
+- [ ] Block extra accounts unless whitelisted
+- [ ] Implement whitelist request flow + wave approvals
+- [ ] Rate-limit account creation
+- [ ] CAPTCHA + verification
+- [ ] Cooldown before new accounts can join a season
+- [ ] Per-player and per-IP star purchase throttles
+- [ ] Detect clustering behavior and create abuse events
+- [ ] Apply reversible throttles based on abuse events
+
+---
+
+## 🧱 STEP 21 — Persistent State Expansion
+
+- [ ] Add account_id and trust_status to players
+- [ ] Add whitelist_group_id to players
+- [ ] Add seasons table with status and timestamps
+- [ ] Add player-season state (coins, stars, daily totals)
+- [ ] Append-only coin earning log
+- [ ] Append-only star purchase log
+
+---
+
+## 🧱 STEP 22 — Real-Time Updates
+
+- [ ] Server-sent events or WebSockets for season state
+- [ ] Broadcast star price updates
+- [ ] Broadcast season time remaining
+- [ ] Broadcast economy pressure changes
+
+---
+
+## 🧱 STEP 23 — Frontend MVP Pages
+
+- [ ] Landing page
+- [ ] Auth/signup/login
+- [ ] Season lobby
+- [ ] Main season dashboard
+- [ ] Bulk purchase UI with cost breakdown + warnings
+- [ ] Leaderboard page
+- [ ] Player profile + collection page
+- [ ] Settings + accessibility
+- [ ] Whitelist request page
+- [ ] Admin console entry point
+
+---
+
+## 🧱 STEP 24 — Season End & Rewards
+
+- [ ] Freeze economy actions on season end
+- [ ] Snapshot final rankings
+- [ ] Grant cosmetic rewards by tier
+- [ ] Late-season participation recognition
+- [ ] Season summary screen and next-season CTA
+
+---
+
+## 🧱 STEP 25 — Between-Season Progression
+
+- [ ] Persistent account level (participation-based)
+- [ ] Cosmetics, badges, and titles persistence
+- [ ] Season history records on profiles
+- [ ] Return incentives (cosmetic-only)
+- [ ] Season modifiers that do not alter economy rules
+
+---
+
+## 🧱 STEP 26 — Admin Tools & Moderation
+
+- [ ] Whitelist review dashboard
+- [ ] Abuse event review and resolution
+- [ ] Economy monitoring (emission, pressure, purchases)
+- [ ] Manual throttles and flags
+
+---
+
 ## 📜 Version Notes
 
 - **v0.1** — Economy core complete (server-authoritative, persistent, emission-capped)
