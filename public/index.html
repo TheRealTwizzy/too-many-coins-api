@@ -210,7 +210,6 @@
 				<div class="row">
 					<button id="claim-daily" class="primary">Daily claim</button>
 					<button id="claim-activity">Activity claim</button>
-					<button id="risk-roll">Risk roll (1)</button>
 				</div>
 				<div id="actions-status" class="muted"></div>
 			</div>
@@ -416,6 +415,23 @@
 					<button id="pc-save" class="primary">Apply</button>
 				</div>
 				<div id="pc-status" class="label"></div>
+			</div>
+
+			<div class="card" id="admin-star-log" style="display:none;">
+				<div class="label">Star purchase log</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="star-log-account" placeholder="Account ID" />
+					<input id="star-log-player" placeholder="Player ID" />
+					<input id="star-log-season" placeholder="Season ID" />
+				</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="star-log-type" placeholder="Type (base/variant)" />
+					<input id="star-log-variant" placeholder="Variant" />
+					<input id="star-log-limit" placeholder="Limit (max 250)" />
+					<button id="star-log-load" class="primary">Load</button>
+				</div>
+				<div id="star-log-status" class="label"></div>
+				<div id="star-log-list" class="stack" style="margin-top:0.5rem;"></div>
 			</div>
 
 			<div class="card" id="auction-card" style="display:none;">
@@ -1020,22 +1036,6 @@ function initHome() {
 		await refreshPlayer();
 	});
 
-	document.getElementById("risk-roll").addEventListener("click", async () => {
-		const res = await apiFetch("/risk-roll", {
-			method: "POST",
-			body: JSON.stringify({ wager: 1 })
-		});
-		const data = await res.json();
-		if (!data.ok) {
-			actionsStatus.innerText = data.error || "Roll failed";
-			setToast(actionsStatus.innerText, "error");
-			return;
-		}
-		actionsStatus.innerText = data.won ? `Won +${data.payout}` : "No win this time";
-		setToast("Risk roll complete.", "success");
-		await refreshPlayer();
-	});
-
 	document.getElementById("whitelist-request-btn").addEventListener("click", async () => {
 		const reason = document.getElementById("whitelist-reason").value.trim();
 		const res = await apiFetch("/auth/request-whitelist", {
@@ -1334,6 +1334,10 @@ function initAdmin() {
 		status.innerText = data.ok ? `Touched active for ${data.playerId}` : (data.error || "Touch failed.");
 	});
 
+	document.getElementById("star-log-load").addEventListener("click", async () => {
+		await loadStarPurchaseLog();
+	});
+
 	const storedKey = getAdminKey();
 	if (storedKey) {
 		document.getElementById("admin-key").value = storedKey;
@@ -1358,6 +1362,7 @@ async function refreshAdminView() {
 		document.getElementById("admin-notify").style.display = "none";
 		document.getElementById("admin-player-controls").style.display = "none";
 		document.getElementById("admin-settings").style.display = "none";
+		document.getElementById("admin-star-log").style.display = "none";
 		document.getElementById("admin-setup").style.display = "block";
 		return false;
 	}
@@ -1373,8 +1378,56 @@ async function refreshAdminView() {
 	document.getElementById("admin-notify").style.display = "block";
 	document.getElementById("admin-player-controls").style.display = "block";
 	document.getElementById("admin-settings").style.display = "block";
+	document.getElementById("admin-star-log").style.display = "block";
 	loadWhitelistRequests();
 	return true;
+}
+
+async function loadStarPurchaseLog() {
+	const status = document.getElementById("star-log-status");
+	const container = document.getElementById("star-log-list");
+	const accountId = document.getElementById("star-log-account").value.trim();
+	const playerId = document.getElementById("star-log-player").value.trim();
+	const seasonId = document.getElementById("star-log-season").value.trim();
+	const purchaseType = document.getElementById("star-log-type").value.trim();
+	const variant = document.getElementById("star-log-variant").value.trim();
+	const limitValue = parseInt(document.getElementById("star-log-limit").value, 10);
+
+	const params = new URLSearchParams();
+	if (accountId) params.set("accountId", accountId);
+	if (playerId) params.set("playerId", playerId);
+	if (seasonId) params.set("seasonId", seasonId);
+	if (purchaseType) params.set("purchaseType", purchaseType);
+	if (variant) params.set("variant", variant);
+	if (!Number.isNaN(limitValue)) params.set("limit", limitValue);
+
+	const url = params.toString() ? `/admin/star-purchases?${params.toString()}` : "/admin/star-purchases";
+	const res = await apiFetch(url, { headers: { "X-Admin-Key": getAdminKey() } });
+	const data = await res.json();
+	if (!data.ok) {
+		status.innerText = data.error || "Load failed.";
+		container.innerHTML = "";
+		return;
+	}
+
+	const rows = data.items || [];
+	status.innerText = `Loaded ${rows.length} entries.`;
+	if (rows.length === 0) {
+		container.innerText = "No results.";
+		return;
+	}
+	container.innerHTML = rows.map(row => {
+		const time = new Date(row.createdAt).toLocaleString();
+		const variantLabel = row.variant ? ` · ${row.variant}` : "";
+		return `
+			<div class="card" style="margin-top:0.5rem;">
+				<div class="label">${time} · ${row.seasonId}</div>
+				<div>${row.purchaseType}${variantLabel} · paid ${row.pricePaid}</div>
+				<div class="label">Account ${row.accountId} · Player ${row.playerId}</div>
+				<div class="label">Coins ${row.coinsBefore} → ${row.coinsAfter} · Stars ${row.starsBefore} → ${row.starsAfter}</div>
+			</div>
+		`;
+	}).join("");
 }
 
 async function loadWhitelistRequests() {

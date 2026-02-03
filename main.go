@@ -40,21 +40,10 @@ type FaucetClaimResponse struct {
 	NextAvailableInSeconds int64  `json:"nextAvailableInSeconds,omitempty"`
 }
 
-type RiskRollResponse struct {
-	OK                     bool   `json:"ok"`
-	Error                  string `json:"error,omitempty"`
-	Won                    bool   `json:"won,omitempty"`
-	Wager                  int    `json:"wager,omitempty"`
-	Payout                 int    `json:"payout,omitempty"`
-	PlayerCoins            int    `json:"playerCoins,omitempty"`
-	NextAvailableInSeconds int64  `json:"nextAvailableInSeconds,omitempty"`
-}
-
 type BuyVariantStarRequest struct {
 	PlayerID string `json:"playerId"`
 	Variant  string `json:"variant"`
 }
-
 type BuyVariantStarResponse struct {
 	OK          bool   `json:"ok"`
 	Error       string `json:"error,omitempty"`
@@ -334,7 +323,6 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/burn-coins", burnCoinsHandler(db))
 	mux.HandleFunc("/claim-daily", dailyClaimHandler(db))
 	mux.HandleFunc("/claim-activity", activityClaimHandler(db))
-	mux.HandleFunc("/risk-roll", riskRollHandler(db))
 	mux.HandleFunc("/auction-status", auctionStatusHandler(db))
 	mux.HandleFunc("/auction-bid", auctionBidHandler(db))
 	mux.HandleFunc("/auth/signup", signupHandler(db))
@@ -360,6 +348,7 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/admin/notifications", adminNotificationsHandler(db))
 	mux.HandleFunc("/admin/player-controls", adminPlayerControlsHandler(db))
 	mux.HandleFunc("/admin/settings", adminSettingsHandler(db))
+	mux.HandleFunc("/admin/star-purchases", adminStarPurchaseLogHandler(db))
 	mux.HandleFunc("/moderator/profile", moderatorProfileHandler(db))
 }
 

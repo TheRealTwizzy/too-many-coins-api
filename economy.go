@@ -368,6 +368,26 @@ func ensureSchema(db *sql.DB) error {
 		return err
 	}
 
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS star_purchase_log (
+			id BIGSERIAL PRIMARY KEY,
+			account_id TEXT,
+			player_id TEXT NOT NULL,
+			season_id TEXT NOT NULL,
+			purchase_type TEXT NOT NULL,
+			variant TEXT,
+			price_paid BIGINT NOT NULL,
+			coins_before BIGINT NOT NULL,
+			coins_after BIGINT NOT NULL,
+			stars_before BIGINT NOT NULL,
+			stars_after BIGINT NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
 	// 6️⃣ player_boosts table
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS player_boosts (

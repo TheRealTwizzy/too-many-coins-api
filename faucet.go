@@ -1,9 +1,7 @@
 package main
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"math/big"
 	"time"
 )
 
@@ -11,7 +9,6 @@ const (
 	FaucetPassive  = "passive"
 	FaucetDaily    = "daily"
 	FaucetActivity = "activity"
-	FaucetRisk     = "risk"
 )
 
 func CanAccessFaucetByPriority(faucetType string, available int) bool {
@@ -22,8 +19,6 @@ func CanAccessFaucetByPriority(faucetType string, available int) bool {
 		return available >= 10
 	case FaucetActivity:
 		return available >= 50
-	case FaucetRisk:
-		return available >= 100
 	default:
 		return false
 	}
@@ -84,13 +79,4 @@ func RecordFaucetClaim(db *sql.DB, playerID string, faucetKey string) error {
 	`, playerID, faucetKey)
 
 	return err
-}
-
-func rollWin50() (bool, error) {
-	n, err := rand.Int(rand.Reader, big.NewInt(2))
-	if err != nil {
-		return false, err
-	}
-
-	return n.Int64() == 1, nil
 }

@@ -45,6 +45,27 @@ type AdminEconomyUpdateRequest struct {
 	TelemetryEnabled    *bool `json:"telemetryEnabled,omitempty"`
 }
 
+type AdminStarPurchaseLogItem struct {
+	ID           int64     `json:"id"`
+	AccountID    string    `json:"accountId"`
+	PlayerID     string    `json:"playerId"`
+	SeasonID     string    `json:"seasonId"`
+	PurchaseType string    `json:"purchaseType"`
+	Variant      string    `json:"variant,omitempty"`
+	PricePaid    int64     `json:"pricePaid"`
+	CoinsBefore  int64     `json:"coinsBefore"`
+	CoinsAfter   int64     `json:"coinsAfter"`
+	StarsBefore  int64     `json:"starsBefore"`
+	StarsAfter   int64     `json:"starsAfter"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+type AdminStarPurchaseLogResponse struct {
+	OK    bool                       `json:"ok"`
+	Error string                     `json:"error,omitempty"`
+	Items []AdminStarPurchaseLogItem `json:"items,omitempty"`
+}
+
 func requireAdmin(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Account, bool) {
 	account, _, err := getSessionAccount(db, r)
 	if err != nil || account == nil {
@@ -755,5 +776,104 @@ func adminSettingsHandler(db *sql.DB) http.HandlerFunc {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
+	}
+}
+
+func adminStarPurchaseLogHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		query := r.URL.Query()
+		limit := 50
+		if raw := strings.TrimSpace(query.Get("limit")); raw != "" {
+			if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+				limit = parsed
+			}
+		}
+		if limit > 250 {
+			limit = 250
+		}
+
+		accountID := strings.TrimSpace(query.Get("accountId"))
+		playerID := strings.TrimSpace(query.Get("playerId"))
+		seasonID := strings.TrimSpace(query.Get("seasonId"))
+		purchaseType := strings.TrimSpace(query.Get("purchaseType"))
+		variant := strings.TrimSpace(query.Get("variant"))
+
+		clauses := []string{}
+		args := []interface{}{}
+		argIndex := 1
+		if accountID != "" {
+			clauses = append(clauses, "account_id = $"+strconv.Itoa(argIndex))
+			args = append(args, accountID)
+			argIndex++
+		}
+		if playerID != "" {
+			clauses = append(clauses, "player_id = $"+strconv.Itoa(argIndex))
+			args = append(args, playerID)
+			argIndex++
+		}
+		if seasonID != "" {
+			clauses = append(clauses, "season_id = $"+strconv.Itoa(argIndex))
+			args = append(args, seasonID)
+			argIndex++
+		}
+		if purchaseType != "" {
+			clauses = append(clauses, "purchase_type = $"+strconv.Itoa(argIndex))
+			args = append(args, purchaseType)
+			argIndex++
+		}
+		if variant != "" {
+			clauses = append(clauses, "variant = $"+strconv.Itoa(argIndex))
+			args = append(args, variant)
+			argIndex++
+		}
+
+		sqlQuery := `
+			SELECT id, account_id, player_id, season_id, purchase_type, variant,
+				price_paid, coins_before, coins_after, stars_before, stars_after, created_at
+			FROM star_purchase_log
+		`
+		if len(clauses) > 0 {
+			sqlQuery += " WHERE " + strings.Join(clauses, " AND ")
+		}
+		sqlQuery += " ORDER BY created_at DESC LIMIT " + strconv.Itoa(limit)
+
+		rows, err := db.Query(sqlQuery, args...)
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminStarPurchaseLogResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		defer rows.Close()
+
+		items := []AdminStarPurchaseLogItem{}
+		for rows.Next() {
+			var item AdminStarPurchaseLogItem
+			if err := rows.Scan(
+				&item.ID,
+				&item.AccountID,
+				&item.PlayerID,
+				&item.SeasonID,
+				&item.PurchaseType,
+				&item.Variant,
+				&item.PricePaid,
+				&item.CoinsBefore,
+				&item.CoinsAfter,
+				&item.StarsBefore,
+				&item.StarsAfter,
+				&item.CreatedAt,
+			); err != nil {
+				continue
+			}
+			items = append(items, item)
+		}
+
+		json.NewEncoder(w).Encode(AdminStarPurchaseLogResponse{OK: true, Items: items})
 	}
 }

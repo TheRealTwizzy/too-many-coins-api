@@ -129,6 +129,21 @@ CREATE TABLE IF NOT EXISTS player_star_variants (
     PRIMARY KEY (player_id, variant)
 );
 
+CREATE TABLE IF NOT EXISTS star_purchase_log (
+    id BIGSERIAL PRIMARY KEY,
+    account_id TEXT,
+    player_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
+    purchase_type TEXT NOT NULL,
+    variant TEXT,
+    price_paid BIGINT NOT NULL,
+    coins_before BIGINT NOT NULL,
+    coins_after BIGINT NOT NULL,
+    stars_before BIGINT NOT NULL,
+    stars_after BIGINT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS player_boosts (
     player_id TEXT NOT NULL,
     boost_type TEXT NOT NULL,
