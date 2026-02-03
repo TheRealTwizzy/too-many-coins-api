@@ -9,6 +9,7 @@ const (
 	FaucetPassive  = "passive"
 	FaucetDaily    = "daily"
 	FaucetActivity = "activity"
+	FaucetLogin    = "login"
 )
 
 func CanAccessFaucetByPriority(faucetType string, available int) bool {

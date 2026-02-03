@@ -597,6 +597,12 @@ func runPassiveDrip(db *sql.DB) {
 			adjusted = remainingCap
 		}
 		if !economy.TryDistributeCoins(adjusted) {
+			emitServerTelemetryWithCooldown(db, nil, playerID, "faucet_denied", map[string]interface{}{
+				"faucet":         FaucetPassive,
+				"reason":         "EMISSION_EXHAUSTED",
+				"attempted":      adjusted,
+				"availableCoins": economy.AvailableCoins(),
+			}, 2*time.Minute)
 			emitNotification(db, NotificationInput{
 				RecipientRole: NotificationRoleAdmin,
 				Category:      NotificationCategoryEconomy,

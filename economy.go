@@ -21,6 +21,13 @@ type EconomyState struct {
 	calibration          CalibrationParams
 }
 
+type EconomyInvariantSnapshot struct {
+	GlobalCoinPool   int
+	CoinsDistributed int
+	AvailableCoins   int
+	MarketPressure   float64
+}
+
 var economy = &EconomyState{
 	globalCoinPool:       0,
 	globalStarsPurchased: 0,
@@ -1239,6 +1246,14 @@ func EffectiveDailyEmissionTargetForParams(params CalibrationParams, secondsRema
 	if effective < 0 {
 		effective = 0
 	}
+
+	minFloor := int(float64(params.CBase)*0.25 + 0.5)
+	if minFloor < params.DailyCapLate {
+		minFloor = params.DailyCapLate
+	}
+	if effective < minFloor {
+		effective = minFloor
+	}
 	return effective
 }
 
@@ -1246,6 +1261,18 @@ func (e *EconomyState) AvailableCoins() int {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	return e.globalCoinPool - e.coinsDistributed
+}
+
+func (e *EconomyState) InvariantSnapshot() EconomyInvariantSnapshot {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	available := e.globalCoinPool - e.coinsDistributed
+	return EconomyInvariantSnapshot{
+		GlobalCoinPool:   e.globalCoinPool,
+		CoinsDistributed: e.coinsDistributed,
+		AvailableCoins:   available,
+		MarketPressure:   e.marketPressure,
+	}
 }
 
 // TryDistributeCoins attempts to give coins to players,

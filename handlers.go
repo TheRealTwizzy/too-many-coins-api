@@ -246,13 +246,14 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 
 		var coinsBefore int64
 		var starsBefore int64
+		var lastActive time.Time
 
 		err = tx.QueryRowContext(r.Context(), `
-			SELECT coins, stars, burned_coins
+			SELECT coins, stars, burned_coins, last_active_at
 			FROM players
 			WHERE player_id = $1
 			FOR UPDATE
-		`, playerID).Scan(&coinsBefore, &starsBefore, new(int64))
+		`, playerID).Scan(&coinsBefore, &starsBefore, new(int64), &lastActive)
 
 		if err != nil {
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -260,6 +261,16 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		if coinsBefore < quote.TotalCoinsSpent {
+			activityWindow := ActiveActivityWindow()
+			if time.Since(lastActive) <= activityWindow {
+				emitServerTelemetryWithCooldown(db, &account.AccountID, playerID, "star_purchase_unaffordable_despite_activity", map[string]interface{}{
+					"quantity":       quantity,
+					"requiredCoins":  quote.TotalCoinsSpent,
+					"playerCoins":    coinsBefore,
+					"finalStarPrice": quote.FinalStarPrice,
+					"activityWindow": int64(activityWindow.Seconds()),
+				}, 10*time.Minute)
+			}
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "NOT_ENOUGH_COINS"})
 			return
 		}
@@ -1266,6 +1277,8 @@ func signupHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
+		EnsurePlayableBalanceOnLogin(db, account.PlayerID, &account.AccountID)
+		verifyDailyPlayability(db, account.PlayerID, &account.AccountID)
 		emitNotification(db, NotificationInput{
 			RecipientRole:      NotificationRolePlayer,
 			RecipientAccountID: account.AccountID,
@@ -1351,6 +1364,8 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
+		EnsurePlayableBalanceOnLogin(db, account.PlayerID, &account.AccountID)
+		verifyDailyPlayability(db, account.PlayerID, &account.AccountID)
 
 		sessionID, expiresAt, err := createSession(db, account.AccountID)
 		if err != nil {
@@ -1408,6 +1423,8 @@ func meHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(AuthResponse{OK: false})
 			return
 		}
+		EnsurePlayableBalanceOnLogin(db, account.PlayerID, &account.AccountID)
+		verifyDailyPlayability(db, account.PlayerID, &account.AccountID)
 		json.NewEncoder(w).Encode(AuthResponse{
 			OK:          true,
 			Username:    account.Username,
@@ -1557,10 +1574,18 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		if isSeasonEnded(time.Now().UTC()) {
+			emitServerTelemetryWithCooldown(db, nil, "", "faucet_denied", map[string]interface{}{
+				"faucet": FaucetDaily,
+				"reason": "SEASON_ENDED",
+			}, 5*time.Minute)
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "SEASON_ENDED"})
 			return
 		}
 		if !featureFlags.FaucetsEnabled {
+			emitServerTelemetryWithCooldown(db, nil, "", "faucet_denied", map[string]interface{}{
+				"faucet": FaucetDaily,
+				"reason": "FEATURE_DISABLED",
+			}, 5*time.Minute)
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FEATURE_DISABLED"})
 			return
 		}
@@ -1605,6 +1630,9 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		if !canClaim {
+			logFaucetDenied(db, &account.AccountID, playerID, FaucetDaily, "COOLDOWN", map[string]interface{}{
+				"nextAvailableInSeconds": int64(remaining.Seconds()),
+			})
 			json.NewEncoder(w).Encode(FaucetClaimResponse{
 				OK:                     false,
 				Error:                  "COOLDOWN",
@@ -1615,10 +1643,14 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 
 		remainingCap, err := RemainingDailyCap(db, playerID, time.Now().UTC())
 		if err != nil {
+			logFaucetDenied(db, &account.AccountID, playerID, FaucetDaily, "INTERNAL_ERROR", map[string]interface{}{
+				"stage": "remaining_cap",
+			})
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
 		if remainingCap <= 0 {
+			logFaucetDenied(db, &account.AccountID, playerID, FaucetDaily, "DAILY_CAP", nil)
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "DAILY_CAP"})
 			return
 		}
@@ -1627,6 +1659,10 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		if !TryDistributeCoinsWithPriority(FaucetDaily, reward) {
+			logFaucetDenied(db, &account.AccountID, playerID, FaucetDaily, "EMISSION_EXHAUSTED", map[string]interface{}{
+				"attempted":      reward,
+				"availableCoins": economy.AvailableCoins(),
+			})
 			emitNotification(db, NotificationInput{
 				RecipientRole: NotificationRoleAdmin,
 				Category:      NotificationCategoryEconomy,
@@ -1671,10 +1707,18 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		if isSeasonEnded(time.Now().UTC()) {
+			emitServerTelemetryWithCooldown(db, nil, "", "faucet_denied", map[string]interface{}{
+				"faucet": FaucetActivity,
+				"reason": "SEASON_ENDED",
+			}, 5*time.Minute)
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "SEASON_ENDED"})
 			return
 		}
 		if !featureFlags.FaucetsEnabled {
+			emitServerTelemetryWithCooldown(db, nil, "", "faucet_denied", map[string]interface{}{
+				"faucet": FaucetActivity,
+				"reason": "FEATURE_DISABLED",
+			}, 5*time.Minute)
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FEATURE_DISABLED"})
 			return
 		}
@@ -1726,6 +1770,9 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		if !canClaim {
+			logFaucetDenied(db, &account.AccountID, playerID, FaucetActivity, "COOLDOWN", map[string]interface{}{
+				"nextAvailableInSeconds": int64(remaining.Seconds()),
+			})
 			json.NewEncoder(w).Encode(FaucetClaimResponse{
 				OK:                     false,
 				Error:                  "COOLDOWN",
@@ -1736,10 +1783,14 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 
 		remainingCap, err := RemainingDailyCap(db, playerID, time.Now().UTC())
 		if err != nil {
+			logFaucetDenied(db, &account.AccountID, playerID, FaucetActivity, "INTERNAL_ERROR", map[string]interface{}{
+				"stage": "remaining_cap",
+			})
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
 		if remainingCap <= 0 {
+			logFaucetDenied(db, &account.AccountID, playerID, FaucetActivity, "DAILY_CAP", nil)
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "DAILY_CAP"})
 			return
 		}
@@ -1747,6 +1798,10 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			reward = remainingCap
 		}
 		if !TryDistributeCoinsWithPriority(FaucetActivity, reward) {
+			logFaucetDenied(db, &account.AccountID, playerID, FaucetActivity, "EMISSION_EXHAUSTED", map[string]interface{}{
+				"attempted":      reward,
+				"availableCoins": economy.AvailableCoins(),
+			})
 			emitNotification(db, NotificationInput{
 				RecipientRole: NotificationRoleAdmin,
 				Category:      NotificationCategoryEconomy,

@@ -64,6 +64,7 @@ Players may trade with one another only through a brokered, system-controlled pr
 
 Players earn Coins through daily login and active play faucets.  
 Passive drip is post‑alpha and disabled in the current build.  
+Alpha safeguard: on login, the server may top up very low balances to keep the game playable within minutes (draws from the emission pool, short cooldown).  
 Players spend Coins to buy Stars.  
 Players may optionally trade Coins for existing Stars under tight, time-worsening constraints (post‑alpha).  
 Star prices increase over time and with demand.  

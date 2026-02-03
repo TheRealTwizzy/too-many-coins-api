@@ -14,6 +14,8 @@ Coin emission system (simplified but real)
 
 One coin faucet: daily login
 
+Login playability safeguard (alpha) to ensure a minimal playable balance
+
 One coin faucet: capped active play
 
 Star purchasing (single and bulk)

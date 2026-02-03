@@ -138,6 +138,7 @@ func startTickLoop(db *sql.DB) {
 
 			updateMarketPressure(db, now)
 			UpdateAbuseMonitoring(db, now)
+			checkEconomyInvariants(db, "tick")
 
 			tickCount++
 			if tickCount%5 == 0 {

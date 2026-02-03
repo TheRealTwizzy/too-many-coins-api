@@ -49,3 +49,15 @@ Faucet tuning is balanced against trade burn to keep the economy liquid enough f
 Coin shortage is possible but rare.
 
 All faucet usage and coin grants are validated server-side and logged.
+
+Login Playability Safeguard (Alpha):
+
+If a player logs in with a balance too low to make near-term progress,
+the server may top them up to a minimum playable balance.
+
+This safeguard:
+
+Draws from the global emission pool
+Has a short cooldown
+Is intended to keep the game playable within minutes
+May bypass the per-day earning cap as an alpha-only safety net
