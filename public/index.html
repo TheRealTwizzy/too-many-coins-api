@@ -821,18 +821,38 @@ function initHome() {
 	document.getElementById("login-btn").addEventListener("click", async () => {
 		const username = document.getElementById("username").value;
 		const password = document.getElementById("password").value;
-		const res = await apiFetch("/auth/login", {
-			method: "POST",
-			body: JSON.stringify({ username, password })
-		});
-		const data = await res.json();
-		if (!data.ok) {
-			setToast(data.error || "Login failed", "error");
+		if (!username || !password) {
+			setToast("Enter username and password.", "error");
 			return;
 		}
-		await loadAuth();
-		await refreshPlayer();
-		track("login", {});
+		try {
+			const res = await apiFetch("/auth/login", {
+				method: "POST",
+				body: JSON.stringify({ username, password })
+			});
+			let data = null;
+			try {
+				data = await res.json();
+			} catch (e) {
+				setToast("Login failed (invalid response)", "error");
+				return;
+			}
+			if (!data.ok) {
+				setToast(data.error || "Login failed", "error");
+				return;
+			}
+			await loadAuth();
+			if (!currentUser) {
+				setToast("Login failed (session not established)", "error");
+				return;
+			}
+			await refreshPlayer();
+			await loadSeasons();
+			setToast("Logged in.", "success");
+			track("login", {});
+		} catch (e) {
+			setToast("Login failed (network error)", "error");
+		}
 	});
 
 	logoutBtn.addEventListener("click", async () => {

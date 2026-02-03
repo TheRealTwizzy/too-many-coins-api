@@ -432,7 +432,8 @@ func adminIPWhitelistHandler(db *sql.DB) http.HandlerFunc {
 
 func adminWhitelistRequestsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if _, ok := requireAdmin(db, w, r); !ok {
+		account, ok := requireAdmin(db, w, r)
+		if !ok {
 			return
 		}
 		switch r.Method {
@@ -465,28 +466,40 @@ func adminWhitelistRequestsHandler(db *sql.DB) http.HandlerFunc {
 				json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_REQUEST"})
 				return
 			}
+			var ip string
+			var accountID string
+			err := db.QueryRow(`
+				SELECT ip, COALESCE(account_id, '')
+				FROM ip_whitelist_requests
+				WHERE request_id = $1
+			`, req.RequestID).Scan(&ip, &accountID)
+			if err != nil {
+				json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
 			status := "denied"
 			if decision == "approve" {
 				status = "approved"
 				if req.MaxAccounts <= 0 {
 					req.MaxAccounts = 2
 				}
-				var ip string
-				err := db.QueryRow(`
-					SELECT ip FROM ip_whitelist_requests WHERE request_id = $1
-				`, req.RequestID).Scan(&ip)
-				if err != nil {
-					json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
-					return
-				}
 				if err := upsertIPWhitelist(db, ip, req.MaxAccounts); err != nil {
 					json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 					return
 				}
 			}
-			if err := resolveWhitelistRequest(db, req.RequestID, status, "admin"); err != nil {
+			if err := resolveWhitelistRequest(db, req.RequestID, status, account.AccountID); err != nil {
 				json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 				return
+			}
+			if accountID != "" {
+				message := "Whitelist request denied."
+				level := "warn"
+				if status == "approved" {
+					message = "Whitelist request approved. You may create another account from your IP."
+					level = "info"
+				}
+				_ = createNotification(db, "user", accountID, message, level, nil)
 			}
 			json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 			return
