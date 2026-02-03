@@ -1802,13 +1802,12 @@ async function loadSeasons() {
 					return;
 				}
 				lastQuote = data;
-				if (quoteEl) quoteEl.innerText = `Total cost: ${data.totalCoinsSpent} coins`;
+				const perStarPrice = typeof data.finalStarPrice === "number"
+					? data.finalStarPrice
+					: (data.breakdown && data.breakdown.length > 0 ? data.breakdown[data.breakdown.length - 1].finalPrice : null);
+				if (quoteEl) quoteEl.innerText = perStarPrice != null ? `Per-star price: ${perStarPrice} coins` : "";
 				if (warningEl) warningEl.innerText = data.warning || "";
-				if (breakdownEl) {
-					breakdownEl.innerText = data.breakdown && data.breakdown.length > 1
-						? `Per-star: ${data.breakdown.map(item => item.finalPrice).join(", ")}`
-						: "";
-				}
+				if (breakdownEl) breakdownEl.innerText = "";
 			};
 			if (qtyInput) {
 				qtyInput.addEventListener("input", refreshQuote);
@@ -1819,8 +1818,7 @@ async function loadSeasons() {
 				const qty = Math.max(1, parseInt(qtyInput?.value, 10) || 1);
 				await refreshQuote();
 				if (qty > 1) {
-					const total = lastQuote && lastQuote.totalCoinsSpent ? lastQuote.totalCoinsSpent : "unknown";
-					if (!confirm(`Confirm bulk purchase of ${qty} stars for ${total} coins?`)) {
+					if (!confirm(`Confirm purchase of ${qty} stars?`)) {
 						return;
 					}
 				}
@@ -1838,12 +1836,11 @@ async function loadSeasons() {
 				coinsDiv.innerText = `Coins: ${playerCoins}`;
 				starsDiv.innerText = `Stars: ${playerStars}`;
 				statPill.innerText = `${playerCoins} coins · ${playerStars} stars`;
-				const total = data.totalCoinsSpent || data.starPricePaid;
 				const label = data.starsPurchased && data.starsPurchased > 1
-					? `Bought ${data.starsPurchased} stars for ${total} coins.`
-					: `Star purchased for ${total} coins.`;
+					? `Bought ${data.starsPurchased} stars.`
+					: "Star purchased.";
 				setToast(label, "success");
-				track("buy_star", { seasonId: season.seasonId, quantity: data.starsPurchased || 1, total });
+				track("buy_star", { seasonId: season.seasonId, quantity: data.starsPurchased || 1 });
 				refreshQuote();
 			});
 		}
