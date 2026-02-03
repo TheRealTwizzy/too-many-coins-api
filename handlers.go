@@ -208,16 +208,6 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		allowed, err := IsPlayerAllowedByIP(db, playerID)
-		if err != nil {
-			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if !allowed {
-			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "IP_BLOCKED"})
-			return
-		}
-
 		isBot, _, err := getPlayerBotInfo(db, playerID)
 		if err != nil {
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -448,16 +438,6 @@ func buyStarQuoteHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		allowed, err := IsPlayerAllowedByIP(db, playerID)
-		if err != nil {
-			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if !allowed {
-			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "IP_BLOCKED"})
-			return
-		}
-
 		isBot, _, err := getPlayerBotInfo(db, playerID)
 		if err != nil {
 			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -634,16 +614,6 @@ func buyVariantStarHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		allowed, err := IsPlayerAllowedByIP(db, playerID)
-		if err != nil {
-			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if !allowed {
-			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "IP_BLOCKED"})
-			return
-		}
-
 		isBot, _, err := getPlayerBotInfo(db, playerID)
 		if err != nil {
 			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -774,20 +744,23 @@ func buyBoostHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		allowed, err := IsPlayerAllowedByIP(db, playerID)
-		if err != nil {
-			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if !allowed {
-			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "IP_BLOCKED"})
-			return
-		}
-
 		const price = 25
 		const duration = 30 * time.Minute
 		enforcement := abuseEffectiveEnforcement(db, playerID, bulkStarMaxQty())
 		finalPrice := abuseAdjustedPrice(price, enforcement.PriceMultiplier)
+		throttled, err := IsPlayerThrottledByIP(db, playerID)
+		if err != nil {
+			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if throttled {
+			trustStatus, err := accountTrustStatusForPlayer(db, playerID)
+			if err != nil {
+				trustStatus = trustStatusNormal
+			}
+			multiplier := ipDampeningPriceMultiplier * trustStatusPriceMultiplier(trustStatus)
+			finalPrice = int(float64(finalPrice)*multiplier + 0.9999)
+		}
 
 		if player.Coins < int64(finalPrice) {
 			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "NOT_ENOUGH_COINS"})
@@ -845,16 +818,6 @@ func burnCoinsHandler(db *sql.DB) http.HandlerFunc {
 		playerID := account.PlayerID
 		if !isValidPlayerID(playerID) {
 			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "INVALID_PLAYER_ID"})
-			return
-		}
-
-		allowed, err := IsPlayerAllowedByIP(db, playerID)
-		if err != nil {
-			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if !allowed {
-			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "IP_BLOCKED"})
 			return
 		}
 
@@ -974,67 +937,6 @@ func resetPasswordHandler(db *sql.DB) http.HandlerFunc {
 				return
 			}
 		}
-		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
-	}
-}
-
-func whitelistRequestHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		account, ok := requireSession(db, w, r)
-		if !ok {
-			return
-		}
-		var req WhitelistRequestPayload
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_REQUEST"})
-			return
-		}
-		ip := getClientIP(r)
-		if ip == "" {
-			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_IP"})
-			return
-		}
-		pending, err := hasPendingWhitelistRequest(db, ip)
-		if err != nil {
-			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if pending {
-			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "REQUEST_ALREADY_PENDING"})
-			return
-		}
-		if err := createIPWhitelistRequest(db, ip, account.AccountID, req.Reason); err != nil {
-			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		emitNotification(db, NotificationInput{
-			RecipientRole: NotificationRoleAdmin,
-			Category:      NotificationCategorySystem,
-			Type:          "whitelist_request_pending",
-			Priority:      NotificationPriorityHigh,
-			Message:       "Whitelist request pending for IP: " + ip,
-			Link:          "#/moderator",
-			Payload: map[string]interface{}{
-				"ip":        ip,
-				"accountId": account.AccountID,
-			},
-		})
-		emitNotification(db, NotificationInput{
-			RecipientRole:      NotificationRolePlayer,
-			RecipientAccountID: account.AccountID,
-			Category:           NotificationCategorySystem,
-			Type:               "whitelist_request_submitted",
-			Priority:           NotificationPriorityNormal,
-			Message:            "Whitelist request submitted. An admin will review it.",
-			Link:               "#/home",
-			Payload: map[string]interface{}{
-				"ip": ip,
-			},
-		})
 		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 	}
 }
@@ -1342,16 +1244,7 @@ func signupHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "RATE_LIMIT"})
 			return
 		}
-		allowed, err := CanSignupFromIP(db, ip)
-		if err != nil {
-			log.Println("signup: CanSignupFromIP error:", err)
-			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if !allowed {
-			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "IP_LIMIT"})
-			return
-		}
+		log.Printf("signup: whitelist gating removed; relying on throttles (ip=%s)", ip)
 		account, err := createAccount(db, req.Username, req.Password, req.DisplayName, req.Email)
 		if err != nil {
 			log.Println("signup: createAccount error:", err)
@@ -1690,22 +1583,17 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		allowed, err := IsPlayerAllowedByIP(db, playerID)
-		if err != nil {
-			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if !allowed {
-			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FAUCET_BLOCKED"})
-			return
-		}
-
 		params := economy.Calibration()
 		reward := params.DailyLoginReward
 		cooldown := time.Duration(params.DailyLoginCooldownHours) * time.Hour
 		enforcement := abuseEffectiveEnforcement(db, playerID, bulkStarMaxQty())
 		reward = abuseAdjustedReward(reward, enforcement.EarnMultiplier)
 		cooldown += abuseCooldownJitter(cooldown, enforcement.CooldownJitterFactor)
+		reward, err = ApplyIPDampeningReward(db, playerID, reward)
+		if err != nil {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
 
 		canClaim, remaining, err := CanClaimFaucet(db, playerID, FaucetDaily, cooldown)
 		if err != nil {
@@ -1809,16 +1697,6 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		allowed, err := IsPlayerAllowedByIP(db, playerID)
-		if err != nil {
-			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if !allowed {
-			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FAUCET_BLOCKED"})
-			return
-		}
-
 		params := economy.Calibration()
 		reward := params.ActivityReward
 		cooldown := time.Duration(params.ActivityCooldownSeconds) * time.Second
@@ -1832,6 +1710,11 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 		enforcement := abuseEffectiveEnforcement(db, playerID, bulkStarMaxQty())
 		reward = abuseAdjustedReward(reward, enforcement.EarnMultiplier)
 		cooldown += abuseCooldownJitter(cooldown, enforcement.CooldownJitterFactor)
+		reward, err = ApplyIPDampeningReward(db, playerID, reward)
+		if err != nil {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
 
 		canClaim, remaining, err := CanClaimFaucet(db, playerID, FaucetActivity, cooldown)
 		if err != nil {

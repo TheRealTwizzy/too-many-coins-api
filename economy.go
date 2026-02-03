@@ -295,6 +295,14 @@ func ensureSchema(db *sql.DB) error {
 		return err
 	}
 
+	_, err = db.Exec(`
+		ALTER TABLE accounts
+		ADD COLUMN IF NOT EXISTS trust_status TEXT NOT NULL DEFAULT 'normal';
+	`)
+	if err != nil {
+		return err
+	}
+
 	// 2️⃣c sessions table
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS sessions (
@@ -402,27 +410,10 @@ func ensureSchema(db *sql.DB) error {
 	}
 
 	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS ip_whitelist (
-			ip TEXT PRIMARY KEY,
-			max_accounts INT NOT NULL DEFAULT 1,
-			created_at TIMESTAMPTZ NOT NULL
-		);
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS ip_whitelist_requests (
-			request_id TEXT PRIMARY KEY,
-			ip TEXT NOT NULL,
-			account_id TEXT,
-			reason TEXT,
-			status TEXT NOT NULL DEFAULT 'pending',
-			created_at TIMESTAMPTZ NOT NULL,
-			resolved_at TIMESTAMPTZ,
-			resolved_by TEXT
-		);
+		DROP TABLE IF EXISTS ip_whitelist_requests;
+		DROP TABLE IF EXISTS ip_whitelist;
+		DROP TABLE IF EXISTS ip_whitelist_requests_archive;
+		DROP TABLE IF EXISTS ip_whitelist_archive;
 	`)
 	if err != nil {
 		return err

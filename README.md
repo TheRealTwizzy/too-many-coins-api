@@ -188,18 +188,16 @@ Late-season challenges that reward persistence without adding Coins
 
 ## Anti-Manipulation and Abuse Prevention
 
-One active player per IP address per season must be enforced by default.
+One active player per IP address per season is the default baseline.
 
 If multiple accounts originate from the same IP:
-They are blocked from joining a season unless whitelisted  
-
-A whitelist request system must exist for households, schools, and shared networks.  
-Whitelist approvals must be reviewed and approved manually by admins.
+They are not hard-blocked; they are throttled through economic dampening, cooldowns, and trust-based enforcement.
+No whitelist requests or manual approvals are used in alpha.
 
 Players earn Coins faster while actively using the site. Passive drip is post‑alpha and disabled in the current build.
 
 Admin tools (alpha):
-Read‑only economy monitoring, telemetry, and whitelist management. No direct coin/star edits.
+Read‑only economy monitoring and telemetry. No direct coin/star edits.
 
 Additional protections:
 Rate‑limited account creation  
@@ -226,6 +224,10 @@ Each season may include a simple modifier that changes presentation or rewards w
 
 ## Changelog (Alpha)
 
+- [Alpha] Removed whitelisting system
+- Simplified access control and admin overhead
+- Relies fully on server-side anti-abuse and economic pressure
+- No player-facing permission gating remains
 - [Alpha] Expanded role-based notification system
 - Added player, moderator, and admin notification tiers
 - Introduced priority alerts for admin-critical events
@@ -242,7 +244,6 @@ Authentication page for signup and login
 Main season dashboard where gameplay occurs  
 Bulk purchase interface with transparent cost scaling  
 Leaderboard page  
-Whitelist request page  
 Internal admin console for moderation and economy monitoring  
 
 Post‑alpha pages:

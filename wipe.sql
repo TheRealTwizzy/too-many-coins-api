@@ -15,10 +15,7 @@ TRUNCATE password_resets;
 TRUNCATE refresh_tokens RESTART IDENTITY;
 TRUNCATE sessions;
 
--- IP abuse / throttling / whitelist
 TRUNCATE player_ip_associations;
-TRUNCATE ip_whitelist_requests;
-TRUNCATE ip_whitelist;
 
 -- Faucet / sinks / purchase logs
 TRUNCATE player_faucet_claims;

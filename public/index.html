@@ -637,14 +637,6 @@
 						<div id="actions-status" class="muted"></div>
 					</div>
 
-					<div class="card" id="whitelist-request-card" style="display:none;">
-						<div class="label">IP whitelist request</div>
-						<div class="row">
-							<input id="whitelist-reason" placeholder="Reason (optional)" />
-							<button id="whitelist-request-btn" class="primary">Request approval</button>
-						</div>
-						<div id="whitelist-request-status" class="muted"></div>
-					</div>
 				</div>
 			</div>
 		</section>
@@ -878,11 +870,6 @@
 				<div class="card-body">
 					<div class="muted">Admin-only. Actions apply to the loaded profile.</div>
 					<div class="row" style="margin-top:0.5rem;">
-						<input id="mod-ip-whitelist" placeholder="IP to whitelist" />
-						<input id="mod-ip-max" type="number" min="1" max="6" placeholder="Max accounts" />
-						<button id="mod-ip-whitelist-btn" class="primary">Whitelist IP</button>
-					</div>
-					<div class="row" style="margin-top:0.5rem;">
 						<button id="mod-freeze" class="danger">Freeze account</button>
 						<button id="mod-unfreeze">Unfreeze account</button>
 						<button id="mod-delete" class="danger">Delete account</button>
@@ -916,7 +903,6 @@ const coinsDiv = document.getElementById("profile-coins");
 const starsDiv = document.getElementById("profile-stars");
 const onboarding = document.getElementById("onboarding");
 const actionsCard = document.getElementById("actions-card");
-const whitelistRequestCard = document.getElementById("whitelist-request-card");
 const actionsStatus = document.getElementById("actions-status");
 const toast = document.getElementById("toast");
 const statPill = document.getElementById("stat-pill");
@@ -1141,7 +1127,6 @@ async function loadAuth() {
 		playerPanels.style.display = "none";
 		seasonSnapshot.style.display = "none";
 		actionsCard.style.display = "none";
-		whitelistRequestCard.style.display = "none";
 		statPill.style.display = "none";
 		signupLink.style.display = "inline";
 		moderatorLink.style.display = "none";
@@ -1166,7 +1151,6 @@ async function loadAuth() {
 	playerPanels.style.display = "grid";
 	seasonSnapshot.style.display = "block";
 	actionsCard.style.display = "block";
-	whitelistRequestCard.style.display = "block";
 	statPill.style.display = "inline-flex";
 	signupLink.style.display = "none";
 	moderatorLink.style.display = (data.isModerator || data.isAdmin) ? "inline" : "none";
@@ -1930,18 +1914,6 @@ function initHome() {
 		await refreshPlayer();
 	});
 
-	document.getElementById("whitelist-request-btn").addEventListener("click", async () => {
-		const reason = document.getElementById("whitelist-reason").value.trim();
-		const res = await apiFetch("/auth/request-whitelist", {
-			method: "POST",
-			body: JSON.stringify({ reason })
-		});
-		const data = await res.json();
-		document.getElementById("whitelist-request-status").innerText = data.ok
-			? "Request submitted for admin review."
-			: (data.error || "Request failed");
-	});
-
 	document.getElementById("dismiss-hint").addEventListener("click", () => {
 		localStorage.setItem("dismissedHint", "true");
 		onboarding.style.display = "none";
@@ -2072,30 +2044,6 @@ function initModerator() {
 		});
 		const data = await res.json();
 		document.getElementById("mod-status-view").innerText = data.ok ? "Profile updated." : (data.error || "Update failed.");
-	});
-
-	document.getElementById("mod-ip-whitelist-btn").addEventListener("click", async () => {
-		if (!currentUser || !currentUser.isAdmin) {
-			adminStatus.innerText = "Admin access required.";
-			return;
-		}
-		if (!loadedUsername) {
-			adminStatus.innerText = "Load a profile first.";
-			return;
-		}
-		const ip = document.getElementById("mod-ip-whitelist").value.trim();
-		const maxAccountsRaw = parseInt(document.getElementById("mod-ip-max").value, 10);
-		const maxAccounts = Number.isNaN(maxAccountsRaw) ? 2 : maxAccountsRaw;
-		if (!ip) {
-			adminStatus.innerText = "Enter an IP address to whitelist.";
-			return;
-		}
-		const res = await apiFetch("/admin/ip-whitelist", {
-			method: "POST",
-			body: JSON.stringify({ ip, maxAccounts, action: "set" })
-		});
-		const data = await res.json();
-		adminStatus.innerText = data.ok ? `Whitelisted ${ip} (max ${maxAccounts}).` : (data.error || "Whitelist failed.");
 	});
 
 	document.getElementById("mod-freeze").addEventListener("click", async () => {

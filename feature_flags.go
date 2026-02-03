@@ -6,6 +6,7 @@ type FeatureFlags struct {
 	FaucetsEnabled bool
 	SinksEnabled   bool
 	Telemetry      bool
+	IPThrottling   bool
 }
 
 var featureFlags = loadFeatureFlags()
@@ -15,6 +16,7 @@ func loadFeatureFlags() FeatureFlags {
 		FaucetsEnabled: envFlag("ENABLE_FAUCETS", true),
 		SinksEnabled:   envFlag("ENABLE_SINKS", true),
 		Telemetry:      envFlag("ENABLE_TELEMETRY", true),
+		IPThrottling:   envFlag("ENABLE_IP_THROTTLING", true),
 	}
 }
 

@@ -52,6 +52,9 @@ ALTER TABLE accounts
 ALTER TABLE accounts
     ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
 
+ALTER TABLE accounts
+    ADD COLUMN IF NOT EXISTS trust_status TEXT NOT NULL DEFAULT 'normal';
+
 CREATE TABLE IF NOT EXISTS sessions (
     session_id TEXT PRIMARY KEY,
     account_id TEXT NOT NULL,
@@ -79,23 +82,6 @@ CREATE TABLE IF NOT EXISTS player_ip_associations (
     first_seen TIMESTAMPTZ NOT NULL,
     last_seen TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (player_id, ip)
-);
-
-CREATE TABLE IF NOT EXISTS ip_whitelist (
-    ip TEXT PRIMARY KEY,
-    max_accounts INT NOT NULL DEFAULT 1,
-    created_at TIMESTAMPTZ NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS ip_whitelist_requests (
-    request_id TEXT PRIMARY KEY,
-    ip TEXT NOT NULL,
-    account_id TEXT,
-    reason TEXT,
-    status TEXT NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMPTZ NOT NULL,
-    resolved_at TIMESTAMPTZ,
-    resolved_by TEXT
 );
 
 CREATE TABLE IF NOT EXISTS notifications (

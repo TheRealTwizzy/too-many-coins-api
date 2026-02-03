@@ -199,30 +199,6 @@ type SimpleResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
-type WhitelistRequestPayload struct {
-	Reason string `json:"reason,omitempty"`
-}
-
-type AdminWhitelistRequestListResponse struct {
-	OK       bool                   `json:"ok"`
-	Error    string                 `json:"error,omitempty"`
-	Requests []WhitelistRequestView `json:"requests,omitempty"`
-}
-
-type WhitelistRequestView struct {
-	RequestID string    `json:"requestId"`
-	IP        string    `json:"ip"`
-	AccountID string    `json:"accountId,omitempty"`
-	Reason    string    `json:"reason,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
-}
-
-type AdminWhitelistResolveRequest struct {
-	RequestID   string `json:"requestId"`
-	Decision    string `json:"decision"`
-	MaxAccounts int    `json:"maxAccounts,omitempty"`
-}
-
 type NotificationItem struct {
 	ID             int64           `json:"id"`
 	Message        string          `json:"message"`
@@ -491,7 +467,7 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/auth/refresh", refreshTokenHandler(db))
 	mux.HandleFunc("/auth/request-reset", requestPasswordResetHandler(db))
 	mux.HandleFunc("/auth/reset-password", resetPasswordHandler(db))
-	mux.HandleFunc("/auth/request-whitelist", whitelistRequestHandler(db))
+	
 	mux.HandleFunc("/notifications", notificationsHandler(db))
 	mux.HandleFunc("/notifications/ack", notificationsAckHandler(db))
 	mux.HandleFunc("/notifications/delete", notificationsDeleteHandler(db))
@@ -505,8 +481,7 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/admin/economy", adminEconomyHandler(db))
 	mux.HandleFunc("/admin/set-key", adminKeySetHandler(db))
 	mux.HandleFunc("/admin/role", adminRoleHandler(db))
-	mux.HandleFunc("/admin/ip-whitelist", adminIPWhitelistHandler(db))
-	mux.HandleFunc("/admin/whitelist-requests", adminWhitelistRequestsHandler(db))
+
 	mux.HandleFunc("/admin/notifications", adminNotificationsHandler(db))
 	mux.HandleFunc("/admin/player-controls", adminPlayerControlsHandler(db))
 	mux.HandleFunc("/admin/settings", adminSettingsHandler(db))
@@ -597,18 +572,14 @@ func runPassiveDrip(db *sql.DB) {
 			continue
 		}
 
-		allowed, err := IsPlayerAllowedByIP(db, playerID)
-		if err != nil {
-			log.Println("drip ip check failed:", err)
-			continue
-		}
-		if !allowed {
-			continue
-		}
-
 		adjusted := int(float64(dripAmount) * dripMultiplier)
 		if adjusted < 1 {
 			adjusted = 1
+		}
+		adjusted, err = ApplyIPDampeningReward(db, playerID, adjusted)
+		if err != nil {
+			log.Println("drip ip dampening failed:", err)
+			continue
 		}
 		remainingCap, err := RemainingDailyCap(db, playerID, now)
 		if err != nil {

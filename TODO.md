@@ -49,7 +49,7 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 1.3 Create base schema tables
   - [x] [DONE] players, accounts, sessions
   - [x] [DONE] season_economy persistence
-  - [x] [DONE] star_purchase_log, notifications, whitelist tables
+  - [x] [DONE] star_purchase_log, notifications
 - [x] [DONE] 1.4 Auth stack with sessions + access/refresh tokens
   - [x] [DONE] Signup/login endpoints with password hashing
   - [x] [DONE] Session cookies + access tokens
@@ -153,15 +153,20 @@ Allowed to be rough or missing in Alpha:
 
 ## Phase 7 — Anti‑Abuse, Trust, and Access Control
 - [x] [DONE] 7.1 IP capture + association tracking
-- [x] [DONE] 7.2 Whitelist request flow + approvals
+- [x] [DONE] 7.2 Whitelist request flow + approvals (removed in ALPHA)
   - [x] [DONE] Request submission endpoint
   - [x] [DONE] Admin review + approve/deny
 - [x] [DONE] 7.3 Enforce one active player per IP per season
   - [x] [DONE] Enforce 1 account/IP by default for season participation (not just signup)
-  - [x] [DONE] Respect whitelist max_accounts for exceptions
+  - [x] [DONE] Remove whitelist max_accounts exceptions (alpha removal)
   - [x] [DONE] Remove hardcoded maxPlayersPerIP=2 bypass in faucet gating
 - [x] [DONE] 7.4 Soft IP dampening
   - [x] [DONE] Delay + price multiplier for excess accounts
+- [x] [ALPHA] Remove whitelist schema and data paths
+- [x] [ALPHA] Remove whitelist UI and admin tools
+- [ ] [ALPHA] Audit anti-abuse coverage post-removal
+- [x] [ALPHA] Add internal trust flags (admin-only)
+- [ ] [ALPHA] Monitor abuse metrics after removal
 - [x] [DONE] 7.5 Account creation protections (minimum viable)
   - [x] [DONE] Rate limiting for signup/login endpoints
   - [x] [DONE] Cooldown before new accounts can join a season
@@ -186,7 +191,7 @@ Allowed to be rough or missing in Alpha:
   - [x] [DONE] Moderator profile editing endpoint
 - [x] [DONE] 8.3 Economy monitoring dashboard endpoints
 - [x] [DONE] 8.4 Telemetry capture + admin telemetry
-- [x] [DONE] 8.5 Whitelist management dashboard
+- [x] [DONE] 8.5 Whitelist management dashboard (removed in ALPHA)
 - [ ] [POST-ALPHA] 8.6 Abuse event review + resolution UI
 - [ ] [POST-ALPHA] 8.7 Trade monitoring for admins
   - [ ] [POST-ALPHA] Trade volume + burn metrics
@@ -205,7 +210,7 @@ Allowed to be rough or missing in Alpha:
 - [ ] [POST-ALPHA] 9.1 Seasons table + status transitions
 - [ ] [POST-ALPHA] 9.2 PlayerSeasonState table
   - [ ] [POST-ALPHA] Per‑season coins, stars, daily totals
-- [ ] [POST-ALPHA] 9.3 Trust status + whitelist group on players
+- [x] [ALPHA] 9.3 Trust status flags (admin-only)
 - [x] [DONE] 9.4 Season calibration persistence
   - [x] [DONE] season_calibration table + load/save
 - [x] [DONE] 9.5 Append‑only coin earning log (duplicate of 4.7)
@@ -219,7 +224,7 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 10.3 Main season dashboard
 - [x] [DONE] 10.4 Bulk purchase UI + warnings
 - [x] [DONE] 10.5 Leaderboard page
-- [x] [DONE] 10.6 Whitelist request page
+- [x] [DONE] 10.6 Whitelist request page (removed in ALPHA)
 - [x] [DONE] 10.7 Admin console entry point
 - [ ] [POST-ALPHA] 10.8 Season lobby
 - [ ] [POST-ALPHA] 10.9 Player profile + collection page

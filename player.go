@@ -2,6 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"log"
+	"math"
+	"strings"
 	"time"
 )
 
@@ -14,19 +17,75 @@ type Player struct {
 }
 
 const (
-	ipDampeningPriceMultiplier = 1.5
-	ipDampeningDelay           = 10 * time.Minute
+	ipDampeningPriceMultiplier  = 1.5
+	ipDampeningDelay            = 10 * time.Minute
+	ipDampeningRewardMultiplier = 0.7
+	ipDampeningMaxAccounts      = 1
 )
 
-func maxAccountsForIP(db *sql.DB, ip string) (int, error) {
-	maxAllowed, err := getWhitelistMaxForIP(db, ip)
+const (
+	trustStatusNormal    = "normal"
+	trustStatusThrottled = "throttled"
+	trustStatusFlagged   = "flagged"
+)
+
+func trustStatusDelayMultiplier(status string) float64 {
+	switch status {
+	case trustStatusThrottled:
+		return 1.5
+	case trustStatusFlagged:
+		return 2.0
+	default:
+		return 1.0
+	}
+}
+
+func trustStatusPriceMultiplier(status string) float64 {
+	switch status {
+	case trustStatusThrottled:
+		return 1.25
+	case trustStatusFlagged:
+		return 1.5
+	default:
+		return 1.0
+	}
+}
+
+func trustStatusRewardMultiplier(status string) float64 {
+	switch status {
+	case trustStatusThrottled:
+		return 0.9
+	case trustStatusFlagged:
+		return 0.8
+	default:
+		return 1.0
+	}
+}
+
+func accountTrustStatusForPlayer(db *sql.DB, playerID string) (string, error) {
+	accountID, err := accountIDForPlayer(db, playerID)
 	if err != nil {
-		return 0, err
+		return trustStatusNormal, err
 	}
-	if maxAllowed <= 0 {
-		return 1, nil
+	var status string
+	err = db.QueryRow(`
+		SELECT COALESCE(trust_status, 'normal')
+		FROM accounts
+		WHERE account_id = $1
+	`, accountID).Scan(&status)
+	if err == sql.ErrNoRows {
+		return trustStatusNormal, nil
 	}
-	return maxAllowed, nil
+	if err != nil {
+		return trustStatusNormal, err
+	}
+	status = strings.ToLower(strings.TrimSpace(status))
+	switch status {
+	case trustStatusNormal, trustStatusThrottled, trustStatusFlagged:
+		return status, nil
+	default:
+		return trustStatusNormal, nil
+	}
 }
 
 func LoadOrCreatePlayer(
@@ -134,6 +193,9 @@ func RecordPlayerIP(db *sql.DB, playerID string, ip string) (bool, error) {
 }
 
 func ApplyIPDampeningDelay(db *sql.DB, playerID string, ip string) error {
+	if !featureFlags.IPThrottling {
+		return nil
+	}
 	if ip == "" {
 		return nil
 	}
@@ -142,16 +204,20 @@ func ApplyIPDampeningDelay(db *sql.DB, playerID string, ip string) error {
 	if err != nil {
 		return err
 	}
-	maxAllowed, err := maxAccountsForIP(db, ip)
-	if err != nil {
-		return err
-	}
 
-	if count <= maxAllowed {
+	if count <= ipDampeningMaxAccounts {
 		return nil
 	}
 
-	delaySeconds := int(ipDampeningDelay.Seconds())
+	trustStatus, err := accountTrustStatusForPlayer(db, playerID)
+	if err != nil {
+		log.Printf("ip_dampening: trust_status lookup failed (player_id=%s, ip=%s): %v", playerID, ip, err)
+		trustStatus = trustStatusNormal
+	}
+
+	log.Printf("ip_dampening: delay applied (player_id=%s, ip=%s, count=%d, trust_status=%s)", playerID, ip, count, trustStatus)
+
+	delaySeconds := int(ipDampeningDelay.Seconds() * trustStatusDelayMultiplier(trustStatus))
 	_, err = db.Exec(`
 		UPDATE players
 		SET last_coin_grant_at = NOW() + ($2 * INTERVAL '1 second')
@@ -161,70 +227,76 @@ func ApplyIPDampeningDelay(db *sql.DB, playerID string, ip string) error {
 	return err
 }
 
-func IsPlayerAllowedByIP(db *sql.DB, playerID string) (bool, error) {
+func IsPlayerThrottledByIP(db *sql.DB, playerID string) (bool, error) {
+	if !featureFlags.IPThrottling {
+		return false, nil
+	}
 	ip, err := latestIPForPlayer(db, playerID)
 	if err == sql.ErrNoRows {
-		return true, nil
+		return false, nil
 	}
 	if err != nil {
-		return true, err
+		return false, err
 	}
 	if ip == "" {
-		return true, nil
+		return false, nil
 	}
 
 	count, err := countPlayersForIP(db, ip)
 	if err != nil {
-		return true, err
+		return false, err
 	}
-	maxAllowed, err := maxAccountsForIP(db, ip)
-	if err != nil {
-		return true, err
-	}
-
-	if count <= maxAllowed {
-		return true, nil
+	if count <= ipDampeningMaxAccounts {
+		return false, nil
 	}
 
-	rows, err := db.Query(`
-		SELECT player_id
-		FROM player_ip_associations
-		WHERE ip = $1
-		ORDER BY first_seen ASC
-		LIMIT $2
-	`, ip, maxAllowed)
-	if err != nil {
-		return true, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return true, err
-		}
-		if id == playerID {
-			return true, nil
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		return true, err
-	}
-
-	return false, nil
+	return true, nil
 }
 
 func ComputeDampenedStarPrice(db *sql.DB, playerID string, basePrice int) (int, error) {
-	allowed, err := IsPlayerAllowedByIP(db, playerID)
+	if !featureFlags.IPThrottling {
+		return basePrice, nil
+	}
+	throttled, err := IsPlayerThrottledByIP(db, playerID)
 	if err != nil {
 		return basePrice, err
 	}
-	if allowed {
+	if !throttled {
 		return basePrice, nil
 	}
 
-	return int(float64(basePrice)*ipDampeningPriceMultiplier + 0.9999), nil
+	trustStatus, err := accountTrustStatusForPlayer(db, playerID)
+	if err != nil {
+		trustStatus = trustStatusNormal
+	}
+	multiplier := ipDampeningPriceMultiplier * trustStatusPriceMultiplier(trustStatus)
+	return int(float64(basePrice)*multiplier + 0.9999), nil
+}
+
+func ApplyIPDampeningReward(db *sql.DB, playerID string, reward int) (int, error) {
+	if !featureFlags.IPThrottling {
+		return reward, nil
+	}
+	if reward <= 0 {
+		return reward, nil
+	}
+	throttled, err := IsPlayerThrottledByIP(db, playerID)
+	if err != nil {
+		return reward, err
+	}
+	if !throttled {
+		return reward, nil
+	}
+	trustStatus, err := accountTrustStatusForPlayer(db, playerID)
+	if err != nil {
+		trustStatus = trustStatusNormal
+	}
+	multiplier := ipDampeningRewardMultiplier * trustStatusRewardMultiplier(trustStatus)
+	adjusted := int(math.Floor(float64(reward) * multiplier))
+	if adjusted < 1 {
+		adjusted = 1
+	}
+	return adjusted, nil
 }
 
 func latestIPForPlayer(db *sql.DB, playerID string) (string, error) {

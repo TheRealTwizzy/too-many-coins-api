@@ -20,7 +20,7 @@ Late-season: star prices higher, coin supply lower, trading narrower and more ex
 
 Affordability: star prices stay aligned with per-player coin emission so most active players can buy stars throughout the season
 
-Anti-abuse: 1 active account per IP per season by default; whitelist request + wave approvals
+Anti-abuse: 1 active account per IP per season by default; no whitelist, throttles + trust-based enforcement only
 
 Rewards: cosmetics/titles/badges persist between seasons; coins/stars reset per season
 

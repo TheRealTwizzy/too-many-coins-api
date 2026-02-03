@@ -62,14 +62,6 @@ View IP-based clustering signals.
 
 View throttles currently applied.
 
-Whitelist management:
-
-View whitelist requests.
-
-Approve or deny requests in waves.
-
-See affected accounts per whitelist group.
-
 Safety tools:
 
 Temporarily pause star purchases per season if needed.

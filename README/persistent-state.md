@@ -12,9 +12,7 @@ created_at
 
 last_login_at
 
-trust_status (normal, throttled, flagged)
-
-whitelist_group_id (nullable)
+trust_status (normal, throttled, flagged; admin-only internal flag)
 
 Seasons:
 
@@ -117,18 +115,6 @@ source_type (login, task, activity, comeback)
 amount
 
 created_at
-
-WhitelistRequests:
-
-request_id
-
-ip_hash
-
-requested_slots
-
-status (pending, approved, denied)
-
-reviewed_at
 
 AbuseEvents:
 

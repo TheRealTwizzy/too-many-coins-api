@@ -58,11 +58,6 @@ Accessibility options.
 
 Account preferences.
 
-Whitelist Request Page:
-
-Allows shared-network users to request approval.
-
-Shows request status.
 
 All pages must be simple, fast, and functional.
 No non-essential pages are built before economy testing.

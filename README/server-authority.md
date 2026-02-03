@@ -25,9 +25,7 @@ Trade eligibility, pricing, premiums, and burn rates
 
 Trade execution and logging
 
-IP-based season access rules
-
-Whitelist approval state
+IP-based throttling rules
 
 
 

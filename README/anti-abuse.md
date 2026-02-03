@@ -2,17 +2,11 @@ The system must actively prevent and mitigate abuse and coordinated manipulation
 
 Access controls:
 
-Only one active player per IP address per season is allowed by default.
+Only one active player per IP address per season is the default baseline.
 
-Additional accounts from the same IP are blocked from joining a season unless whitelisted.
+Additional accounts from the same IP are not hard-blocked; they are throttled through economic dampening, cooldowns, and trust-based enforcement.
 
-Whitelist system:
-
-Players may submit a whitelist request for shared networks.
-
-Requests are reviewed and approved or denied in periodic waves.
-
-Whitelist approval applies per IP group, not per account.
+No whitelist or allowlist is used in alpha.
 
 Account protections:
 

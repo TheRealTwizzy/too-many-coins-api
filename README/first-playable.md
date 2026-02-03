@@ -30,7 +30,7 @@ Excluded:
 
 Multiple concurrent seasons
 
-Whitelist system (can be stubbed or manual)
+No whitelist system; rely on throttles and abuse detection
 
 Daily tasks
 
