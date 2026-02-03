@@ -166,10 +166,14 @@ Allowed to be rough or missing in Alpha:
   - [x] [DONE] Rate limiting for signup/login endpoints
   - [x] [DONE] Cooldown before new accounts can join a season
   - [ ] [POST-ALPHA] CAPTCHA + verification
-- [ ] [POST-ALPHA] 7.6 Abuse detection + events
-  - [ ] [POST-ALPHA] Clustering detection
-  - [ ] [POST-ALPHA] AbuseEvents table + logging
-  - [ ] [POST-ALPHA] Reversible throttles
+- [x] [ALPHA] 7.6 Passive abuse monitoring + quiet throttles
+  - [x] [ALPHA] AbuseEvents table + logging
+  - [x] [ALPHA] Rolling signal aggregation (cadence, tick reaction, IP clustering)
+  - [x] [ALPHA] Reversible throttles (price multiplier, bulk caps, faucet throttles)
+  - [ ] [ALPHA] Additional abuse signals (trade graph, identical decisions, coordinated timing)
+  - [ ] [ALPHA] Admin visualization improvements for abuse state
+  - [ ] [ALPHA] Decay rate + threshold tuning playbook
+  - [ ] [ALPHA] Cross-season behavior analysis + persistence rules
 - [ ] [POST-ALPHA] 7.7 Star purchase throttles
   - [ ] [POST-ALPHA] Per‑player limits
   - [ ] [POST-ALPHA] Per‑IP limits

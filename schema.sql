@@ -236,3 +236,43 @@ CREATE TABLE IF NOT EXISTS player_telemetry (
     created_at TIMESTAMPTZ NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS player_abuse_state (
+    player_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
+    score DOUBLE PRECISION NOT NULL DEFAULT 0,
+    severity INT NOT NULL DEFAULT 0,
+    last_signal_at TIMESTAMPTZ,
+    last_decay_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    persistent_until TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (player_id, season_id)
+);
+
+CREATE TABLE IF NOT EXISTS account_abuse_reputation (
+    account_id TEXT PRIMARY KEY,
+    score DOUBLE PRECISION NOT NULL DEFAULT 0,
+    severity INT NOT NULL DEFAULT 0,
+    last_signal_at TIMESTAMPTZ,
+    last_decay_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    persistent_until TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS abuse_events (
+    id BIGSERIAL PRIMARY KEY,
+    account_id TEXT,
+    player_id TEXT,
+    season_id TEXT,
+    event_type TEXT NOT NULL,
+    severity INT NOT NULL,
+    score_delta DOUBLE PRECISION NOT NULL DEFAULT 0,
+    details JSONB,
+    created_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_abuse_events_created_at
+    ON abuse_events (created_at);
+
+CREATE INDEX IF NOT EXISTS idx_player_abuse_state_score
+    ON player_abuse_state (season_id, score);
+

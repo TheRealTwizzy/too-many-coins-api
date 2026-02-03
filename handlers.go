@@ -187,15 +187,16 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 		if quantity <= 0 {
 			quantity = 1
 		}
-		maxQty := bulkStarMaxQty()
-		if quantity < 1 || quantity > maxQty {
-			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INVALID_QUANTITY"})
-			return
-		}
 
 		playerID := account.PlayerID
 		if !isValidPlayerID(playerID) {
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INVALID_PLAYER_ID"})
+			return
+		}
+
+		maxQty := abuseMaxBulkQty(db, playerID, bulkStarMaxQty())
+		if quantity < 1 || quantity > maxQty {
+			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INVALID_QUANTITY"})
 			return
 		}
 
@@ -324,11 +325,10 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
-
+		quantity := req.Quantity
 		for i := 0; i < quantity; i++ {
 			economy.IncrementStars()
 		}
-
 		lastPrice := 0
 		if len(quote.Breakdown) > 0 {
 			lastPrice = quote.Breakdown[len(quote.Breakdown)-1].FinalPrice
@@ -384,15 +384,16 @@ func buyStarQuoteHandler(db *sql.DB) http.HandlerFunc {
 		if quantity <= 0 {
 			quantity = 1
 		}
-		maxQty := bulkStarMaxQty()
-		if quantity < 1 || quantity > maxQty {
-			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "INVALID_QUANTITY"})
-			return
-		}
 
 		playerID := account.PlayerID
 		if !isValidPlayerID(playerID) {
 			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "INVALID_PLAYER_ID"})
+			return
+		}
+
+		maxQty := abuseMaxBulkQty(db, playerID, bulkStarMaxQty())
+		if quantity < 1 || quantity > maxQty {
+			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "INVALID_QUANTITY"})
 			return
 		}
 
@@ -458,6 +459,7 @@ func buildBulkStarQuote(db *sql.DB, playerID string, quantity int) (bulkStarQuot
 	if quantity < 1 {
 		return bulkStarQuote{}, nil
 	}
+	enforcement := abuseEffectiveEnforcement(db, playerID, bulkStarMaxQty())
 	coinsInCirculation := economy.CoinsInCirculation()
 	secondsRemaining := seasonSecondsRemaining(time.Now().UTC())
 	baseStars := economy.StarsPurchased()
@@ -476,7 +478,7 @@ func buildBulkStarQuote(db *sql.DB, playerID string, quantity int) (bulkStarQuot
 		if multiplier > maxMultiplier {
 			maxMultiplier = multiplier
 		}
-		finalPrice := int(float64(dampenedPrice)*multiplier + 0.9999)
+		finalPrice := int(float64(dampenedPrice)*multiplier*enforcement.PriceMultiplier + 0.9999)
 		breakdown = append(breakdown, BulkStarBreakdown{
 			Index:          i + 1,
 			BasePrice:      dampenedPrice,
@@ -634,7 +636,9 @@ func buyVariantStarHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		price := int(float64(dampenedPrice)*variantMultiplier + 0.9999)
+		enforcement := abuseEffectiveEnforcement(db, playerID, bulkStarMaxQty())
+		baseVariantPrice := int(float64(dampenedPrice)*variantMultiplier + 0.9999)
+		price := abuseAdjustedPrice(baseVariantPrice, enforcement.PriceMultiplier)
 		if player.Coins < int64(price) {
 			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "NOT_ENOUGH_COINS"})
 			return
@@ -737,13 +741,15 @@ func buyBoostHandler(db *sql.DB) http.HandlerFunc {
 
 		const price = 25
 		const duration = 30 * time.Minute
+		enforcement := abuseEffectiveEnforcement(db, playerID, bulkStarMaxQty())
+		finalPrice := abuseAdjustedPrice(price, enforcement.PriceMultiplier)
 
-		if player.Coins < price {
+		if player.Coins < int64(finalPrice) {
 			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "NOT_ENOUGH_COINS"})
 			return
 		}
 
-		player.Coins -= price
+		player.Coins -= int64(finalPrice)
 		if err := UpdatePlayerBalances(db, player.PlayerID, player.Coins, player.Stars); err != nil {
 			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
@@ -1448,6 +1454,9 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 		params := economy.Calibration()
 		reward := params.DailyLoginReward
 		cooldown := time.Duration(params.DailyLoginCooldownHours) * time.Hour
+		enforcement := abuseEffectiveEnforcement(db, playerID, bulkStarMaxQty())
+		reward = abuseAdjustedReward(reward, enforcement.EarnMultiplier)
+		cooldown += abuseCooldownJitter(cooldown, enforcement.CooldownJitterFactor)
 
 		canClaim, remaining, err := CanClaimFaucet(db, playerID, FaucetDaily, cooldown)
 		if err != nil {
@@ -1558,6 +1567,9 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 		} else if active {
 			reward += 1
 		}
+		enforcement := abuseEffectiveEnforcement(db, playerID, bulkStarMaxQty())
+		reward = abuseAdjustedReward(reward, enforcement.EarnMultiplier)
+		cooldown += abuseCooldownJitter(cooldown, enforcement.CooldownJitterFactor)
 
 		canClaim, remaining, err := CanClaimFaucet(db, playerID, FaucetActivity, cooldown)
 		if err != nil {

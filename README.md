@@ -224,6 +224,13 @@ Each season may include a simple modifier that changes presentation or rewards w
 
 ---
 
+## Changelog (Alpha)
+
+- [Alpha] Introduced passive anti-cheat behavior monitoring
+- Server now observes long-term abuse patterns and applies quiet throttles
+- No player-facing penalties or rewards
+- Improves economy integrity and resistance to manipulation
+
 ## Website Pages
 
 Landing page explaining the game quickly  

@@ -462,6 +462,7 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/profile", profileHandler(db))
 	mux.HandleFunc("/telemetry", telemetryHandler(db))
 	mux.HandleFunc("/admin/telemetry", adminTelemetryHandler(db))
+	mux.HandleFunc("/admin/abuse-events", adminAbuseEventsHandler(db))
 	mux.HandleFunc("/admin/economy", adminEconomyHandler(db))
 	mux.HandleFunc("/admin/set-key", adminKeySetHandler(db))
 	mux.HandleFunc("/admin/role", adminRoleHandler(db))
@@ -549,6 +550,9 @@ func runPassiveDrip(db *sql.DB) {
 			dripInterval = activeDripInterval
 			dripAmount = activeDripAmount
 		}
+
+		enforcement := abuseEffectiveEnforcement(db, playerID, bulkStarMaxQty())
+		dripAmount = abuseAdjustedReward(dripAmount, enforcement.EarnMultiplier)
 
 		if now.Sub(lastGrant) < dripInterval {
 			continue

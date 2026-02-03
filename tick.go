@@ -89,6 +89,7 @@ func startTickLoop(db *sql.DB) {
 			economy.mu.Unlock()
 
 			updateMarketPressure(db, now)
+			UpdateAbuseMonitoring(db, now)
 
 			tickCount++
 			if tickCount%5 == 0 {

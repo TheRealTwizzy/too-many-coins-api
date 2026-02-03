@@ -64,6 +64,24 @@ type AdminStarPurchaseLogResponse struct {
 	Items []AdminStarPurchaseLogItem `json:"items,omitempty"`
 }
 
+type AdminAbuseEvent struct {
+	ID         int64           `json:"id"`
+	AccountID  string          `json:"accountId,omitempty"`
+	PlayerID   string          `json:"playerId,omitempty"`
+	SeasonID   string          `json:"seasonId,omitempty"`
+	EventType  string          `json:"eventType"`
+	Severity   int             `json:"severity"`
+	ScoreDelta float64         `json:"scoreDelta"`
+	Details    json.RawMessage `json:"details,omitempty"`
+	CreatedAt  time.Time       `json:"createdAt"`
+}
+
+type AdminAbuseEventsResponse struct {
+	OK    bool              `json:"ok"`
+	Error string            `json:"error,omitempty"`
+	Items []AdminAbuseEvent `json:"items,omitempty"`
+}
+
 func requireAdmin(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Account, bool) {
 	account, _, err := getSessionAccount(db, r)
 	if err != nil || account == nil {
@@ -157,6 +175,55 @@ func adminEconomyHandler(db *sql.DB) http.HandlerFunc {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
+	}
+}
+
+func adminAbuseEventsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+
+		rows, err := db.Query(`
+			SELECT id, COALESCE(account_id, ''), COALESCE(player_id, ''), COALESCE(season_id, ''), event_type, severity, score_delta, details, created_at
+			FROM abuse_events
+			ORDER BY created_at DESC
+			LIMIT 200
+		`)
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminAbuseEventsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		defer rows.Close()
+
+		items := []AdminAbuseEvent{}
+		for rows.Next() {
+			var item AdminAbuseEvent
+			var details sql.NullString
+			if err := rows.Scan(
+				&item.ID,
+				&item.AccountID,
+				&item.PlayerID,
+				&item.SeasonID,
+				&item.EventType,
+				&item.Severity,
+				&item.ScoreDelta,
+				&details,
+				&item.CreatedAt,
+			); err != nil {
+				continue
+			}
+			if details.Valid {
+				item.Details = json.RawMessage(details.String)
+			}
+			items = append(items, item)
+		}
+
+		json.NewEncoder(w).Encode(AdminAbuseEventsResponse{OK: true, Items: items})
 	}
 }
 
