@@ -96,6 +96,21 @@ type AdminOverviewResponse struct {
 	AbuseSevereLastHour  int     `json:"abuseSevereLastHour"`
 }
 
+type AdminToggleStatus struct {
+	Key             string     `json:"key"`
+	Label           string     `json:"label"`
+	Status          string     `json:"status"`
+	LastTriggeredAt *time.Time `json:"lastTriggeredAt,omitempty"`
+	EventCount      int        `json:"eventCount"`
+}
+
+type AdminAntiCheatResponse struct {
+	OK          bool                `json:"ok"`
+	Error       string              `json:"error,omitempty"`
+	Toggles     []AdminToggleStatus `json:"toggles,omitempty"`
+	Sensitivity map[string]string   `json:"sensitivity,omitempty"`
+}
+
 func requireAdmin(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Account, bool) {
 	account, _, err := getSessionAccount(db, r)
 	if err != nil || account == nil {
@@ -327,6 +342,94 @@ func adminOverviewHandler(db *sql.DB) http.HandlerFunc {
 			ActiveAbuseFlags:     activeFlags,
 			AbuseEventsLastHour:  abuseEvents,
 			AbuseSevereLastHour:  abuseSevere,
+		})
+	}
+}
+
+func adminAntiCheatHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+
+		now := time.Now().UTC()
+		queryStats := func(eventTypes []string) (int, *time.Time) {
+			if len(eventTypes) == 0 {
+				return 0, nil
+			}
+			args := []interface{}{now.Add(-24 * time.Hour)}
+			placeholders := []string{}
+			for i, eventType := range eventTypes {
+				args = append(args, eventType)
+				placeholders = append(placeholders, "$"+strconv.Itoa(i+2))
+			}
+			inClause := strings.Join(placeholders, ", ")
+			countQuery := `SELECT COUNT(*) FROM abuse_events WHERE created_at >= $1 AND event_type IN (` + inClause + `)`
+			var count int
+			_ = db.QueryRow(countQuery, args...).Scan(&count)
+
+			lastQuery := `SELECT created_at FROM abuse_events WHERE event_type IN (` + inClause + `) ORDER BY created_at DESC LIMIT 1`
+			var last time.Time
+			if err := db.QueryRow(lastQuery, args[1:]...).Scan(&last); err == nil {
+				return count, &last
+			}
+			return count, nil
+		}
+
+		ipCount, ipLast := queryStats([]string{"ip_cluster_activity"})
+		abuseCount, abuseLast := queryStats([]string{"purchase_burst", "purchase_regular_interval", "activity_regular_interval", "tick_reaction_burst", "ip_cluster_activity"})
+
+		toggles := []AdminToggleStatus{
+			{
+				Key:             "ip_enforcement",
+				Label:           "Enable IP enforcement",
+				Status:          map[bool]string{true: "enabled", false: "disabled"}[featureFlags.IPThrottling],
+				LastTriggeredAt: ipLast,
+				EventCount:      ipCount,
+			},
+			{
+				Key:             "clustering_detection",
+				Label:           "Enable clustering detection",
+				Status:          "always-on",
+				LastTriggeredAt: ipLast,
+				EventCount:      ipCount,
+			},
+			{
+				Key:             "automatic_throttling",
+				Label:           "Enable automatic throttling",
+				Status:          "always-on",
+				LastTriggeredAt: abuseLast,
+				EventCount:      abuseCount,
+			},
+			{
+				Key:             "trade_tightening",
+				Label:           "Enable trade eligibility tightening",
+				Status:          "not-configured",
+				LastTriggeredAt: nil,
+				EventCount:      0,
+			},
+			{
+				Key:             "bot_detection",
+				Label:           "Enable bot detection heuristics",
+				Status:          "not-configured",
+				LastTriggeredAt: nil,
+				EventCount:      0,
+			},
+		}
+
+		json.NewEncoder(w).Encode(AdminAntiCheatResponse{
+			OK:      true,
+			Toggles: toggles,
+			Sensitivity: map[string]string{
+				"clustering": "not-configured",
+				"throttle":   "not-configured",
+				"trade":      "not-configured",
+				"faucet":     "not-configured",
+			},
 		})
 	}
 }

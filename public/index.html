@@ -1426,6 +1426,16 @@ const adminSeasonList = document.getElementById("admin-season-list");
 const adminSeasonEmpty = document.getElementById("admin-season-empty");
 const adminSeasonDetail = document.getElementById("admin-season-detail");
 const adminSeasonMetrics = document.getElementById("admin-season-metrics");
+const adminToggleIP = document.getElementById("admin-toggle-ip");
+const adminToggleCluster = document.getElementById("admin-toggle-cluster");
+const adminToggleThrottle = document.getElementById("admin-toggle-throttle");
+const adminToggleTrade = document.getElementById("admin-toggle-trade");
+const adminToggleBots = document.getElementById("admin-toggle-bots");
+const adminSenseCluster = document.getElementById("admin-sense-cluster");
+const adminSenseThrottle = document.getElementById("admin-sense-throttle");
+const adminSenseTrade = document.getElementById("admin-sense-trade");
+const adminSenseFaucet = document.getElementById("admin-sense-faucet");
+const adminAbuseHeatmap = document.getElementById("admin-abuse-heatmap");
 
 const views = Array.from(document.querySelectorAll(".view"));
 const viewMap = {
@@ -1471,6 +1481,7 @@ let notificationPanelOpen = false;
 let notificationsCache = [];
 let adminOverviewTimer = null;
 let adminAbuseTimer = null;
+let adminAntiCheatTimer = null;
 
 function apiFetch(url, options = {}) {
 	return fetch(url, {
@@ -2397,6 +2408,45 @@ function seasonStatus(secondsRemaining) {
 	return "Active";
 }
 
+function formatToggleStatus(item) {
+	if (!item) return "--";
+	const statusMap = {
+		enabled: "Enabled",
+		disabled: "Disabled",
+		"always-on": "Always-on",
+		"not-configured": "Not configured"
+	};
+	const status = statusMap[item.status] || item.status || "Unknown";
+	const count = typeof item.eventCount === "number" ? item.eventCount : 0;
+	const last = item.lastTriggeredAt ? formatRelativeTime(item.lastTriggeredAt) : "No triggers";
+	return `${status} · ${count} events · ${last}`;
+}
+
+async function loadAdminAntiCheat() {
+	if (!currentUser || !currentUser.isAdmin) return;
+	try {
+		const res = await apiFetch("/admin/anti-cheat");
+		const data = await res.json();
+		if (!data.ok) return;
+		const toggles = data.toggles || [];
+		const byKey = toggles.reduce((acc, item) => {
+			acc[item.key] = item;
+			return acc;
+		}, {});
+		if (adminToggleIP) adminToggleIP.innerText = formatToggleStatus(byKey.ip_enforcement);
+		if (adminToggleCluster) adminToggleCluster.innerText = formatToggleStatus(byKey.clustering_detection);
+		if (adminToggleThrottle) adminToggleThrottle.innerText = formatToggleStatus(byKey.automatic_throttling);
+		if (adminToggleTrade) adminToggleTrade.innerText = formatToggleStatus(byKey.trade_tightening);
+		if (adminToggleBots) adminToggleBots.innerText = formatToggleStatus(byKey.bot_detection);
+		const sensitivity = data.sensitivity || {};
+		if (adminSenseCluster) adminSenseCluster.innerText = sensitivity.clustering || "Not configured";
+		if (adminSenseThrottle) adminSenseThrottle.innerText = sensitivity.throttle || "Not configured";
+		if (adminSenseTrade) adminSenseTrade.innerText = sensitivity.trade || "Not configured";
+		if (adminSenseFaucet) adminSenseFaucet.innerText = sensitivity.faucet || "Not configured";
+		if (adminAbuseHeatmap) adminAbuseHeatmap.innerText = "Unavailable";
+	} catch (e) {}
+}
+
 async function loadAdminSeasons() {
 	if (!currentUser || !currentUser.isAdmin) return;
 	if (!adminSeasonList) return;
@@ -2577,8 +2627,10 @@ function startAdminLoops() {
 	loadAdminOverview();
 	loadAdminSeasons();
 	loadAdminAbuseEvents();
+	loadAdminAntiCheat();
 	adminOverviewTimer = setInterval(loadAdminOverview, 10000);
 	adminAbuseTimer = setInterval(loadAdminAbuseEvents, 12000);
+	adminAntiCheatTimer = setInterval(loadAdminAntiCheat, 15000);
 }
 
 function stopAdminLoops() {
@@ -2586,6 +2638,8 @@ function stopAdminLoops() {
 	adminOverviewTimer = null;
 	if (adminAbuseTimer) clearInterval(adminAbuseTimer);
 	adminAbuseTimer = null;
+	if (adminAntiCheatTimer) clearInterval(adminAntiCheatTimer);
+	adminAntiCheatTimer = null;
 }
 
 function getRouteInfo() {

@@ -480,6 +480,7 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/admin/telemetry", adminTelemetryHandler(db))
 	mux.HandleFunc("/admin/abuse-events", adminAbuseEventsHandler(db))
 	mux.HandleFunc("/admin/overview", adminOverviewHandler(db))
+	mux.HandleFunc("/admin/anti-cheat", adminAntiCheatHandler(db))
 	mux.HandleFunc("/admin/economy", adminEconomyHandler(db))
 	mux.HandleFunc("/admin/set-key", adminKeySetHandler(db))
 	mux.HandleFunc("/admin/role", adminRoleHandler(db))
