@@ -218,6 +218,22 @@ func ensureSchema(db *sql.DB) error {
 
 	_, err = db.Exec(`
 		ALTER TABLE players
+		ADD COLUMN IF NOT EXISTS drip_multiplier DOUBLE PRECISION NOT NULL DEFAULT 1.0;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE players
+		ADD COLUMN IF NOT EXISTS drip_paused BOOLEAN NOT NULL DEFAULT FALSE;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE players
 		ADD COLUMN IF NOT EXISTS burned_coins BIGINT NOT NULL DEFAULT 0;
 	`)
 	if err != nil {
@@ -286,6 +302,17 @@ func ensureSchema(db *sql.DB) error {
 			account_id TEXT NOT NULL,
 			read_at TIMESTAMPTZ NOT NULL,
 			PRIMARY KEY (notification_id, account_id)
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS global_settings (
+			key TEXT PRIMARY KEY,
+			value TEXT NOT NULL,
+			updated_at TIMESTAMPTZ NOT NULL
 		);
 	`)
 	if err != nil {

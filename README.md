@@ -117,6 +117,10 @@ Whitelist approvals must be reviewed and approved manually by admins.
 
 Players earn Coins faster while actively using the site. If the browser/tab is hidden or inactive, passive coin drip slows but does not stop.
 
+Admin knobs:
+Global: daily emission target, faucets/sinks/telemetry toggles.
+Per-player: set/add coins, set/add stars, drip multiplier, pause/resume drip, touch activity.
+
 Additional protections:
 Rate-limited account creation  
 CAPTCHA and verification  

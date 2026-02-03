@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -555,5 +556,204 @@ func adminNotificationsHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
+	}
+}
+
+func adminPlayerControlsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+		var req AdminPlayerControlRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+		playerID := strings.TrimSpace(req.PlayerID)
+		if playerID == "" && strings.TrimSpace(req.Username) != "" {
+			if err := db.QueryRow(`
+				SELECT player_id FROM accounts WHERE username = $1
+			`, strings.ToLower(strings.TrimSpace(req.Username))).Scan(&playerID); err != nil {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "PLAYER_NOT_FOUND"})
+				return
+			}
+		}
+		if playerID == "" {
+			json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+
+		if req.SetCoins != nil {
+			if *req.SetCoins < 0 {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INVALID_COINS"})
+				return
+			}
+			_, err := db.Exec(`
+				UPDATE players
+				SET coins = $2
+				WHERE player_id = $1
+			`, playerID, *req.SetCoins)
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+		}
+		if req.AddCoins != nil && *req.AddCoins != 0 {
+			_, err := db.Exec(`
+				UPDATE players
+				SET coins = GREATEST(coins + $2, 0)
+				WHERE player_id = $1
+			`, playerID, *req.AddCoins)
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+		}
+		if req.SetStars != nil {
+			if *req.SetStars < 0 {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INVALID_STARS"})
+				return
+			}
+			_, err := db.Exec(`
+				UPDATE players
+				SET stars = $2
+				WHERE player_id = $1
+			`, playerID, *req.SetStars)
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+		}
+		if req.AddStars != nil && *req.AddStars != 0 {
+			_, err := db.Exec(`
+				UPDATE players
+				SET stars = GREATEST(stars + $2, 0)
+				WHERE player_id = $1
+			`, playerID, *req.AddStars)
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+		}
+		if req.DripMultiplier != nil {
+			value := *req.DripMultiplier
+			if value < 0.1 || value > 10.0 {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INVALID_MULTIPLIER"})
+				return
+			}
+			_, err := db.Exec(`
+				UPDATE players
+				SET drip_multiplier = $2
+				WHERE player_id = $1
+			`, playerID, value)
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+		}
+		if req.DripPaused != nil {
+			_, err := db.Exec(`
+				UPDATE players
+				SET drip_paused = $2
+				WHERE player_id = $1
+			`, playerID, *req.DripPaused)
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+		}
+		if req.TouchActive {
+			_, err := db.Exec(`
+				UPDATE players
+				SET last_active_at = NOW()
+				WHERE player_id = $1
+			`, playerID)
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+		}
+
+		var coins int64
+		var stars int64
+		var dripMultiplier float64
+		var dripPaused bool
+		var lastActive time.Time
+		var lastGrant time.Time
+		if err := db.QueryRow(`
+			SELECT coins, stars, drip_multiplier, drip_paused, last_active_at, last_coin_grant_at
+			FROM players
+			WHERE player_id = $1
+		`, playerID).Scan(&coins, &stars, &dripMultiplier, &dripPaused, &lastActive, &lastGrant); err != nil {
+			json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		json.NewEncoder(w).Encode(AdminPlayerControlResponse{
+			OK:             true,
+			PlayerID:       playerID,
+			Coins:          coins,
+			Stars:          stars,
+			DripMultiplier: dripMultiplier,
+			DripPaused:     dripPaused,
+			LastActiveAt:   lastActive,
+			LastGrantAt:    lastGrant,
+		})
+	}
+}
+
+func adminSettingsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+		switch r.Method {
+		case http.MethodGet:
+			json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: true, Settings: GetGlobalSettings()})
+			return
+		case http.MethodPost:
+			var req AdminGlobalSettingsRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: false, Error: "INVALID_REQUEST"})
+				return
+			}
+			updates := map[string]string{}
+			if req.ActiveDripIntervalSeconds != nil {
+				updates["active_drip_interval_seconds"] = strconv.Itoa(*req.ActiveDripIntervalSeconds)
+			}
+			if req.IdleDripIntervalSeconds != nil {
+				updates["idle_drip_interval_seconds"] = strconv.Itoa(*req.IdleDripIntervalSeconds)
+			}
+			if req.ActiveDripAmount != nil {
+				updates["active_drip_amount"] = strconv.Itoa(*req.ActiveDripAmount)
+			}
+			if req.IdleDripAmount != nil {
+				updates["idle_drip_amount"] = strconv.Itoa(*req.IdleDripAmount)
+			}
+			if req.ActivityWindowSeconds != nil {
+				updates["activity_window_seconds"] = strconv.Itoa(*req.ActivityWindowSeconds)
+			}
+			if req.DripEnabled != nil {
+				updates["drip_enabled"] = strconv.FormatBool(*req.DripEnabled)
+			}
+			if len(updates) == 0 {
+				json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: false, Error: "NO_UPDATES"})
+				return
+			}
+			settings, err := UpdateGlobalSettings(db, updates)
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+			json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: true, Settings: settings})
+			return
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 	}
 }

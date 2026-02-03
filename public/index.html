@@ -371,6 +371,53 @@
 				<div id="notify-status" class="label"></div>
 			</div>
 
+			<div class="card" id="admin-settings" style="display:none;">
+				<div class="label">Global settings</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="gs-active-interval" placeholder="Active drip interval (s)" />
+					<input id="gs-idle-interval" placeholder="Idle drip interval (s)" />
+					<input id="gs-active-amount" placeholder="Active drip amount" />
+					<input id="gs-idle-amount" placeholder="Idle drip amount" />
+				</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="gs-activity-window" placeholder="Activity window (s)" />
+					<select id="gs-drip-enabled">
+						<option value="">Drip enabled?</option>
+						<option value="true">Enabled</option>
+						<option value="false">Disabled</option>
+					</select>
+					<button id="gs-load" class="primary">Load</button>
+					<button id="gs-save" class="primary">Save</button>
+				</div>
+				<div id="gs-status" class="label"></div>
+			</div>
+
+			<div class="card" id="admin-player-controls" style="display:none;">
+				<div class="label">Player controls</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="pc-username" placeholder="Username" />
+					<input id="pc-player-id" placeholder="Player ID" />
+					<button id="pc-load" class="primary">Load</button>
+				</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="pc-set-coins" placeholder="Set coins" />
+					<input id="pc-add-coins" placeholder="Add coins" />
+					<input id="pc-set-stars" placeholder="Set stars" />
+					<input id="pc-add-stars" placeholder="Add stars" />
+				</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="pc-drip-mult" placeholder="Drip multiplier (0.1–10)" />
+					<select id="pc-drip-paused">
+						<option value="">Pause?</option>
+						<option value="true">Pause drip</option>
+						<option value="false">Resume drip</option>
+					</select>
+					<button id="pc-touch" class="primary">Touch active</button>
+					<button id="pc-save" class="primary">Apply</button>
+				</div>
+				<div id="pc-status" class="label"></div>
+			</div>
+
 			<div class="card" id="auction-card" style="display:none;">
 				<div class="label">Auction</div>
 				<div id="auction-status">Loading…</div>
@@ -1186,6 +1233,107 @@ function initAdmin() {
 		}
 	});
 
+	document.getElementById("gs-load").addEventListener("click", async () => {
+		const res = await apiFetch("/admin/settings", { headers: { "X-Admin-Key": getAdminKey() } });
+		const data = await res.json();
+		const status = document.getElementById("gs-status");
+		if (!data.ok) {
+			status.innerText = data.error || "Load failed.";
+			return;
+		}
+		const s = data.settings || {};
+		document.getElementById("gs-active-interval").value = s.activeDripIntervalSeconds !== undefined ? s.activeDripIntervalSeconds : "";
+		document.getElementById("gs-idle-interval").value = s.idleDripIntervalSeconds !== undefined ? s.idleDripIntervalSeconds : "";
+		document.getElementById("gs-active-amount").value = s.activeDripAmount !== undefined ? s.activeDripAmount : "";
+		document.getElementById("gs-idle-amount").value = s.idleDripAmount !== undefined ? s.idleDripAmount : "";
+		document.getElementById("gs-activity-window").value = s.activityWindowSeconds !== undefined ? s.activityWindowSeconds : "";
+		document.getElementById("gs-drip-enabled").value = s.dripEnabled ? "true" : "false";
+		status.innerText = "Settings loaded.";
+	});
+
+	document.getElementById("gs-save").addEventListener("click", async () => {
+		const payload = {};
+		const activeInterval = parseInt(document.getElementById("gs-active-interval").value, 10);
+		const idleInterval = parseInt(document.getElementById("gs-idle-interval").value, 10);
+		const activeAmount = parseInt(document.getElementById("gs-active-amount").value, 10);
+		const idleAmount = parseInt(document.getElementById("gs-idle-amount").value, 10);
+		const activityWindow = parseInt(document.getElementById("gs-activity-window").value, 10);
+		const dripEnabled = document.getElementById("gs-drip-enabled").value;
+		if (!Number.isNaN(activeInterval)) payload.activeDripIntervalSeconds = activeInterval;
+		if (!Number.isNaN(idleInterval)) payload.idleDripIntervalSeconds = idleInterval;
+		if (!Number.isNaN(activeAmount)) payload.activeDripAmount = activeAmount;
+		if (!Number.isNaN(idleAmount)) payload.idleDripAmount = idleAmount;
+		if (!Number.isNaN(activityWindow)) payload.activityWindowSeconds = activityWindow;
+		if (dripEnabled === "true") payload.dripEnabled = true;
+		if (dripEnabled === "false") payload.dripEnabled = false;
+		const res = await apiFetch("/admin/settings", {
+			method: "POST",
+			headers: { "X-Admin-Key": getAdminKey() },
+			body: JSON.stringify(payload)
+		});
+		const data = await res.json();
+		document.getElementById("gs-status").innerText = data.ok ? "Settings saved." : (data.error || "Save failed.");
+	});
+
+	document.getElementById("pc-load").addEventListener("click", async () => {
+		const username = document.getElementById("pc-username").value.trim();
+		const playerId = document.getElementById("pc-player-id").value.trim();
+		const res = await apiFetch("/admin/player-controls", {
+			method: "POST",
+			headers: { "X-Admin-Key": getAdminKey() },
+			body: JSON.stringify({ username, playerId })
+		});
+		const data = await res.json();
+		const status = document.getElementById("pc-status");
+		if (!data.ok) {
+			status.innerText = data.error || "Load failed.";
+			return;
+		}
+		status.innerText = `Loaded ${data.playerId} · coins ${data.coins} · stars ${data.stars} · drip ${data.dripMultiplier} · paused ${data.dripPaused}`;
+		document.getElementById("pc-player-id").value = data.playerId || playerId;
+	});
+
+	document.getElementById("pc-save").addEventListener("click", async () => {
+		const username = document.getElementById("pc-username").value.trim();
+		const playerId = document.getElementById("pc-player-id").value.trim();
+		const setCoins = parseInt(document.getElementById("pc-set-coins").value, 10);
+		const addCoins = parseInt(document.getElementById("pc-add-coins").value, 10);
+		const setStars = parseInt(document.getElementById("pc-set-stars").value, 10);
+		const addStars = parseInt(document.getElementById("pc-add-stars").value, 10);
+		const dripMultiplier = parseFloat(document.getElementById("pc-drip-mult").value);
+		const dripPausedValue = document.getElementById("pc-drip-paused").value;
+		const payload = { username, playerId };
+		if (!Number.isNaN(setCoins)) payload.setCoins = setCoins;
+		if (!Number.isNaN(addCoins)) payload.addCoins = addCoins;
+		if (!Number.isNaN(setStars)) payload.setStars = setStars;
+		if (!Number.isNaN(addStars)) payload.addStars = addStars;
+		if (!Number.isNaN(dripMultiplier)) payload.dripMultiplier = dripMultiplier;
+		if (dripPausedValue === "true") payload.dripPaused = true;
+		if (dripPausedValue === "false") payload.dripPaused = false;
+
+		const res = await apiFetch("/admin/player-controls", {
+			method: "POST",
+			headers: { "X-Admin-Key": getAdminKey() },
+			body: JSON.stringify(payload)
+		});
+		const data = await res.json();
+		const status = document.getElementById("pc-status");
+		status.innerText = data.ok ? `Updated ${data.playerId} · coins ${data.coins} · stars ${data.stars} · drip ${data.dripMultiplier} · paused ${data.dripPaused}` : (data.error || "Update failed.");
+	});
+
+	document.getElementById("pc-touch").addEventListener("click", async () => {
+		const username = document.getElementById("pc-username").value.trim();
+		const playerId = document.getElementById("pc-player-id").value.trim();
+		const res = await apiFetch("/admin/player-controls", {
+			method: "POST",
+			headers: { "X-Admin-Key": getAdminKey() },
+			body: JSON.stringify({ username, playerId, touchActive: true })
+		});
+		const data = await res.json();
+		const status = document.getElementById("pc-status");
+		status.innerText = data.ok ? `Touched active for ${data.playerId}` : (data.error || "Touch failed.");
+	});
+
 	const storedKey = getAdminKey();
 	if (storedKey) {
 		document.getElementById("admin-key").value = storedKey;
@@ -1208,6 +1356,8 @@ async function refreshAdminView() {
 		document.getElementById("whitelist-requests").style.display = "none";
 		document.getElementById("moderator-profile").style.display = "none";
 		document.getElementById("admin-notify").style.display = "none";
+		document.getElementById("admin-player-controls").style.display = "none";
+		document.getElementById("admin-settings").style.display = "none";
 		document.getElementById("admin-setup").style.display = "block";
 		return false;
 	}
@@ -1221,6 +1371,8 @@ async function refreshAdminView() {
 	document.getElementById("whitelist-requests").style.display = "block";
 	document.getElementById("moderator-profile").style.display = "block";
 	document.getElementById("admin-notify").style.display = "block";
+	document.getElementById("admin-player-controls").style.display = "block";
+	document.getElementById("admin-settings").style.display = "block";
 	loadWhitelistRequests();
 	return true;
 }

@@ -206,6 +206,45 @@ type AdminNotificationCreateRequest struct {
 	ExpiresAt  string `json:"expiresAt,omitempty"`
 }
 
+type AdminPlayerControlRequest struct {
+	PlayerID       string   `json:"playerId,omitempty"`
+	Username       string   `json:"username,omitempty"`
+	SetCoins       *int64   `json:"setCoins,omitempty"`
+	AddCoins       *int64   `json:"addCoins,omitempty"`
+	SetStars       *int64   `json:"setStars,omitempty"`
+	AddStars       *int64   `json:"addStars,omitempty"`
+	DripMultiplier *float64 `json:"dripMultiplier,omitempty"`
+	DripPaused     *bool    `json:"dripPaused,omitempty"`
+	TouchActive    bool     `json:"touchActive,omitempty"`
+}
+
+type AdminPlayerControlResponse struct {
+	OK             bool      `json:"ok"`
+	Error          string    `json:"error,omitempty"`
+	PlayerID       string    `json:"playerId,omitempty"`
+	Coins          int64     `json:"coins,omitempty"`
+	Stars          int64     `json:"stars,omitempty"`
+	DripMultiplier float64   `json:"dripMultiplier,omitempty"`
+	DripPaused     bool      `json:"dripPaused,omitempty"`
+	LastActiveAt   time.Time `json:"lastActiveAt,omitempty"`
+	LastGrantAt    time.Time `json:"lastGrantAt,omitempty"`
+}
+
+type AdminGlobalSettingsRequest struct {
+	ActiveDripIntervalSeconds *int  `json:"activeDripIntervalSeconds,omitempty"`
+	IdleDripIntervalSeconds   *int  `json:"idleDripIntervalSeconds,omitempty"`
+	ActiveDripAmount          *int  `json:"activeDripAmount,omitempty"`
+	IdleDripAmount            *int  `json:"idleDripAmount,omitempty"`
+	ActivityWindowSeconds     *int  `json:"activityWindowSeconds,omitempty"`
+	DripEnabled               *bool `json:"dripEnabled,omitempty"`
+}
+
+type AdminGlobalSettingsResponse struct {
+	OK       bool           `json:"ok"`
+	Error    string         `json:"error,omitempty"`
+	Settings GlobalSettings `json:"settings,omitempty"`
+}
+
 /* ======================
    main()
    ====================== */
@@ -250,6 +289,9 @@ func main() {
 	// Economy
 	if err := economy.load(currentSeasonID(), db); err != nil {
 		log.Fatal("Failed to load economy state:", err)
+	}
+	if err := LoadGlobalSettings(db); err != nil {
+		log.Println("Failed to load global settings:", err)
 	}
 
 	startTickLoop(db)
@@ -316,6 +358,8 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/admin/ip-whitelist", adminIPWhitelistHandler(db))
 	mux.HandleFunc("/admin/whitelist-requests", adminWhitelistRequestsHandler(db))
 	mux.HandleFunc("/admin/notifications", adminNotificationsHandler(db))
+	mux.HandleFunc("/admin/player-controls", adminPlayerControlsHandler(db))
+	mux.HandleFunc("/admin/settings", adminSettingsHandler(db))
 	mux.HandleFunc("/moderator/profile", moderatorProfileHandler(db))
 }
 
@@ -328,13 +372,30 @@ func runPassiveDrip(db *sql.DB) {
 	if isSeasonEnded(now) {
 		return
 	}
-	const activeDripInterval = time.Minute
-	const idleDripInterval = 4 * time.Minute
-	const activeDripAmount = 2
-	const idleDripAmount = 1
+	settings := GetGlobalSettings()
+	if !settings.DripEnabled {
+		return
+	}
+	activeDripInterval := time.Duration(settings.ActiveDripIntervalSeconds) * time.Second
+	idleDripInterval := time.Duration(settings.IdleDripIntervalSeconds) * time.Second
+	activeDripAmount := settings.ActiveDripAmount
+	idleDripAmount := settings.IdleDripAmount
+	if activeDripInterval <= 0 {
+		activeDripInterval = time.Minute
+	}
+	if idleDripInterval <= 0 {
+		idleDripInterval = 4 * time.Minute
+	}
+	if activeDripAmount <= 0 {
+		activeDripAmount = 2
+	}
+	if idleDripAmount <= 0 {
+		idleDripAmount = 1
+	}
+	activityWindow := ActiveActivityWindow()
 
 	rows, err := db.Query(`
-		SELECT player_id, last_active_at, last_coin_grant_at
+		SELECT player_id, last_active_at, last_coin_grant_at, drip_multiplier, drip_paused
 		FROM players
 	`)
 	if err != nil {
@@ -347,15 +408,20 @@ func runPassiveDrip(db *sql.DB) {
 		var playerID string
 		var lastActive time.Time
 		var lastGrant time.Time
+		var dripMultiplier float64
+		var dripPaused bool
 
-		if err := rows.Scan(&playerID, &lastActive, &lastGrant); err != nil {
+		if err := rows.Scan(&playerID, &lastActive, &lastGrant, &dripMultiplier, &dripPaused); err != nil {
+			continue
+		}
+		if dripPaused {
 			continue
 		}
 
 		inactiveFor := now.Sub(lastActive)
 		dripInterval := idleDripInterval
 		dripAmount := idleDripAmount
-		if inactiveFor <= activeActivityWindow {
+		if inactiveFor <= activityWindow {
 			dripInterval = activeDripInterval
 			dripAmount = activeDripAmount
 		}
@@ -373,7 +439,11 @@ func runPassiveDrip(db *sql.DB) {
 			continue
 		}
 
-		if !economy.TryDistributeCoins(dripAmount) {
+		adjusted := int(float64(dripAmount) * dripMultiplier)
+		if adjusted < 1 {
+			adjusted = 1
+		}
+		if !economy.TryDistributeCoins(adjusted) {
 			return
 		}
 
@@ -382,7 +452,7 @@ func runPassiveDrip(db *sql.DB) {
 			SET coins = coins + $3,
 			    last_coin_grant_at = $2
 			WHERE player_id = $1
-		`, playerID, now, dripAmount)
+		`, playerID, now, adjusted)
 
 		if err != nil {
 			log.Println("drip update failed:", err)

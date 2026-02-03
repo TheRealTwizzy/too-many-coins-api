@@ -17,7 +17,6 @@ const (
 	maxPlayersPerIP            = 2
 	ipDampeningPriceMultiplier = 1.5
 	ipDampeningDelay           = 10 * time.Minute
-	activeActivityWindow       = 2 * time.Minute
 )
 
 func LoadOrCreatePlayer(

@@ -46,6 +46,12 @@ ALTER TABLE players
     ADD COLUMN IF NOT EXISTS last_coin_grant_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
 ALTER TABLE players
+    ADD COLUMN IF NOT EXISTS drip_multiplier DOUBLE PRECISION NOT NULL DEFAULT 1.0;
+
+ALTER TABLE players
+    ADD COLUMN IF NOT EXISTS drip_paused BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE players
     ADD COLUMN IF NOT EXISTS burned_coins BIGINT NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS player_ip_associations (
@@ -88,6 +94,12 @@ CREATE TABLE IF NOT EXISTS notification_reads (
     account_id TEXT NOT NULL,
     read_at TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (notification_id, account_id)
+);
+
+CREATE TABLE IF NOT EXISTS global_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS password_resets (
