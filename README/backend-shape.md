@@ -1,5 +1,5 @@
 The backend will start as a single authoritative API service.
-This service handles authentication, seasons, economy logic, purchases, and abuse prevention.
+This service handles authentication, seasons, economy logic, purchases, brokered trading, and abuse prevention.
 
 A single relational database is used for persistent state, transactions, and audit logs.
 

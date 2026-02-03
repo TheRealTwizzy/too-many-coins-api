@@ -32,6 +32,8 @@ Provides actions to earn coins and buy stars.
 
 Shows basic feedback for price changes and throttles.
 
+Shows trading eligibility status and current trade premium/burn.
+
 Bulk Purchase Modal:
 
 Allows selecting star quantity.
@@ -64,3 +66,11 @@ Shows request status.
 
 All pages must be simple, fast, and functional.
 No non-essential pages are built before economy testing.
+
+Trading Desk (when enabled):
+
+Allows requesting a system-quoted trade.
+
+Shows eligibility gates, burn cost, and premium.
+
+Requires explicit confirmation and warns that trades are expensive and irreversible.

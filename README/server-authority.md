@@ -21,6 +21,10 @@ Market pressure values
 
 Season timing and transitions
 
+Trade eligibility, pricing, premiums, and burn rates
+
+Trade execution and logging
+
 IP-based season access rules
 
 Whitelist approval state

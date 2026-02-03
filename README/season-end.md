@@ -3,6 +3,7 @@ At the end of a season, the economy is frozen and final standings are recorded.
 End-of-season resolution:
 
 Star purchases and coin earning are disabled once the season ends.
+Brokered trading is disabled once the season ends; any pending offers are canceled safely.
 
 Final star balances determine leaderboard rankings.
 

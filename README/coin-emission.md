@@ -40,6 +40,9 @@ Coin earning rates are automatically throttled.
 
 Faucets slow down rather than shutting off abruptly.
 
+Trade burn is a modeled sink. The daily emission budget accounts for expected trade burn so liquidity remains sufficient for meaningful daily action. Coin shortage is possible but rare; the economy must not stall.
+Burned Coins are removed permanently and never redistributed.
+
 Coins are never created directly by player actions.
 Coins cannot exceed the remaining global budget for the day.
 

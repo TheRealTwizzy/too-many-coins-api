@@ -420,7 +420,6 @@
 				<a href="#/leaderboard">Leaderboard</a>
 				<a id="signup-link" href="#/signup">Sign up</a>
 				<a id="moderator-link" href="#/moderator" style="display:none;">Moderate</a>
-				<a id="admin-link" href="#/admin" style="display:none;">Admin</a>
 			</nav>
 		</div>
 	</header>
@@ -465,6 +464,10 @@
 							<div class="label">Star price</div>
 							<div id="hero-star-price" class="stat-value">--</div>
 						</div>
+						<div class="metric">
+							<div class="label">Inflation pressure</div>
+							<div id="hero-inflation" class="stat-value">--</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -494,7 +497,7 @@
 								<div id="season-coins" class="stat-value">--</div>
 							</div>
 							<div class="metric">
-								<div class="label">Coins / min</div>
+								<div class="label">Inflation pressure</div>
 								<div id="season-emission" class="stat-value">--</div>
 							</div>
 							<div class="metric">
@@ -745,476 +748,14 @@
 			</div>
 		</section>
 
-		<section id="view-admin" class="view">
-			<div class="section-stack">
-				<div class="card hero-card">
-					<div class="card-header">
-						<div>
-							<div class="label">Admin console</div>
-							<h2 style="margin:0.35rem 0 0;">Monitor the economy and keep the system fair.</h2>
-							<div class="muted">All adjustments are applied server-side.</div>
-						</div>
-						<div class="section-nav">
-							<a href="#/home">Back to game</a>
-							<a href="#/admin-telemetry">Telemetry</a>
-							<a href="#/admin-economy">Economy</a>
-							<a href="#/admin-star-log">Star log</a>
-							<a href="#/admin-bots">Bots</a>
-						</div>
-					</div>
-				</div>
-
-				<div class="card" id="admin-setup" style="display:none;">
-					<div class="card-toggle">
-						<div class="label">Admin setup</div>
-					</div>
-					<div class="card-body">
-						<input id="admin-setup-key" placeholder="Setup key" />
-						<button id="save-key" class="primary">Save</button>
-						<div id="key-status" class="label"></div>
-					</div>
-				</div>
-
-			<div class="card" id="admin-content" data-collapsible="true" style="display:none;">
-				<div class="card-toggle">
-					<div class="label">Season summary</div>
-					<button class="toggle-btn" type="button">Hide</button>
-				</div>
-				<div class="card-body">
-					<div id="season-summary">Loading…</div>
-					<div class="row" style="margin-top:0.5rem;">
-						<button id="refresh" class="primary">Refresh</button>
-					</div>
-				</div>
-			</div>
-
-			<div class="card" id="role-management" data-collapsible="true" style="display:none;">
-				<div class="card-toggle">
-					<div class="label">Role management</div>
-					<button class="toggle-btn" type="button">Hide</button>
-				</div>
-				<div class="card-body">
-					<div class="row" style="margin-top:0.5rem;">
-						<input id="role-username" placeholder="Username" />
-						<select id="role-value">
-							<option value="moderator">Moderator</option>
-							<option value="admin">Admin</option>
-						</select>
-						<button id="role-save" class="primary">Set role</button>
-					</div>
-					<div id="role-status" class="label"></div>
-				</div>
-			</div>
-
-			<div class="card" id="ip-whitelist" data-collapsible="true" style="display:none;">
-				<div class="card-toggle">
-					<div class="label">IP whitelist (max accounts)</div>
-					<button class="toggle-btn" type="button">Hide</button>
-				</div>
-				<div class="card-body">
-					<div class="row" style="margin-top:0.5rem;">
-						<input id="ip-whitelist-value" placeholder="IP address" />
-						<button id="ip-whitelist-save" class="primary">Allow</button>
-						<button id="ip-whitelist-remove">Remove</button>
-					</div>
-					<div id="ip-whitelist-status" class="label"></div>
-				</div>
-			</div>
-
-			<div class="card" id="whitelist-requests" data-collapsible="true" style="display:none;">
-				<div class="card-toggle">
-					<div class="label">Pending whitelist requests</div>
-					<button class="toggle-btn" type="button">Hide</button>
-				</div>
-				<div class="card-body">
-					<div id="whitelist-requests-list" class="label">Loading…</div>
-				</div>
-			</div>
-
-			<div class="card" id="admin-notify" data-collapsible="true" style="display:none;">
-				<div class="card-toggle">
-					<div class="label">Send notification</div>
-					<button class="toggle-btn" type="button">Hide</button>
-				</div>
-				<div class="card-body">
-					<div class="row" style="margin-top:0.5rem;">
-						<select id="notify-target">
-							<option value="all">All</option>
-							<option value="user">Players</option>
-							<option value="moderator">Moderators</option>
-							<option value="admin">Admins</option>
-						</select>
-						<input id="notify-account" placeholder="Account ID (optional)" />
-						<select id="notify-level">
-							<option value="info">Info</option>
-							<option value="warn">Warn</option>
-							<option value="urgent">Urgent</option>
-						</select>
-					</div>
-					<div class="row" style="margin-top:0.5rem;">
-						<input id="notify-expires" placeholder="Expires (RFC3339, optional)" />
-						<input id="notify-link" placeholder="Link (e.g. #/admin)" />
-						<input id="notify-message" placeholder="Message" style="flex:1;" />
-						<button id="notify-send" class="primary">Send</button>
-					</div>
-					<div id="notify-status" class="label"></div>
-				</div>
-			</div>
-
-			<div class="card" id="admin-settings" data-collapsible="true" style="display:none;">
-				<div class="card-toggle">
-					<div class="label">Global settings</div>
-					<button class="toggle-btn" type="button">Hide</button>
-				</div>
-				<div class="card-body">
-					<div class="row" style="margin-top:0.5rem;">
-						<div class="stack" style="min-width:160px;">
-							<label class="label">Active drip interval (s)</label>
-							<input id="gs-active-interval" type="range" min="15" max="300" step="15" value="60" />
-							<span id="gs-active-interval-value" class="label"></span>
-						</div>
-						<div class="stack" style="min-width:160px;">
-							<label class="label">Idle drip interval (s)</label>
-							<input id="gs-idle-interval" type="range" min="60" max="900" step="30" value="240" />
-							<span id="gs-idle-interval-value" class="label"></span>
-						</div>
-						<div class="stack" style="min-width:160px;">
-							<label class="label">Active drip amount</label>
-							<input id="gs-active-amount" type="range" min="1" max="10" step="1" value="2" />
-							<span id="gs-active-amount-value" class="label"></span>
-						</div>
-						<div class="stack" style="min-width:160px;">
-							<label class="label">Idle drip amount</label>
-							<input id="gs-idle-amount" type="range" min="1" max="5" step="1" value="1" />
-							<span id="gs-idle-amount-value" class="label"></span>
-						</div>
-					</div>
-					<div class="row" style="margin-top:0.5rem;">
-						<div class="stack" style="min-width:180px;">
-							<label class="label">Activity window (s)</label>
-							<input id="gs-activity-window" type="range" min="30" max="600" step="30" value="120" />
-							<span id="gs-activity-window-value" class="label"></span>
-						</div>
-						<select id="gs-drip-enabled">
-							<option value="">Drip enabled?</option>
-							<option value="true">Enabled</option>
-							<option value="false">Disabled</option>
-						</select>
-						<button id="gs-load" class="primary">Load</button>
-						<button id="gs-save" class="primary">Save</button>
-					</div>
-					<div id="gs-status" class="label"></div>
-				</div>
-			</div>
-
-				<div class="card" id="no-access" style="display:none;">
-					<div class="label">Not authorized</div>
-					<div class="label">You need an admin account to view this page.</div>
-				</div>
-			</div>
-		</section>
-
-		<section id="view-admin-economy" class="view">
-			<div class="section-stack">
-				<div class="card hero-card">
-					<div class="card-header">
-						<div>
-							<div class="label">Economy controls</div>
-							<h2 style="margin:0.35rem 0 0;">Tune daily emission and feature gates.</h2>
-							<div class="muted">Changes apply instantly on the server.</div>
-						</div>
-						<div class="section-nav">
-							<a href="#/admin">Admin home</a>
-							<a href="#/admin-telemetry">Telemetry</a>
-							<a href="#/admin-star-log">Star log</a>
-						</div>
-					</div>
-				</div>
-
-				<div class="card" id="econ-no-access" style="display:none;">
-					<div class="label">Not authorized</div>
-				</div>
-
-				<div class="card" data-collapsible="true">
-					<div class="card-toggle">
-						<div class="label">Daily emission target</div>
-						<button class="toggle-btn" type="button">Hide</button>
-					</div>
-					<div class="card-body">
-						<div class="row">
-							<input id="emission" type="range" min="0" max="5000" step="50" />
-							<span id="emission-value"></span>
-						</div>
-						<div class="row" style="margin-top:0.5rem;">
-							<label><input type="checkbox" id="faucets" /> Faucets enabled</label>
-							<label><input type="checkbox" id="sinks" /> Sinks enabled</label>
-							<label><input type="checkbox" id="telemetry" /> Telemetry enabled</label>
-						</div>
-						<div class="row" style="margin-top:0.5rem;">
-							<button id="econ-save" class="primary">Save</button>
-						</div>
-						<div id="econ-status" class="label"></div>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<section id="view-admin-telemetry" class="view">
-			<div class="section-stack">
-				<div class="card hero-card">
-					<div class="card-header">
-						<div>
-							<div class="label">Telemetry</div>
-							<h2 style="margin:0.35rem 0 0;">Observe live activity and usage patterns.</h2>
-							<div class="muted">Aggregates are server-tracked for fairness.</div>
-						</div>
-						<div class="section-nav">
-							<a href="#/admin">Admin home</a>
-							<a href="#/admin-economy">Economy</a>
-							<a href="#/admin-star-log">Star log</a>
-						</div>
-					</div>
-				</div>
-
-				<div class="card" id="tele-no-access" style="display:none;">
-					<div class="label">Not authorized</div>
-				</div>
-
-				<div class="card" data-collapsible="true">
-					<div class="card-toggle">
-						<div class="label">Events by hour (last 48h)</div>
-						<button class="toggle-btn" type="button">Hide</button>
-					</div>
-					<div class="card-body">
-						<table>
-							<thead>
-								<tr><th>Hour</th><th>Event</th><th>Count</th></tr>
-							</thead>
-							<tbody id="telemetry-body"></tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-
-		</section>
-
-		<section id="view-admin-star-log" class="view">
-			<div class="section-stack">
-				<div class="card hero-card">
-					<div class="card-header">
-						<div>
-							<div class="label">Star purchases</div>
-							<h2 style="margin:0.35rem 0 0;">Audit pricing and transaction flow.</h2>
-							<div class="muted">All entries are server-validated.</div>
-						</div>
-						<div class="section-nav">
-							<a href="#/admin">Admin home</a>
-							<a href="#/admin-telemetry">Telemetry</a>
-							<a href="#/admin-economy">Economy</a>
-						</div>
-					</div>
-				</div>
-
-				<div class="card" data-collapsible="true">
-					<div class="card-toggle">
-						<div class="label">Star purchase log</div>
-						<button class="toggle-btn" type="button">Hide</button>
-					</div>
-					<div class="card-body">
-						<div class="row" style="margin-top:0.5rem;">
-							<select id="star-log-filter-key">
-								<option value="">Filter by...</option>
-								<option value="accountId">Account ID</option>
-								<option value="playerId">Player ID</option>
-								<option value="seasonId">Season ID</option>
-								<option value="purchaseType">Purchase type</option>
-								<option value="variant">Variant</option>
-								<option value="from">From (RFC3339)</option>
-								<option value="to">To (RFC3339)</option>
-								<option value="minPrice">Min price</option>
-								<option value="maxPrice">Max price</option>
-								<option value="minCoinsBefore">Min coins before</option>
-								<option value="maxCoinsBefore">Max coins before</option>
-								<option value="minCoinsAfter">Min coins after</option>
-								<option value="maxCoinsAfter">Max coins after</option>
-								<option value="minStarsBefore">Min stars before</option>
-								<option value="maxStarsBefore">Max stars before</option>
-								<option value="minStarsAfter">Min stars after</option>
-								<option value="maxStarsAfter">Max stars after</option>
-								<option value="limit">Limit</option>
-							</select>
-							<input id="star-log-filter-value" placeholder="Value" />
-							<button id="star-log-load" class="primary">Apply</button>
-							<button id="star-log-clear">Clear</button>
-						</div>
-						<div class="row" style="margin-top:0.5rem;">
-							<button id="star-log-export-csv">Export CSV</button>
-							<button id="star-log-export-json">Export JSON</button>
-						</div>
-						<div id="star-log-status" class="label"></div>
-					</div>
-				</div>
-
-				<div class="card" data-collapsible="true">
-					<div class="card-toggle">
-						<div class="label">Live purchase feed</div>
-						<button class="toggle-btn" type="button">Hide</button>
-					</div>
-					<div class="card-body">
-						<div id="star-log-list" class="stack"></div>
-					</div>
-				</div>
-
-				<div class="card" id="star-log-no-access" style="display:none;">
-					<div class="label">Not authorized</div>
-					<div class="label">You need an admin account to view this page.</div>
-				</div>
-			</div>
-		</section>
-
-		<section id="view-admin-bots" class="view">
-			<div class="section-stack">
-				<div class="card hero-card">
-					<div class="card-header">
-						<div>
-							<div class="label">Bot control</div>
-							<h2 style="margin:0.35rem 0 0;">Manage bots globally and individually.</h2>
-							<div class="muted">Bot actions remain server-authoritative.</div>
-						</div>
-						<div class="section-nav">
-							<a href="#/admin">Admin home</a>
-							<a href="#/admin-telemetry">Telemetry</a>
-							<a href="#/admin-economy">Economy</a>
-							<a href="#/admin-star-log">Star log</a>
-						</div>
-					</div>
-				</div>
-
-				<div class="card" id="bots-no-access" style="display:none;">
-					<div class="label">Not authorized</div>
-				</div>
-
-				<div class="card" data-collapsible="true" id="bots-global" style="display:none;">
-					<div class="card-toggle">
-						<div class="label">Global bot controls</div>
-						<button class="toggle-btn" type="button">Hide</button>
-					</div>
-					<div class="card-body">
-						<div class="row" style="margin-top:0.5rem;">
-							<label class="label"><input type="checkbox" id="bots-enabled-toggle" /> Bots enabled</label>
-							<div class="stack" style="min-width:200px;">
-								<label class="label">Min seconds between bot star buys</label>
-								<input id="bot-min-interval" type="range" min="30" max="600" step="30" value="90" />
-								<span id="bot-min-interval-value" class="label"></span>
-							</div>
-							<button id="bots-global-save" class="primary">Save</button>
-						</div>
-						<div id="bots-global-status" class="label"></div>
-					</div>
-				</div>
-
-				<div class="card" data-collapsible="true" id="bots-create" style="display:none;">
-					<div class="card-toggle">
-						<div class="label">Create bot</div>
-						<button class="toggle-btn" type="button">Hide</button>
-					</div>
-					<div class="card-body">
-						<div class="row" style="margin-top:0.5rem;">
-							<input id="bot-create-username" placeholder="Username" />
-							<input id="bot-create-display" placeholder="Display name" />
-							<select id="bot-create-profile">
-								<option value="">Bot profile</option>
-								<option value="threshold_buyer">Threshold buyer</option>
-								<option value="cautious_buyer">Cautious buyer</option>
-								<option value="late_fomo">Late FOMO</option>
-							</select>
-						</div>
-						<div class="row" style="margin-top:0.5rem;">
-							<input id="bot-create-password" placeholder="Password (leave empty to auto-generate)" />
-							<button id="bot-create" class="primary">Create bot</button>
-						</div>
-						<div id="bot-create-status" class="label"></div>
-					</div>
-				</div>
-
-				<div class="card" data-collapsible="true" id="bots-individual" style="display:none;">
-					<div class="card-toggle">
-						<div class="label">Individual bot control</div>
-						<button class="toggle-btn" type="button">Hide</button>
-					</div>
-					<div class="card-body">
-						<div class="row" style="margin-top:0.5rem;">
-							<select id="bot-select">
-								<option value="">Select bot</option>
-							</select>
-							<button id="bot-load" class="primary">Load</button>
-							<button id="bot-delete" class="danger">Delete bot</button>
-						</div>
-						<div class="row" style="margin-top:0.5rem;">
-							<label class="label"><input type="checkbox" id="bot-is-bot-enabled" /> Set bot status</label>
-							<select id="bot-is-bot" disabled>
-								<option value="">Bot status</option>
-								<option value="true">Bot</option>
-								<option value="false">Human</option>
-							</select>
-							<label class="label"><input type="checkbox" id="bot-profile-enabled" /> Set bot profile</label>
-							<select id="bot-profile" disabled>
-								<option value="">None</option>
-								<option value="threshold_buyer">Threshold buyer</option>
-								<option value="cautious_buyer">Cautious buyer</option>
-								<option value="late_fomo">Late FOMO</option>
-							</select>
-						</div>
-						<div class="row" style="margin-top:0.5rem;">
-							<div class="stack" style="min-width:160px;">
-								<label class="label"><input type="checkbox" id="bot-set-coins-enabled" /> Set coins</label>
-								<input id="bot-set-coins" type="range" min="0" max="10000" step="50" value="0" disabled />
-								<span id="bot-set-coins-value" class="label"></span>
-							</div>
-							<div class="stack" style="min-width:160px;">
-								<label class="label"><input type="checkbox" id="bot-add-coins-enabled" /> Add coins</label>
-								<input id="bot-add-coins" type="range" min="0" max="2000" step="25" value="0" disabled />
-								<span id="bot-add-coins-value" class="label"></span>
-							</div>
-							<div class="stack" style="min-width:160px;">
-								<label class="label"><input type="checkbox" id="bot-set-stars-enabled" /> Set stars</label>
-								<input id="bot-set-stars" type="range" min="0" max="500" step="1" value="0" disabled />
-								<span id="bot-set-stars-value" class="label"></span>
-							</div>
-							<div class="stack" style="min-width:160px;">
-								<label class="label"><input type="checkbox" id="bot-add-stars-enabled" /> Add stars</label>
-								<input id="bot-add-stars" type="range" min="0" max="100" step="1" value="0" disabled />
-								<span id="bot-add-stars-value" class="label"></span>
-							</div>
-						</div>
-						<div class="row" style="margin-top:0.5rem;">
-							<div class="stack" style="min-width:200px;">
-								<label class="label"><input type="checkbox" id="bot-drip-mult-enabled" /> Drip multiplier</label>
-								<input id="bot-drip-mult" type="range" min="0.1" max="3" step="0.1" value="1" disabled />
-								<span id="bot-drip-mult-value" class="label"></span>
-							</div>
-							<select id="bot-drip-paused">
-								<option value="">Pause?</option>
-								<option value="true">Pause drip</option>
-								<option value="false">Resume drip</option>
-							</select>
-							<button id="bot-touch" class="primary">Touch active</button>
-							<button id="bot-save" class="primary">Apply</button>
-						</div>
-						<div id="bot-status" class="label"></div>
-					</div>
-				</div>
-			</div>
-		</section>
-
 		<section id="view-moderator" class="view">
 			<div class="section-stack">
 				<div class="card hero-card">
 					<div class="card-header">
 						<div>
-							<div class="label">Moderator tools</div>
-							<h2 style="margin:0.35rem 0 0;">Keep profiles clean and accurate.</h2>
-							<div class="muted">Edits are validated and stored server-side.</div>
+							<div class="label">Profile moderation</div>
+							<h2 style="margin:0.35rem 0 0;">View and edit profiles with server authority.</h2>
+							<div class="muted">Moderators edit user profiles. Admins can freeze or delete accounts.</div>
 						</div>
 						<div class="section-nav">
 							<a href="#/home">Back to game</a>
@@ -1224,7 +765,7 @@
 
 				<div class="card" id="moderator-content" data-collapsible="true" style="display:none;">
 					<div class="card-toggle">
-						<div class="label">Edit profile</div>
+						<div class="label">Find profile</div>
 						<button class="toggle-btn" type="button">Hide</button>
 					</div>
 					<div class="card-body">
@@ -1232,6 +773,16 @@
 							<input id="mod-username-view" placeholder="Username" />
 							<button id="mod-load-view" class="primary">Load</button>
 						</div>
+						<div id="mod-status-view" class="label"></div>
+					</div>
+				</div>
+
+				<div class="card" id="moderator-profile" data-collapsible="true" style="display:none;">
+					<div class="card-toggle">
+						<div class="label">Profile details</div>
+						<button class="toggle-btn" type="button">Hide</button>
+					</div>
+					<div class="card-body">
 						<div class="row" style="margin-top:0.5rem;">
 							<input id="mod-display-name-view" placeholder="Display name" />
 							<button id="mod-save-view" class="primary">Update</button>
@@ -1246,7 +797,6 @@
 							<input id="mod-avatar-view" placeholder="Avatar URL" />
 						</div>
 						<textarea id="mod-bio-view" rows="3" placeholder="Bio"></textarea>
-						<div id="mod-status-view" class="label"></div>
 					</div>
 				</div>
 
@@ -1256,65 +806,17 @@
 				</div>
 			</div>
 
-			<div class="card" id="mod-admin-controls" data-collapsible="true" style="display:none;">
+			<div class="card collapsed" id="mod-admin-actions" data-collapsible="true" style="display:none;">
 				<div class="card-toggle">
-					<div class="label">Admin player controls</div>
-					<button class="toggle-btn" type="button">Hide</button>
+					<div class="label">Admin actions</div>
+					<button class="toggle-btn" type="button">Show</button>
 				</div>
 				<div class="card-body">
+					<div class="muted">Admin-only. Actions apply to the loaded profile.</div>
 					<div class="row" style="margin-top:0.5rem;">
-						<input id="mod-player-id" placeholder="Player ID" readonly />
-					</div>
-					<div class="row" style="margin-top:0.5rem;">
-						<div class="stack" style="min-width:160px;">
-							<label class="label"><input type="checkbox" id="mod-set-coins-enabled" /> Set coins</label>
-							<input id="mod-set-coins" type="range" min="0" max="10000" step="50" value="0" disabled />
-							<span id="mod-set-coins-value" class="label"></span>
-						</div>
-						<div class="stack" style="min-width:160px;">
-							<label class="label"><input type="checkbox" id="mod-add-coins-enabled" /> Add coins</label>
-							<input id="mod-add-coins" type="range" min="0" max="2000" step="25" value="0" disabled />
-							<span id="mod-add-coins-value" class="label"></span>
-						</div>
-						<div class="stack" style="min-width:160px;">
-							<label class="label"><input type="checkbox" id="mod-set-stars-enabled" /> Set stars</label>
-							<input id="mod-set-stars" type="range" min="0" max="500" step="1" value="0" disabled />
-							<span id="mod-set-stars-value" class="label"></span>
-						</div>
-						<div class="stack" style="min-width:160px;">
-							<label class="label"><input type="checkbox" id="mod-add-stars-enabled" /> Add stars</label>
-							<input id="mod-add-stars" type="range" min="0" max="100" step="1" value="0" disabled />
-							<span id="mod-add-stars-value" class="label"></span>
-						</div>
-					</div>
-					<div class="row" style="margin-top:0.5rem;">
-						<div class="stack" style="min-width:200px;">
-							<label class="label"><input type="checkbox" id="mod-drip-mult-enabled" /> Drip multiplier</label>
-							<input id="mod-drip-mult" type="range" min="0.1" max="3" step="0.1" value="1" disabled />
-							<span id="mod-drip-mult-value" class="label"></span>
-						</div>
-						<select id="mod-drip-paused">
-							<option value="">Pause?</option>
-							<option value="true">Pause drip</option>
-							<option value="false">Resume drip</option>
-						</select>
-						<button id="mod-touch" class="primary">Touch active</button>
-						<button id="mod-admin-save" class="primary">Apply</button>
-					</div>
-					<div class="row" style="margin-top:0.5rem;">
-						<label class="label"><input type="checkbox" id="mod-is-bot-enabled" /> Set bot status</label>
-						<select id="mod-is-bot" disabled>
-							<option value="">Bot status</option>
-							<option value="true">Bot</option>
-							<option value="false">Human</option>
-						</select>
-						<label class="label"><input type="checkbox" id="mod-bot-profile-enabled" /> Set bot profile</label>
-						<select id="mod-bot-profile" disabled>
-							<option value="">None</option>
-							<option value="threshold_buyer">Threshold buyer</option>
-							<option value="cautious_buyer">Cautious buyer</option>
-							<option value="late_fomo">Late FOMO</option>
-						</select>
+						<input id="mod-ip-whitelist" placeholder="IP to whitelist" />
+						<input id="mod-ip-max" type="number" min="1" max="6" placeholder="Max accounts" />
+						<button id="mod-ip-whitelist-btn" class="primary">Whitelist IP</button>
 					</div>
 					<div class="row" style="margin-top:0.5rem;">
 						<button id="mod-freeze" class="danger">Freeze account</button>
@@ -1361,7 +863,6 @@ const notificationReadList = document.getElementById("notification-read");
 const notificationHideBtn = document.getElementById("notification-hide");
 const signupLink = document.getElementById("signup-link");
 const moderatorLink = document.getElementById("moderator-link");
-const adminLink = document.getElementById("admin-link");
 const liveStatus = document.getElementById("live-status");
 const seasonRemaining = document.getElementById("season-remaining");
 const seasonStarPrice = document.getElementById("season-star-price");
@@ -1373,6 +874,7 @@ const seasonStatus = document.getElementById("season-status");
 const heroSeasonId = document.getElementById("hero-season-id");
 const heroSeasonRemaining = document.getElementById("hero-season-remaining");
 const heroStarPrice = document.getElementById("hero-star-price");
+const heroInflation = document.getElementById("hero-inflation");
 const leaderboardResults = document.getElementById("leaderboard-results");
 const leaderboardPageLabel = document.getElementById("leaderboard-page");
 
@@ -1384,11 +886,6 @@ const viewMap = {
 	leaderboard: "view-leaderboard",
 	signup: "view-signup",
 	reset: "view-reset",
-	admin: "view-admin",
-	"admin-bots": "view-admin-bots",
-	"admin-economy": "view-admin-economy",
-	"admin-telemetry": "view-admin-telemetry",
-	"admin-star-log": "view-admin-star-log",
 	moderator: "view-moderator"
 };
 
@@ -1397,11 +894,6 @@ let playerCoins = 0;
 let playerStars = 0;
 let currentUser = null;
 let homeInitialized = false;
-let adminInitialized = false;
-let adminBotsInitialized = false;
-let adminEconomyInitialized = false;
-let adminTelemetryInitialized = false;
-let adminStarLogInitialized = false;
 let moderatorInitialized = false;
 let signupInitialized = false;
 let resetInitialized = false;
@@ -1410,11 +902,9 @@ let playerRefreshInterval = null;
 let seasonRefreshInterval = null;
 let notificationRefreshInterval = null;
 let activityPingInterval = null;
-let starLogRefreshInterval = null;
 let liveEventSource = null;
 const ALPHA_SEASON_ID = "season-1";
 const bulkStarMax = 5;
-let lastStarLogRows = [];
 let leaderboardPage = 1;
 
 if (joinedSeasonId && joinedSeasonId !== ALPHA_SEASON_ID) {
@@ -1474,11 +964,12 @@ function updateSeasonSnapshot(season) {
 	if (seasonRemaining) seasonRemaining.innerText = formatRemaining(season.secondsRemaining || 0);
 	if (seasonStarPrice) seasonStarPrice.innerText = `${season.currentStarPrice} coins`;
 	if (seasonCoins) seasonCoins.innerText = `${season.coinsInCirculation} coins`;
-	if (seasonEmission) seasonEmission.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)}`;
+	if (seasonEmission) seasonEmission.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
 	if (seasonNextEmission) seasonNextEmission.innerText = `${season.nextEmissionInSeconds || 0}s`;
 	if (heroSeasonId) heroSeasonId.innerText = "Season 1";
 	if (heroSeasonRemaining) heroSeasonRemaining.innerText = formatRemaining(season.secondsRemaining || 0);
 	if (heroStarPrice) heroStarPrice.innerText = `${season.currentStarPrice} coins`;
+	if (heroInflation) heroInflation.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
 	if (seasonStatus) {
 		seasonStatus.innerText = season.secondsRemaining > 0 ? "Active" : "Ended";
 	}
@@ -1495,7 +986,7 @@ function updateSeasonCard(season) {
 	if (remainingEl) remainingEl.innerText = formatRemaining(season.secondsRemaining || 0);
 	if (priceEl) priceEl.innerText = `${season.currentStarPrice} coins`;
 	if (coinsEl) coinsEl.innerText = `${season.coinsInCirculation} coins`;
-	if (emissionEl) emissionEl.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)}`;
+	if (emissionEl) emissionEl.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
 }
 
 function applyLiveSnapshot(payload) {
@@ -1537,55 +1028,6 @@ function disconnectLiveStream() {
 	updateLiveStatus("offline", "Offline");
 }
 
-function bindRangeValue(rangeId, outputId, formatter) {
-	const input = document.getElementById(rangeId);
-	const output = document.getElementById(outputId);
-	if (!input || !output) return;
-	const update = () => {
-		const value = parseFloat(input.value);
-		output.innerText = formatter ? formatter(value) : `${value}`;
-	};
-	input.addEventListener("input", update);
-	update();
-}
-
-function bindRangeToggle(rangeId, outputId, toggleId, formatter) {
-	const input = document.getElementById(rangeId);
-	const output = document.getElementById(outputId);
-	const toggle = document.getElementById(toggleId);
-	if (!input || !output || !toggle) return;
-	const update = () => {
-		const value = parseFloat(input.value);
-		output.innerText = formatter ? formatter(value) : `${value}`;
-	};
-	const updateState = () => {
-		input.disabled = !toggle.checked;
-		output.style.opacity = toggle.checked ? "1" : "0.5";
-	};
-	input.addEventListener("input", update);
-	toggle.addEventListener("change", updateState);
-	update();
-	updateState();
-}
-
-function setRangeValue(rangeId, value) {
-	const input = document.getElementById(rangeId);
-	if (!input || value === undefined || value === null || Number.isNaN(value)) return;
-	input.value = value;
-	input.dispatchEvent(new Event("input"));
-}
-
-function bindToggleSelect(toggleId, selectId) {
-	const toggle = document.getElementById(toggleId);
-	const select = document.getElementById(selectId);
-	if (!toggle || !select) return;
-	const update = () => {
-		select.disabled = !toggle.checked;
-	};
-	toggle.addEventListener("change", update);
-	update();
-}
-
 async function loadAuth() {
 	const res = await apiFetch("/auth/me");
 	const data = await res.json();
@@ -1601,7 +1043,6 @@ async function loadAuth() {
 		statPill.style.display = "none";
 		signupLink.style.display = "inline";
 		moderatorLink.style.display = "none";
-		adminLink.style.display = "none";
 		notificationPanel.style.display = "none";
 		notificationUnreadList.innerHTML = "";
 		notificationReadList.innerHTML = "";
@@ -1627,7 +1068,6 @@ async function loadAuth() {
 	statPill.style.display = "inline-flex";
 	signupLink.style.display = "none";
 	moderatorLink.style.display = (data.isModerator || data.isAdmin) ? "inline" : "none";
-	adminLink.style.display = data.isAdmin ? "inline" : "none";
 	document.getElementById("seasons").style.display = "grid";
 	document.getElementById("locked-message").innerText = "";
 }
@@ -1761,8 +1201,8 @@ async function loadSeasons() {
 					<div class="stat-value" data-season-coins>${season.coinsInCirculation} coins</div>
 				</div>
 				<div class="metric">
-					<div class="label">Coins / min</div>
-					<div class="stat-value" data-season-emission>${(season.coinEmissionPerMinute || 0).toFixed(2)}</div>
+					<div class="label">Inflation pressure</div>
+					<div class="stat-value" data-season-emission>${(season.coinEmissionPerMinute || 0).toFixed(2)} / min</div>
 				</div>
 			</div>
 			<div class="season-actions">
@@ -2079,9 +1519,6 @@ function getRouteInfo() {
 
 async function route() {
 	const { routeKey, query } = getRouteInfo();
-	if (routeKey !== "admin-star-log") {
-		stopStarLogRefresh();
-	}
 	await loadAuth();
 	initCollapsibleCards();
 	if (routeKey === "signup" && currentUser) {
@@ -2109,31 +1546,6 @@ async function route() {
 		}
 		return;
 	}
-	if (routeKey === "admin") {
-		if (!adminInitialized) initAdmin();
-		await refreshAdminView();
-		return;
-	}
-	if (routeKey === "admin-bots") {
-		if (!adminBotsInitialized) initAdminBots();
-		await refreshAdminBotsView();
-		return;
-	}
-	if (routeKey === "admin-economy") {
-		if (!adminEconomyInitialized) initAdminEconomy();
-		await refreshAdminEconomyView();
-		return;
-	}
-	if (routeKey === "admin-telemetry") {
-		if (!adminTelemetryInitialized) initAdminTelemetry();
-		await refreshAdminTelemetryView();
-		return;
-	}
-	if (routeKey === "admin-star-log") {
-		if (!adminStarLogInitialized) initAdminStarLog();
-		await refreshAdminStarLogView();
-		return;
-	}
 	if (routeKey === "moderator") {
 		if (!moderatorInitialized) initModerator();
 		await refreshModeratorView();
@@ -2144,7 +1556,6 @@ async function route() {
 		await loadLeaderboard();
 		return;
 	}
-	stopStarLogRefresh();
 }
 
 function initHome() {
@@ -2328,741 +1739,27 @@ function initReset() {
 	});
 }
 
-function initAdmin() {
-	adminInitialized = true;
-	bindRangeValue("gs-active-interval", "gs-active-interval-value", value => `${value}s`);
-	bindRangeValue("gs-idle-interval", "gs-idle-interval-value", value => `${value}s`);
-	bindRangeValue("gs-active-amount", "gs-active-amount-value", value => `${value} coins`);
-	bindRangeValue("gs-idle-amount", "gs-idle-amount-value", value => `${value} coins`);
-	bindRangeValue("gs-activity-window", "gs-activity-window-value", value => `${value}s`);
-	document.getElementById("refresh").addEventListener("click", () => {
-		loadSummary();
-	});
-
-	document.getElementById("save-key").addEventListener("click", async () => {
-		const setupKey = document.getElementById("admin-setup-key").value.trim();
-		const res = await apiFetch("/admin/set-key", {
-			method: "POST",
-			headers: { "X-Admin-Setup": setupKey },
-			body: JSON.stringify({})
-		});
-		const data = await res.json();
-		if (!data.ok) {
-			document.getElementById("key-status").innerText = data.error || "Setup failed.";
-			return;
-		}
-		document.getElementById("key-status").innerText = "Admin enabled.";
-		await refreshAdminView();
-		loadSummary();
-		loadWhitelistRequests();
-	});
-
-	document.getElementById("role-save").addEventListener("click", async () => {
-		const username = document.getElementById("role-username").value.trim();
-		const role = document.getElementById("role-value").value;
-		const res = await apiFetch("/admin/role", {
-			method: "POST",
-			body: JSON.stringify({ username, role })
-		});
-		const data = await res.json();
-		document.getElementById("role-status").innerText = data.ok ? "Role updated." : (data.error || "Role update failed.");
-	});
-
-	document.getElementById("ip-whitelist-save").addEventListener("click", async () => {
-		const ip = document.getElementById("ip-whitelist-value").value.trim();
-		const maxAccounts = 2;
-		const res = await apiFetch("/admin/ip-whitelist", {
-			method: "POST",
-			body: JSON.stringify({ ip, maxAccounts, action: "set" })
-		});
-		const data = await res.json();
-		document.getElementById("ip-whitelist-status").innerText = data.ok ? "IP whitelisted." : (data.error || "Update failed.");
-	});
-
-	document.getElementById("ip-whitelist-remove").addEventListener("click", async () => {
-		const ip = document.getElementById("ip-whitelist-value").value.trim();
-		const res = await apiFetch("/admin/ip-whitelist", {
-			method: "POST",
-			body: JSON.stringify({ ip, action: "remove" })
-		});
-		const data = await res.json();
-		document.getElementById("ip-whitelist-status").innerText = data.ok ? "IP removed." : (data.error || "Update failed.");
-	});
-
-
-	document.getElementById("notify-send").addEventListener("click", async () => {
-		const targetRole = document.getElementById("notify-target").value;
-		const accountId = document.getElementById("notify-account").value.trim();
-		const level = document.getElementById("notify-level").value;
-		const expiresAt = document.getElementById("notify-expires").value.trim();
-		const link = document.getElementById("notify-link").value.trim();
-		const message = document.getElementById("notify-message").value.trim();
-		const res = await apiFetch("/admin/notifications", {
-			method: "POST",
-			body: JSON.stringify({ targetRole, accountId, level, expiresAt, link, message })
-		});
-		const data = await res.json();
-		document.getElementById("notify-status").innerText = data.ok ? "Notification sent." : (data.error || "Send failed.");
-		if (data.ok) {
-			document.getElementById("notify-message").value = "";
-			document.getElementById("notify-link").value = "";
-		}
-	});
-
-	document.getElementById("gs-load").addEventListener("click", async () => {
-		const res = await apiFetch("/admin/settings");
-		const data = await res.json();
-		const status = document.getElementById("gs-status");
-		if (!data.ok) {
-			status.innerText = data.error || "Load failed.";
-			return;
-		}
-		const s = data.settings || {};
-		setRangeValue("gs-active-interval", s.activeDripIntervalSeconds);
-		setRangeValue("gs-idle-interval", s.idleDripIntervalSeconds);
-		setRangeValue("gs-active-amount", s.activeDripAmount);
-		setRangeValue("gs-idle-amount", s.idleDripAmount);
-		setRangeValue("gs-activity-window", s.activityWindowSeconds);
-		document.getElementById("gs-drip-enabled").value = s.dripEnabled ? "true" : "false";
-		status.innerText = "Settings loaded.";
-	});
-
-	document.getElementById("gs-save").addEventListener("click", async () => {
-		const payload = {};
-		const activeInterval = parseInt(document.getElementById("gs-active-interval").value, 10);
-		const idleInterval = parseInt(document.getElementById("gs-idle-interval").value, 10);
-		const activeAmount = parseInt(document.getElementById("gs-active-amount").value, 10);
-		const idleAmount = parseInt(document.getElementById("gs-idle-amount").value, 10);
-		const activityWindow = parseInt(document.getElementById("gs-activity-window").value, 10);
-		const dripEnabled = document.getElementById("gs-drip-enabled").value;
-		if (!Number.isNaN(activeInterval)) payload.activeDripIntervalSeconds = activeInterval;
-		if (!Number.isNaN(idleInterval)) payload.idleDripIntervalSeconds = idleInterval;
-		if (!Number.isNaN(activeAmount)) payload.activeDripAmount = activeAmount;
-		if (!Number.isNaN(idleAmount)) payload.idleDripAmount = idleAmount;
-		if (!Number.isNaN(activityWindow)) payload.activityWindowSeconds = activityWindow;
-		if (dripEnabled === "true") payload.dripEnabled = true;
-		if (dripEnabled === "false") payload.dripEnabled = false;
-		const res = await apiFetch("/admin/settings", {
-			method: "POST",
-			body: JSON.stringify(payload)
-		});
-		const data = await res.json();
-		document.getElementById("gs-status").innerText = data.ok ? "Settings saved." : (data.error || "Save failed.");
-	});
-
-	loadWhitelistRequests();
-}
-
-function initAdminBots() {
-	adminBotsInitialized = true;
-	bindRangeValue("bot-min-interval", "bot-min-interval-value", value => `${value}s`);
-	bindRangeToggle("bot-set-coins", "bot-set-coins-value", "bot-set-coins-enabled", value => `${value} coins`);
-	bindRangeToggle("bot-add-coins", "bot-add-coins-value", "bot-add-coins-enabled", value => `+${value} coins`);
-	bindRangeToggle("bot-set-stars", "bot-set-stars-value", "bot-set-stars-enabled", value => `${value} stars`);
-	bindRangeToggle("bot-add-stars", "bot-add-stars-value", "bot-add-stars-enabled", value => `+${value} stars`);
-	bindRangeToggle("bot-drip-mult", "bot-drip-mult-value", "bot-drip-mult-enabled", value => `${value.toFixed(1)}x`);
-	bindToggleSelect("bot-is-bot-enabled", "bot-is-bot");
-	bindToggleSelect("bot-profile-enabled", "bot-profile");
-
-	document.getElementById("bots-global-save").addEventListener("click", async () => {
-		const payload = {
-			botsEnabled: document.getElementById("bots-enabled-toggle").checked,
-			botMinStarIntervalSeconds: parseInt(document.getElementById("bot-min-interval").value, 10)
-		};
-		const res = await apiFetch("/admin/settings", {
-			method: "POST",
-			body: JSON.stringify(payload)
-		});
-		const data = await res.json();
-		const status = document.getElementById("bots-global-status");
-		if (!data.ok) {
-			status.innerText = data.error || "Save failed.";
-			return;
-		}
-		status.innerText = "Bot settings saved.";
-	});
-
-	document.getElementById("bot-create").addEventListener("click", async () => {
-		const username = document.getElementById("bot-create-username").value.trim();
-		const displayName = document.getElementById("bot-create-display").value.trim();
-		const botProfile = document.getElementById("bot-create-profile").value;
-		const password = document.getElementById("bot-create-password").value.trim();
-		const status = document.getElementById("bot-create-status");
-		if (!username) {
-			status.innerText = "Username is required.";
-			return;
-		}
-		if (!confirm(`Create bot ${username}?`)) {
-			return;
-		}
-		const confirmText = prompt("Type CREATE to confirm bot creation:");
-		if (confirmText !== "CREATE") {
-			status.innerText = "Creation canceled.";
-			return;
-		}
-		const res = await apiFetch("/admin/bots/create", {
-			method: "POST",
-			body: JSON.stringify({ username, displayName, password, botProfile })
-		});
-		const data = await res.json();
-		if (!data.ok) {
-			status.innerText = data.error || "Create failed.";
-			return;
-		}
-		status.innerText = `Bot created. Username: ${data.username} · Password: ${data.password}`;
-		document.getElementById("bot-create-username").value = "";
-		document.getElementById("bot-create-display").value = "";
-		document.getElementById("bot-create-password").value = "";
-		document.getElementById("bot-create-profile").value = "";
-		await loadBotList();
-		if (data.playerId) {
-			document.getElementById("bot-select").value = data.playerId;
-		}
-	});
-
-	document.getElementById("bot-load").addEventListener("click", async () => {
-		const playerId = document.getElementById("bot-select").value;
-		if (!playerId) {
-			document.getElementById("bot-status").innerText = "Select a bot.";
-			return;
-		}
-		const res = await apiFetch("/admin/player-controls", {
-			method: "POST",
-			body: JSON.stringify({ playerId })
-		});
-		const data = await res.json();
-		const status = document.getElementById("bot-status");
-		if (!data.ok) {
-			status.innerText = data.error || "Load failed.";
-			return;
-		}
-		status.innerText = `Loaded ${data.playerId} · coins ${data.coins} · stars ${data.stars} · drip ${data.dripMultiplier} · paused ${data.dripPaused}`;
-		setRangeValue("bot-set-coins", data.coins);
-		setRangeValue("bot-set-stars", data.stars);
-		setRangeValue("bot-add-coins", 0);
-		setRangeValue("bot-add-stars", 0);
-		setRangeValue("bot-drip-mult", data.dripMultiplier);
-		document.getElementById("bot-is-bot").value = data.isBot ? "true" : "false";
-		document.getElementById("bot-profile").value = data.botProfile || "";
-		document.getElementById("bot-drip-paused").value = "";
-	});
-
-	document.getElementById("bot-touch").addEventListener("click", async () => {
-		const playerId = document.getElementById("bot-select").value;
-		if (!playerId) {
-			document.getElementById("bot-status").innerText = "Select a bot.";
-			return;
-		}
-		const res = await apiFetch("/admin/player-controls", {
-			method: "POST",
-			body: JSON.stringify({ playerId, touchActive: true })
-		});
-		const data = await res.json();
-		const status = document.getElementById("bot-status");
-		status.innerText = data.ok ? `Touched active for ${data.playerId}` : (data.error || "Touch failed.");
-	});
-
-	document.getElementById("bot-save").addEventListener("click", async () => {
-		const playerId = document.getElementById("bot-select").value;
-		if (!playerId) {
-			document.getElementById("bot-status").innerText = "Select a bot.";
-			return;
-		}
-		const setCoinsEnabled = document.getElementById("bot-set-coins-enabled").checked;
-		const addCoinsEnabled = document.getElementById("bot-add-coins-enabled").checked;
-		const setStarsEnabled = document.getElementById("bot-set-stars-enabled").checked;
-		const addStarsEnabled = document.getElementById("bot-add-stars-enabled").checked;
-		const dripMultEnabled = document.getElementById("bot-drip-mult-enabled").checked;
-		const isBotEnabled = document.getElementById("bot-is-bot-enabled").checked;
-		const botProfileEnabled = document.getElementById("bot-profile-enabled").checked;
-		const setCoins = parseInt(document.getElementById("bot-set-coins").value, 10);
-		const addCoins = parseInt(document.getElementById("bot-add-coins").value, 10);
-		const setStars = parseInt(document.getElementById("bot-set-stars").value, 10);
-		const addStars = parseInt(document.getElementById("bot-add-stars").value, 10);
-		const dripMultiplier = parseFloat(document.getElementById("bot-drip-mult").value);
-		const isBotValue = document.getElementById("bot-is-bot").value;
-		const botProfileValue = document.getElementById("bot-profile").value;
-		const dripPausedValue = document.getElementById("bot-drip-paused").value;
-		const payload = { playerId };
-		if (setCoinsEnabled && !Number.isNaN(setCoins)) payload.setCoins = setCoins;
-		if (addCoinsEnabled && !Number.isNaN(addCoins)) payload.addCoins = addCoins;
-		if (setStarsEnabled && !Number.isNaN(setStars)) payload.setStars = setStars;
-		if (addStarsEnabled && !Number.isNaN(addStars)) payload.addStars = addStars;
-		if (dripMultEnabled && !Number.isNaN(dripMultiplier)) payload.dripMultiplier = dripMultiplier;
-		if (isBotEnabled && (isBotValue === "true" || isBotValue === "false")) payload.isBot = isBotValue === "true";
-		if (botProfileEnabled) payload.botProfile = botProfileValue;
-		if (dripPausedValue === "true") payload.dripPaused = true;
-		if (dripPausedValue === "false") payload.dripPaused = false;
-
-		const res = await apiFetch("/admin/player-controls", {
-			method: "POST",
-			body: JSON.stringify(payload)
-		});
-		const data = await res.json();
-		const status = document.getElementById("bot-status");
-		status.innerText = data.ok ? `Updated ${data.playerId} · coins ${data.coins} · stars ${data.stars} · drip ${data.dripMultiplier} · paused ${data.dripPaused}` : (data.error || "Update failed.");
-	});
-
-	document.getElementById("bot-delete").addEventListener("click", async () => {
-		const playerId = document.getElementById("bot-select").value;
-		const status = document.getElementById("bot-status");
-		if (!playerId) {
-			status.innerText = "Select a bot.";
-			return;
-		}
-		if (!confirm("Delete this bot and its account?")) {
-			return;
-		}
-		const confirmText = prompt("Type DELETE to confirm bot deletion:");
-		if (confirmText !== "DELETE") {
-			status.innerText = "Deletion canceled.";
-			return;
-		}
-		const res = await apiFetch("/admin/bots/delete", {
-			method: "POST",
-			body: JSON.stringify({ playerId })
-		});
-		const data = await res.json();
-		if (!data.ok) {
-			status.innerText = data.error || "Delete failed.";
-			return;
-		}
-		status.innerText = `Deleted bot ${data.playerId}`;
-		document.getElementById("bot-select").value = "";
-		await loadBotList();
-	});
-}
-
-async function refreshAdminBotsView() {
-	const res = await apiFetch("/auth/me");
-	const data = await res.json();
-	if (!data.ok || !data.isAdmin) {
-		document.getElementById("bots-no-access").style.display = "block";
-		document.getElementById("bots-global").style.display = "none";
-		document.getElementById("bots-create").style.display = "none";
-		document.getElementById("bots-individual").style.display = "none";
-		return false;
-	}
-	document.getElementById("bots-no-access").style.display = "none";
-	document.getElementById("bots-global").style.display = "block";
-	document.getElementById("bots-create").style.display = "block";
-	document.getElementById("bots-individual").style.display = "block";
-	await loadBotSettings();
-	await loadBotList();
-	return true;
-}
-
-async function loadBotSettings() {
-	const res = await apiFetch("/admin/settings");
-	const data = await res.json();
-	const status = document.getElementById("bots-global-status");
-	if (!data.ok) {
-		status.innerText = data.error || "Load failed.";
-		return;
-	}
-	const s = data.settings || {};
-	if (typeof s.botsEnabled === "boolean") {
-		document.getElementById("bots-enabled-toggle").checked = s.botsEnabled;
-	}
-	if (typeof s.botMinStarIntervalSeconds === "number") {
-		setRangeValue("bot-min-interval", s.botMinStarIntervalSeconds);
-	}
-	status.innerText = "Bot settings loaded.";
-}
-
-async function loadBotList() {
-	const res = await apiFetch("/admin/bots");
-	const data = await res.json();
-	const select = document.getElementById("bot-select");
-	if (!data.ok) {
-		select.innerHTML = "<option value=\"\">No bots available</option>";
-		return;
-	}
-	const current = select.value;
-	const bots = data.bots || [];
-	if (bots.length === 0) {
-		select.innerHTML = "<option value=\"\">No bots found</option>";
-		return;
-	}
-	select.innerHTML = ["<option value=\"\">Select bot</option>", ...bots.map(bot => {
-		const name = bot.displayName ? ` · ${bot.displayName}` : "";
-		const label = `${bot.username || bot.playerId}${name}`;
-		return `<option value=\"${bot.playerId}\">${label}</option>`;
-	})].join("");
-	if (current) {
-		select.value = current;
-	}
-}
-
-async function refreshAdminView() {
-	const res = await apiFetch("/auth/me");
-	const data = await res.json();
-	if (!data.ok || !data.isAdmin) {
-		document.getElementById("no-access").style.display = "block";
-		document.getElementById("admin-content").style.display = "none";
-		document.getElementById("role-management").style.display = "none";
-		document.getElementById("ip-whitelist").style.display = "none";
-		document.getElementById("whitelist-requests").style.display = "none";
-		document.getElementById("admin-notify").style.display = "none";
-		document.getElementById("admin-settings").style.display = "none";
-		document.getElementById("admin-setup").style.display = "block";
-		return false;
-	}
-	document.getElementById("no-access").style.display = "none";
-	document.getElementById("admin-setup").style.display = "none";
-	document.getElementById("admin-content").style.display = "block";
-	document.getElementById("role-management").style.display = "block";
-	document.getElementById("ip-whitelist").style.display = "block";
-	document.getElementById("whitelist-requests").style.display = "block";
-	document.getElementById("admin-notify").style.display = "block";
-	document.getElementById("admin-settings").style.display = "block";
-	loadWhitelistRequests();
-	return true;
-}
-
-async function loadStarPurchaseLog() {
-	const status = document.getElementById("star-log-status");
-	const container = document.getElementById("star-log-list");
-	const filterKey = document.getElementById("star-log-filter-key").value;
-	const filterValue = document.getElementById("star-log-filter-value").value.trim();
-
-	const params = new URLSearchParams();
-	if (filterKey && filterValue) {
-		if (filterKey === "limit") {
-			const parsed = parseInt(filterValue, 10);
-			if (!Number.isNaN(parsed)) {
-				params.set("limit", parsed);
-			}
-		} else {
-			params.set(filterKey, filterValue);
-		}
-	}
-
-	const url = params.toString() ? `/admin/star-purchases?${params.toString()}` : "/admin/star-purchases";
-	const res = await apiFetch(url);
-	const data = await res.json();
-	if (!data.ok) {
-		status.innerText = data.error || "Load failed.";
-		container.innerHTML = "";
-		return;
-	}
-
-	const rows = data.items || [];
-	lastStarLogRows = rows;
-	status.innerText = `Loaded ${rows.length} entries.`;
-	if (rows.length === 0) {
-		container.innerText = "No results.";
-		return;
-	}
-	container.innerHTML = rows.map(row => {
-		const time = new Date(row.createdAt).toLocaleString();
-		const variantLabel = row.variant ? ` · ${row.variant}` : "";
-		return `
-			<div class="card" style="margin-top:0.5rem;">
-				<div class="label">${time} · ${row.seasonId}</div>
-				<div>${row.purchaseType}${variantLabel} · paid ${row.pricePaid}</div>
-				<div class="label">Account ${row.accountId} · Player ${row.playerId}</div>
-				<div class="label">Coins ${row.coinsBefore} → ${row.coinsAfter} · Stars ${row.starsBefore} → ${row.starsAfter}</div>
-			</div>
-		`;
-	}).join("");
-}
-
-async function exportStarPurchaseLog(format) {
-	if (!lastStarLogRows || lastStarLogRows.length === 0) {
-		await loadStarPurchaseLog();
-	}
-	const rows = lastStarLogRows || [];
-	if (rows.length === 0) {
-		setToast("No entries to export.", "error");
-		return;
-	}
-	if (format === "json") {
-		const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
-		triggerDownload(blob, "star-purchase-log.json");
-		return;
-	}
-	const headers = [
-		"id",
-		"createdAt",
-		"seasonId",
-		"purchaseType",
-		"variant",
-		"accountId",
-		"playerId",
-		"pricePaid",
-		"coinsBefore",
-		"coinsAfter",
-		"starsBefore",
-		"starsAfter"
-	];
-	const csvLines = [headers.join(",")];
-	rows.forEach(row => {
-		const values = [
-			row.id,
-			new Date(row.createdAt).toISOString(),
-			row.seasonId,
-			row.purchaseType,
-			row.variant || "",
-			row.accountId,
-			row.playerId,
-			row.pricePaid,
-			row.coinsBefore,
-			row.coinsAfter,
-			row.starsBefore,
-			row.starsAfter
-		].map(value => {
-			const text = String(value ?? "");
-			if (text.includes(",") || text.includes("\"")) {
-				return `"${text.replace(/"/g, '""')}"`;
-			}
-			return text;
-		});
-		csvLines.push(values.join(","));
-	});
-	const blob = new Blob([csvLines.join("\n")], { type: "text/csv" });
-	triggerDownload(blob, "star-purchase-log.csv");
-}
-
-function triggerDownload(blob, filename) {
-	const url = URL.createObjectURL(blob);
-	const link = document.createElement("a");
-	link.href = url;
-	link.download = filename;
-	document.body.appendChild(link);
-	link.click();
-	document.body.removeChild(link);
-	URL.revokeObjectURL(url);
-}
-
-async function loadWhitelistRequests() {
-	const res = await apiFetch("/admin/whitelist-requests");
-	const data = await res.json();
-	const container = document.getElementById("whitelist-requests-list");
-	if (!data.ok) {
-		container.innerText = "Unable to load requests.";
-		return;
-	}
-	const rows = data.requests || [];
-	if (rows.length === 0) {
-		container.innerText = "No pending requests.";
-		return;
-	}
-	container.innerHTML = rows.map(req => {
-		const time = new Date(req.createdAt).toLocaleString();
-		return `
-			<div class="card" style="margin-top:0.75rem;">
-				<div class="label">${req.ip} · ${time}</div>
-				<div class="label">Reason: ${req.reason || "(none)"}</div>
-				<div class="row" style="margin-top:0.5rem;">
-					<input data-max="${req.requestId}" placeholder="Max accounts" />
-					<button data-approve="${req.requestId}" class="primary">Approve</button>
-					<button data-deny="${req.requestId}">Deny</button>
-				</div>
-			</div>
-		`;
-	}).join("");
-
-	container.querySelectorAll("button[data-approve]").forEach(btn => {
-		btn.addEventListener("click", async () => {
-			const requestId = btn.getAttribute("data-approve");
-			const maxInput = container.querySelector(`input[data-max="${requestId}"]`);
-			const maxAccounts = parseInt(maxInput.value, 10) || 2;
-			await resolveWhitelistRequest(requestId, "approve", maxAccounts);
-		});
-	});
-
-	container.querySelectorAll("button[data-deny]").forEach(btn => {
-		btn.addEventListener("click", async () => {
-			const requestId = btn.getAttribute("data-deny");
-			await resolveWhitelistRequest(requestId, "deny", 0);
-		});
-	});
-}
-
-async function resolveWhitelistRequest(requestId, decision, maxAccounts) {
-	const res = await apiFetch("/admin/whitelist-requests", {
-		method: "POST",
-		body: JSON.stringify({ requestId, decision, maxAccounts })
-	});
-	const data = await res.json();
-	if (!data.ok) {
-		document.getElementById("whitelist-requests-list").innerText = data.error || "Update failed.";
-		return;
-	}
-	loadWhitelistRequests();
-}
-
-async function loadSummary() {
-	const res = await fetch("/seasons");
-	const data = await res.json();
-	const season = data.seasons.find(s => s.seasonId === "season-1");
-	if (!season) {
-		document.getElementById("season-summary").innerText = "Season not found.";
-		return;
-	}
-	const hoursLeft = Math.floor(season.secondsRemaining / 3600);
-	document.getElementById("season-summary").innerText =
-		`Season 1 · ${hoursLeft}h left · Coins in circulation: ${season.coinsInCirculation} · Star price: ${season.currentStarPrice}`;
-}
-
-function initAdminEconomy() {
-	adminEconomyInitialized = true;
-	document.getElementById("emission").addEventListener("input", (e) => {
-		document.getElementById("emission-value").innerText = e.target.value;
-	});
-
-	document.getElementById("econ-save").addEventListener("click", async () => {
-		const payload = {
-			dailyEmissionTarget: parseInt(document.getElementById("emission").value, 10),
-			faucetsEnabled: document.getElementById("faucets").checked,
-			sinksEnabled: document.getElementById("sinks").checked,
-			telemetryEnabled: document.getElementById("telemetry").checked
-		};
-		const res = await apiFetch("/admin/economy", {
-			method: "POST",
-			body: JSON.stringify(payload)
-		});
-		const data = await res.json();
-		if (!data.ok) {
-			document.getElementById("econ-status").innerText = data.error || "Save failed";
-			return;
-		}
-		document.getElementById("econ-status").innerText = "Saved.";
-		loadEconomy();
-	});
-
-	
-}
-
-async function refreshAdminEconomyView() {
-	const res = await apiFetch("/auth/me");
-	const data = await res.json();
-	if (!data.ok || !data.isAdmin) {
-		document.getElementById("econ-no-access").style.display = "block";
-		return false;
-	}
-	document.getElementById("econ-no-access").style.display = "none";
-	await loadEconomy();
-	return true;
-}
-
-async function loadEconomy() {
-	const res = await apiFetch("/admin/economy");
-	const data = await res.json();
-	if (!data.ok) {
-		document.getElementById("econ-status").innerText = "Unauthorized.";
-		return;
-	}
-	const emission = document.getElementById("emission");
-	emission.value = data.dailyEmissionTarget || 0;
-	document.getElementById("emission-value").innerText = emission.value;
-	document.getElementById("faucets").checked = !!data.faucetsEnabled;
-	document.getElementById("sinks").checked = !!data.sinksEnabled;
-	document.getElementById("telemetry").checked = !!data.telemetryEnabled;
-}
-
-function initAdminTelemetry() {
-	adminTelemetryInitialized = true;
-}
-
-function initAdminStarLog() {
-	adminStarLogInitialized = true;
-	document.getElementById("star-log-load").addEventListener("click", async () => {
-		await loadStarPurchaseLog();
-	});
-
-	document.getElementById("star-log-clear").addEventListener("click", async () => {
-		document.getElementById("star-log-filter-key").value = "";
-		document.getElementById("star-log-filter-value").value = "";
-		await loadStarPurchaseLog();
-	});
-
-	document.getElementById("star-log-export-csv").addEventListener("click", async () => {
-		await exportStarPurchaseLog("csv");
-	});
-
-	document.getElementById("star-log-export-json").addEventListener("click", async () => {
-		await exportStarPurchaseLog("json");
-	});
-}
-
-async function refreshAdminTelemetryView() {
-	const res = await apiFetch("/auth/me");
-	const data = await res.json();
-	if (!data.ok || !data.isAdmin) {
-		document.getElementById("tele-no-access").style.display = "block";
-		return false;
-	}
-	document.getElementById("tele-no-access").style.display = "none";
-	await loadTelemetry();
-	return true;
-}
-
-async function refreshAdminStarLogView() {
-	const res = await apiFetch("/auth/me");
-	const data = await res.json();
-	if (!data.ok || !data.isAdmin) {
-		document.getElementById("star-log-no-access").style.display = "block";
-		document.getElementById("star-log-list").innerHTML = "";
-		stopStarLogRefresh();
-		return false;
-	}
-	document.getElementById("star-log-no-access").style.display = "none";
-	await loadStarPurchaseLog();
-	startStarLogRefresh();
-	return true;
-}
-
-function startStarLogRefresh() {
-	if (starLogRefreshInterval) return;
-	starLogRefreshInterval = setInterval(() => {
-		loadStarPurchaseLog();
-	}, 10000);
-}
-
-function stopStarLogRefresh() {
-	if (starLogRefreshInterval) {
-		clearInterval(starLogRefreshInterval);
-		starLogRefreshInterval = null;
-	}
-}
-
-async function loadTelemetry() {
-	const res = await apiFetch("/admin/telemetry");
-	const data = await res.json();
-	if (!data.ok) {
-		document.getElementById("telemetry-body").innerHTML = "<tr><td colspan='3'>Unauthorized</td></tr>";
-		return;
-	}
-	const rows = data.series || [];
-	const tbody = document.getElementById("telemetry-body");
-	tbody.innerHTML = rows.map(row => {
-		const time = new Date(row.bucket).toLocaleString();
-		return `<tr><td>${time}</td><td>${row.eventType}</td><td>${row.count}</td></tr>`;
-	}).join("");
-
-	
-}
-
 function initModerator() {
 	moderatorInitialized = true;
-	bindRangeToggle("mod-set-coins", "mod-set-coins-value", "mod-set-coins-enabled", value => `${value} coins`);
-	bindRangeToggle("mod-add-coins", "mod-add-coins-value", "mod-add-coins-enabled", value => `+${value} coins`);
-	bindRangeToggle("mod-set-stars", "mod-set-stars-value", "mod-set-stars-enabled", value => `${value} stars`);
-	bindRangeToggle("mod-add-stars", "mod-add-stars-value", "mod-add-stars-enabled", value => `+${value} stars`);
-	bindRangeToggle("mod-drip-mult", "mod-drip-mult-value", "mod-drip-mult-enabled", value => `${value.toFixed(1)}x`);
-	bindToggleSelect("mod-is-bot-enabled", "mod-is-bot");
-	bindToggleSelect("mod-bot-profile-enabled", "mod-bot-profile");
+	const profileCard = document.getElementById("moderator-profile");
+	const adminActionsCard = document.getElementById("mod-admin-actions");
+	const statusView = document.getElementById("mod-status-view");
+	const adminStatus = document.getElementById("mod-admin-status");
+	let loadedUsername = "";
 
 	document.getElementById("mod-load-view").addEventListener("click", async () => {
 		const username = document.getElementById("mod-username-view").value.trim();
+		if (!username) {
+			statusView.innerText = "Enter a username.";
+			return;
+		}
 		const res = await apiFetch(`/moderator/profile?username=${encodeURIComponent(username)}`);
 		const data = await res.json();
 		if (!data.ok) {
 			document.getElementById("mod-status-view").innerText = data.error || "Load failed.";
 			return;
 		}
+		loadedUsername = data.username || username;
 		document.getElementById("mod-display-name-view").value = data.displayName || "";
 		document.getElementById("mod-email-view").value = data.email || "";
 		document.getElementById("mod-pronouns-view").value = data.pronouns || "";
@@ -3073,13 +1770,26 @@ function initModerator() {
 		const roleLabel = data.role ? `Role: ${data.role}` : "";
 		const frozenLabel = data.frozen ? " · Frozen" : "";
 		document.getElementById("mod-status-view").innerText = roleLabel ? `Profile loaded. ${roleLabel}${frozenLabel}` : "Profile loaded.";
-		if (currentUser && currentUser.isAdmin) {
-			await loadAdminProfileControls(username);
-		}
+		if (profileCard) profileCard.style.display = "block";
+		if (adminActionsCard) adminActionsCard.style.display = (currentUser && currentUser.isAdmin) ? "block" : "none";
+		if (adminStatus) adminStatus.innerText = "";
+		const isSelf = currentUser && currentUser.username && loadedUsername
+			? currentUser.username.toLowerCase() === loadedUsername.toLowerCase()
+			: false;
+		const freezeBtn = document.getElementById("mod-freeze");
+		const unfreezeBtn = document.getElementById("mod-unfreeze");
+		const deleteBtn = document.getElementById("mod-delete");
+		if (freezeBtn) freezeBtn.disabled = isSelf;
+		if (unfreezeBtn) unfreezeBtn.disabled = isSelf;
+		if (deleteBtn) deleteBtn.disabled = isSelf;
 	});
 
 	document.getElementById("mod-save-view").addEventListener("click", async () => {
 		const username = document.getElementById("mod-username-view").value.trim();
+		if (!username) {
+			statusView.innerText = "Load a profile first.";
+			return;
+		}
 		const displayName = document.getElementById("mod-display-name-view").value.trim();
 		const email = document.getElementById("mod-email-view").value.trim();
 		const pronouns = document.getElementById("mod-pronouns-view").value.trim();
@@ -3095,64 +1805,38 @@ function initModerator() {
 		document.getElementById("mod-status-view").innerText = data.ok ? "Profile updated." : (data.error || "Update failed.");
 	});
 
-	document.getElementById("mod-admin-save").addEventListener("click", async () => {
-		const username = document.getElementById("mod-username-view").value.trim();
-		const playerId = document.getElementById("mod-player-id").value.trim();
-		const setCoinsEnabled = document.getElementById("mod-set-coins-enabled").checked;
-		const addCoinsEnabled = document.getElementById("mod-add-coins-enabled").checked;
-		const setStarsEnabled = document.getElementById("mod-set-stars-enabled").checked;
-		const addStarsEnabled = document.getElementById("mod-add-stars-enabled").checked;
-		const dripMultEnabled = document.getElementById("mod-drip-mult-enabled").checked;
-		const isBotEnabled = document.getElementById("mod-is-bot-enabled").checked;
-		const botProfileEnabled = document.getElementById("mod-bot-profile-enabled").checked;
-		const setCoins = parseInt(document.getElementById("mod-set-coins").value, 10);
-		const addCoins = parseInt(document.getElementById("mod-add-coins").value, 10);
-		const setStars = parseInt(document.getElementById("mod-set-stars").value, 10);
-		const addStars = parseInt(document.getElementById("mod-add-stars").value, 10);
-		const dripMultiplier = parseFloat(document.getElementById("mod-drip-mult").value);
-		const isBotValue = document.getElementById("mod-is-bot").value;
-		const botProfileValue = document.getElementById("mod-bot-profile").value;
-		const dripPausedValue = document.getElementById("mod-drip-paused").value;
-		const payload = { username, playerId };
-		if (setCoinsEnabled && !Number.isNaN(setCoins)) payload.setCoins = setCoins;
-		if (addCoinsEnabled && !Number.isNaN(addCoins)) payload.addCoins = addCoins;
-		if (setStarsEnabled && !Number.isNaN(setStars)) payload.setStars = setStars;
-		if (addStarsEnabled && !Number.isNaN(addStars)) payload.addStars = addStars;
-		if (dripMultEnabled && !Number.isNaN(dripMultiplier)) payload.dripMultiplier = dripMultiplier;
-		if (isBotEnabled && (isBotValue === "true" || isBotValue === "false")) payload.isBot = isBotValue === "true";
-		if (botProfileEnabled) payload.botProfile = botProfileValue;
-		if (dripPausedValue === "true") payload.dripPaused = true;
-		if (dripPausedValue === "false") payload.dripPaused = false;
-
-		const res = await apiFetch("/admin/player-controls", {
-			method: "POST",
-			body: JSON.stringify(payload)
-		});
-		const data = await res.json();
-		const status = document.getElementById("mod-admin-status");
-		status.innerText = data.ok ? `Updated ${data.playerId} · coins ${data.coins} · stars ${data.stars} · drip ${data.dripMultiplier} · paused ${data.dripPaused}` : (data.error || "Update failed.");
-		if (data.ok) {
-			document.getElementById("mod-player-id").value = data.playerId || playerId;
+	document.getElementById("mod-ip-whitelist-btn").addEventListener("click", async () => {
+		if (!currentUser || !currentUser.isAdmin) {
+			adminStatus.innerText = "Admin access required.";
+			return;
 		}
-	});
-
-	document.getElementById("mod-touch").addEventListener("click", async () => {
-		const username = document.getElementById("mod-username-view").value.trim();
-		const playerId = document.getElementById("mod-player-id").value.trim();
-		const res = await apiFetch("/admin/player-controls", {
+		if (!loadedUsername) {
+			adminStatus.innerText = "Load a profile first.";
+			return;
+		}
+		const ip = document.getElementById("mod-ip-whitelist").value.trim();
+		const maxAccountsRaw = parseInt(document.getElementById("mod-ip-max").value, 10);
+		const maxAccounts = Number.isNaN(maxAccountsRaw) ? 2 : maxAccountsRaw;
+		if (!ip) {
+			adminStatus.innerText = "Enter an IP address to whitelist.";
+			return;
+		}
+		const res = await apiFetch("/admin/ip-whitelist", {
 			method: "POST",
-			body: JSON.stringify({ username, playerId, touchActive: true })
+			body: JSON.stringify({ ip, maxAccounts, action: "set" })
 		});
 		const data = await res.json();
-		const status = document.getElementById("mod-admin-status");
-		status.innerText = data.ok ? `Touched active for ${data.playerId}` : (data.error || "Touch failed.");
+		adminStatus.innerText = data.ok ? `Whitelisted ${ip} (max ${maxAccounts}).` : (data.error || "Whitelist failed.");
 	});
 
 	document.getElementById("mod-freeze").addEventListener("click", async () => {
+		if (!currentUser || !currentUser.isAdmin) {
+			adminStatus.innerText = "Admin access required.";
+			return;
+		}
 		const username = document.getElementById("mod-username-view").value.trim();
-		const status = document.getElementById("mod-admin-status");
 		if (!username) {
-			status.innerText = "Load a profile first.";
+			adminStatus.innerText = "Load a profile first.";
 			return;
 		}
 		if (!confirm(`Freeze account ${username}?`)) {
@@ -3163,17 +1847,17 @@ function initModerator() {
 			body: JSON.stringify({ username, action: "freeze" })
 		});
 		const data = await res.json();
-		status.innerText = data.ok ? "Account frozen." : (data.error || "Freeze failed.");
-		if (data.ok) {
-			await loadAdminProfileControls(username);
-		}
+		adminStatus.innerText = data.ok ? "Account frozen." : (data.error || "Freeze failed.");
 	});
 
 	document.getElementById("mod-unfreeze").addEventListener("click", async () => {
+		if (!currentUser || !currentUser.isAdmin) {
+			adminStatus.innerText = "Admin access required.";
+			return;
+		}
 		const username = document.getElementById("mod-username-view").value.trim();
-		const status = document.getElementById("mod-admin-status");
 		if (!username) {
-			status.innerText = "Load a profile first.";
+			adminStatus.innerText = "Load a profile first.";
 			return;
 		}
 		if (!confirm(`Unfreeze account ${username}?`)) {
@@ -3184,17 +1868,17 @@ function initModerator() {
 			body: JSON.stringify({ username, action: "unfreeze" })
 		});
 		const data = await res.json();
-		status.innerText = data.ok ? "Account unfrozen." : (data.error || "Unfreeze failed.");
-		if (data.ok) {
-			await loadAdminProfileControls(username);
-		}
+		adminStatus.innerText = data.ok ? "Account unfrozen." : (data.error || "Unfreeze failed.");
 	});
 
 	document.getElementById("mod-delete").addEventListener("click", async () => {
+		if (!currentUser || !currentUser.isAdmin) {
+			adminStatus.innerText = "Admin access required.";
+			return;
+		}
 		const username = document.getElementById("mod-username-view").value.trim();
-		const status = document.getElementById("mod-admin-status");
 		if (!username) {
-			status.innerText = "Load a profile first.";
+			adminStatus.innerText = "Load a profile first.";
 			return;
 		}
 		if (!confirm(`Delete account ${username}? This cannot be undone.`)) {
@@ -3202,7 +1886,7 @@ function initModerator() {
 		}
 		const confirmText = prompt("Type DELETE to confirm account deletion:");
 		if (confirmText !== "DELETE") {
-			status.innerText = "Deletion canceled.";
+			adminStatus.innerText = "Deletion canceled.";
 			return;
 		}
 		const res = await apiFetch("/admin/profile-actions", {
@@ -3210,39 +1894,9 @@ function initModerator() {
 			body: JSON.stringify({ username, action: "delete" })
 		});
 		const data = await res.json();
-		status.innerText = data.ok ? "Account deleted." : (data.error || "Delete failed.");
+		adminStatus.innerText = data.ok ? "Account deleted." : (data.error || "Delete failed.");
 	});
 
-}
-
-async function loadAdminProfileControls(username) {
-	const res = await apiFetch("/admin/player-controls", {
-		method: "POST",
-		body: JSON.stringify({ username })
-	});
-	const data = await res.json();
-	const status = document.getElementById("mod-admin-status");
-	if (!data.ok) {
-		status.innerText = data.error || "Load failed.";
-		return;
-	}
-	document.getElementById("mod-player-id").value = data.playerId || "";
-	setRangeValue("mod-set-coins", data.coins);
-	setRangeValue("mod-set-stars", data.stars);
-	setRangeValue("mod-add-coins", 0);
-	setRangeValue("mod-add-stars", 0);
-	setRangeValue("mod-drip-mult", data.dripMultiplier);
-	document.getElementById("mod-is-bot").value = data.isBot ? "true" : "false";
-	document.getElementById("mod-bot-profile").value = data.botProfile || "";
-	document.getElementById("mod-drip-paused").value = "";
-	status.innerText = `Loaded ${data.playerId} · coins ${data.coins} · stars ${data.stars} · drip ${data.dripMultiplier} · paused ${data.dripPaused}`;
-	const isSelf = currentUser && currentUser.username && username.toLowerCase() === currentUser.username.toLowerCase();
-	const freezeBtn = document.getElementById("mod-freeze");
-	const unfreezeBtn = document.getElementById("mod-unfreeze");
-	const deleteBtn = document.getElementById("mod-delete");
-	if (freezeBtn) freezeBtn.disabled = isSelf;
-	if (unfreezeBtn) unfreezeBtn.disabled = isSelf;
-	if (deleteBtn) deleteBtn.disabled = isSelf;
 }
 
 async function refreshModeratorView() {
@@ -3251,12 +1905,14 @@ async function refreshModeratorView() {
 	if (!data.ok || (!data.isModerator && !data.isAdmin)) {
 		document.getElementById("mod-no-access").style.display = "block";
 		document.getElementById("moderator-content").style.display = "none";
-		document.getElementById("mod-admin-controls").style.display = "none";
+		document.getElementById("moderator-profile").style.display = "none";
+		document.getElementById("mod-admin-actions").style.display = "none";
 		return false;
 	}
 	document.getElementById("mod-no-access").style.display = "none";
 	document.getElementById("moderator-content").style.display = "block";
-	document.getElementById("mod-admin-controls").style.display = data.isAdmin ? "block" : "none";
+	document.getElementById("moderator-profile").style.display = "none";
+	document.getElementById("mod-admin-actions").style.display = "none";
 	return true;
 }
 

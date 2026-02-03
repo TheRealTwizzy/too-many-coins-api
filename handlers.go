@@ -882,7 +882,7 @@ func whitelistRequestHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
-		_ = createNotification(db, "admin", "", "Whitelist request pending for IP: "+ip, "warn", "#/admin", nil)
+		_ = createNotification(db, "admin", "", "Whitelist request pending for IP: "+ip, "warn", "#/moderator", nil)
 		_ = createNotification(db, "user", account.AccountID, "Whitelist request submitted. An admin will review it.", "info", "#/home", nil)
 		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 	}

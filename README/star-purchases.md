@@ -1,5 +1,7 @@
 Stars may only be obtained by purchasing them from the system using coins.
 
+Stars are minted only by the system. Brokered trading may transfer existing Stars between players but never creates new Stars and never bypasses scarcity.
+
 Star purchases follow these rules:
 
 Players may buy stars one at a time or in bulk.

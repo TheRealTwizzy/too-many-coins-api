@@ -6,7 +6,7 @@ Too Many Coins! is an online-only massively multiplayer website game built aroun
 
 ## Overview
 
-Players earn Coins and spend them to buy Stars. Stars determine leaderboard rank for a season. As more Coins enter the system and as time passes, Stars become increasingly expensive. Coin supply shrinks as the season progresses, creating scarcity and tension, especially near the end.
+Players earn Coins and spend them to buy Stars. Stars determine leaderboard rank for a season. As more Coins enter the system and as time passes, Stars become increasingly expensive. Coin supply shrinks as the season progresses, creating scarcity and tension, especially near the end. Coin shortage is possible but rare; the system stays liquid enough for daily action.
 
 The game runs in fixed-length seasons and resets regularly, while preserving long-term player progression through cosmetics, titles, badges, and history.
 
@@ -18,6 +18,9 @@ The game must be simple, transparent, and fair
 All economy logic must be enforced server-side  
 Bulk buying must be technically allowed but economically discouraged  
 Late-season scarcity must feel intense but still rewarding  
+Economic pressure must curve, not cliff  
+There is always a rational action and a cost to inaction  
+There is never a safe move  
 The system must resist coordinated manipulation and bad actors  
 Players must have reasons to stay active until the end of a season and return for future seasons  
 
@@ -39,8 +42,8 @@ Persistent rewards carry over between seasons.
 
 Coins are the currency earned and spent by players.  
 Stars are points that determine leaderboard position.  
-Players cannot trade directly with one another.  
-Stars are always purchased from the system.
+Stars are minted only by the system; trading only transfers existing Stars.  
+Players may trade with one another only through a brokered, system-controlled process under strict eligibility rules.
 
 ---
 
@@ -48,9 +51,61 @@ Stars are always purchased from the system.
 
 Players earn Coins through limited daily and activity-based systems.  
 Players spend Coins to buy Stars.  
+Players may optionally trade Coins for existing Stars under tight, time-worsening constraints.  
 Star prices increase over time and with demand.  
 Coin supply decreases over time.  
+Inflation pressure increases monotonically; delay is punished and mistakes are permanent.  
 Late-season decisions become harder and more consequential.
+
+---
+
+## Trading (Conditional, Brokered)
+
+Trading is optional, costly, asymmetric, and increasingly restrictive as the season progresses.
+
+Trading rules:
+
+Trades are Coins-for-Stars only (no Coin-for-Coin, no Star-for-Star).  
+Trades are brokered by the system; players do not set prices.  
+Every trade burns Coins as overhead. Burned Coins never re-enter the economy.  
+Trades never create Coins or Stars and never bypass scarcity.  
+Trades are asymmetric: the buyer pays more than the seller receives due to burn and fees.  
+Trades are priced at or above the current system star price, plus a time-based premium.  
+Trades always contribute to market pressure, never relieve it.  
+
+Eligibility gates (must pass all):
+
+Both players must be currently active and time-normalized participants.  
+Both must have recent coin spending activity (no pure hoarders).  
+Relative Star holdings must be within a tightening ratio band.  
+Coin liquidity must be within a tightening band (not too low, not too high).  
+Inflation exposure difference must be within a tightening band.  
+
+Some players will not qualify to trade. Some pairs will never qualify.
+
+As the season progresses:
+
+Trade eligibility gates tighten.  
+Trade burn percentage rises.  
+Maximum Stars per trade drops.  
+Daily trade limits decrease.  
+
+Late-season trading is expensive, dangerous, and narrow, but still rational in specific cases.
+
+Typical rational cases: a seller needs liquidity to keep playing, or a buyer pays a premium to reach a tier when time is short.
+
+---
+
+## Trading as Pressure, Not Relief
+
+Trading does not save players from inflation. It adds pressure:
+
+Trades burn Coins and reduce total liquidity.  
+Trades are priced with a premium and never undercut the system price.  
+Trades increase market pressure and can make future Stars more expensive.  
+Eligibility tightens over time and can deny trades entirely.  
+
+Trading is a costly tool for repositioning risk, not a catch-up system.
 
 ---
 
@@ -86,6 +141,8 @@ Late-season coin supply is significantly scarcer
 
 Coin emission must be time-sliced so a full day’s supply cannot be drained instantly. If coin consumption is too fast, earning rates must be throttled smoothly rather than stopped abruptly.
 
+Trade burn is modeled and balanced against minting to maintain liquidity. Coin shortage is possible but rare; the system must remain liquid enough for meaningful daily action.
+
 ---
 
 ## Late-Season Design
@@ -104,6 +161,12 @@ Cosmetics
 Achievements  
 Participation recognition  
 Community-wide progress rewards  
+
+Late-season play also includes:
+
+Small, high-impact star purchases  
+Tight, costly trading opportunities  
+Late-season challenges that reward persistence without adding Coins
 
 ---
 
@@ -178,5 +241,49 @@ A new player should understand the game immediately.
 An experienced player should find strategy and tension.  
 Late-season play should remain meaningful.  
 Players should return for multiple seasons.
+
+---
+
+## Mid-Season and Late-Season Play
+
+Mid-season and late-season are designed to be risky, costly, and narrow, but never pointless.
+
+Late joiners are disadvantaged but not invalidated.
+
+You can still:
+
+Earn Coins through limited faucets  
+Buy Stars in small, high-impact quantities  
+Trade under strict eligibility to reposition risk  
+Chase tiers, badges, and late-season challenges  
+
+You cannot:
+
+Catch up safely  
+Erase mistakes  
+Avoid inflation pressure  
+
+---
+
+## Why You Can Still Play (Even If You Can’t Win)
+
+You may be mathematically unable to reach first place, but you always have meaningful decisions:
+
+Spend now vs. wait and risk higher prices  
+Buy a small number of Stars vs. save for a later spike  
+Sell Stars to regain liquidity vs. hold position  
+Use a costly trade to reach a tier vs. accept rank decay  
+
+There is always something at stake, and inaction always has a cost.
+
+---
+
+## Design Guarantee (Revised)
+
+There is always a rational action.  
+There is always something at stake.  
+There is always a cost to inaction.  
+There is never a safe move.  
+Hope may exist; comfort must not.
 
 ---

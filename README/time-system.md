@@ -31,6 +31,7 @@ Each season has a fixed start_time and end_time.
 Season day index is derived from (current_time - start_time).
 
 Pricing curves, coin budgets, and caps are based on the derived season day.
+Trade eligibility bands, premiums, and burn rates are also based on the derived season day.
 
 Season end transitions the season to ended state and freezes economy actions.
 

@@ -36,6 +36,8 @@ Daily tasks
 
 Comeback rewards
 
+Brokered player trading
+
 Cosmetics and meta-progression
 
 Endgame challenges

@@ -28,7 +28,7 @@ Season history:
 
 Each completed season is recorded in the player profile.
 
-History includes season number, final rank tier, and earned rewards.
+History includes season number, final rank tier, earned rewards, and notable trade activity counts.
 
 Return incentives:
 

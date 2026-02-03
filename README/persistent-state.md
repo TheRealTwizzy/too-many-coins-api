@@ -56,6 +56,12 @@ global_coin_budget_remaining
 
 last_emission_tick_at
 
+trade_premium
+
+trade_burn_rate
+
+trade_eligibility_tightness
+
 Purchases (append-only log):
 
 purchase_id
@@ -73,6 +79,28 @@ price_snapshot
 quantity_multiplier_snapshot
 
 market_pressure_snapshot
+
+created_at
+
+Trades (append-only log):
+
+trade_id
+
+seller_player_id
+
+buyer_player_id
+
+season_id
+
+star_quantity
+
+coin_price
+
+coin_burned
+
+trade_premium_snapshot
+
+eligibility_snapshot
 
 created_at
 

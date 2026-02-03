@@ -40,7 +40,12 @@ The cap decreases as the season progresses.
 
 Late-season caps are significantly lower than early-season caps.
 
+Even late-season caps allow some daily earning; faucets never drop to zero.
+
 All faucet grants draw from the global emission pool.
 If the pool is low, faucet rewards are proportionally throttled.
+
+Faucet tuning is balanced against trade burn to keep the economy liquid enough for daily action.
+Coin shortage is possible but rare.
 
 All faucet usage and coin grants are validated server-side and logged.

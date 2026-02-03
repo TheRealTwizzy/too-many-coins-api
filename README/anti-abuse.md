@@ -29,6 +29,7 @@ Per-player star purchase rate limits exist.
 Per-IP star purchase limits exist, especially early in the season.
 
 Coin earning and star buying may be dynamically throttled for suspicious activity.
+Brokered trading eligibility may be tightened or suspended for suspicious activity.
 
 Detection:
 
@@ -37,6 +38,14 @@ The system monitors for clustering patterns such as many new accounts from relat
 Suspicious activity generates abuse events.
 
 Abuse events may trigger automatic temporary throttles.
+
+Trade-specific detection:
+
+Repeated reciprocal trades between the same accounts
+
+Trading patterns that concentrate Stars across related IP ranges
+
+Unusual trade volume spikes relative to participation
 
 Enforcement:
 
