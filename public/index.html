@@ -1366,6 +1366,19 @@
 
 	<div class="footer">Made by AI</div>
 	<div id="debug-status" class="toast" style="display:none; position:fixed; left:1rem; bottom:1rem; z-index:40; max-width:420px;"></div>
+	<script>
+		(() => {
+			const query = location.search || "";
+			const show = query.includes("debug=1") || location.hash.includes("debug=1");
+			if (!show) return;
+			const el = document.getElementById("debug-status");
+			if (!el) return;
+			el.style.display = "block";
+			el.className = "toast";
+			el.innerText = "Inline JS OK. Waiting for app boot...";
+			window.__INLINE_DEBUG__ = true;
+		})();
+	</script>
 
 	<script>
 const authStatus = document.getElementById("auth-status");
@@ -1433,6 +1446,10 @@ const adminSeasonDetail = document.getElementById("admin-season-detail");
 const adminSeasonMetrics = document.getElementById("admin-season-metrics");
 const debugStatus = document.getElementById("debug-status");
 const adminDebugToggle = document.getElementById("admin-debug-toggle");
+
+if (window.__INLINE_DEBUG__ && debugStatus) {
+	debugStatus.innerText = "App script running.";
+}
 const adminToggleIP = document.getElementById("admin-toggle-ip");
 const adminToggleCluster = document.getElementById("admin-toggle-cluster");
 const adminToggleThrottle = document.getElementById("admin-toggle-throttle");
