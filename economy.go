@@ -395,6 +395,26 @@ func ensureSchema(db *sql.DB) error {
 	}
 
 	_, err = db.Exec(`
+		DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1
+				FROM information_schema.columns
+				WHERE table_name = 'refresh_tokens'
+				  AND column_name = 'account_id'
+				  AND data_type = 'uuid'
+			) THEN
+				ALTER TABLE refresh_tokens
+					ALTER COLUMN account_id TYPE TEXT
+					USING account_id::text;
+			END IF;
+		END $$;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
 		ALTER TABLE refresh_tokens
 			ADD COLUMN IF NOT EXISTS token_hash TEXT;
 	`)
