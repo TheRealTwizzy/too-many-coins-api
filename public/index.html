@@ -1361,6 +1361,7 @@
 	</main>
 
 	<div class="footer">Made by AI</div>
+	<div id="debug-status" class="toast" style="display:none; position:fixed; left:1rem; bottom:1rem; z-index:40; max-width:420px;"></div>
 
 	<script>
 const authStatus = document.getElementById("auth-status");
@@ -1426,6 +1427,7 @@ const adminSeasonList = document.getElementById("admin-season-list");
 const adminSeasonEmpty = document.getElementById("admin-season-empty");
 const adminSeasonDetail = document.getElementById("admin-season-detail");
 const adminSeasonMetrics = document.getElementById("admin-season-metrics");
+const debugStatus = document.getElementById("debug-status");
 const adminToggleIP = document.getElementById("admin-toggle-ip");
 const adminToggleCluster = document.getElementById("admin-toggle-cluster");
 const adminToggleThrottle = document.getElementById("admin-toggle-throttle");
@@ -1492,6 +1494,18 @@ function apiFetch(url, options = {}) {
 		},
 		credentials: "include"
 	});
+}
+
+function isDebugEnabled() {
+	const query = location.search || "";
+	return Boolean(window.__DEV_MODE__) || query.includes("debug=1") || location.hash.includes("debug=1");
+}
+
+function setDebugStatus(message) {
+	if (!debugStatus || !isDebugEnabled()) return;
+	debugStatus.style.display = "block";
+	debugStatus.className = "toast";
+	debugStatus.innerText = message;
 }
 
 async function apiFetchJson(url, options = {}, timeoutMs = 3000) {
@@ -2802,7 +2816,12 @@ function isAdminRoute() {
 
 async function route() {
 	const { routeKey, query } = getRouteInfo();
-	await loadAuth();
+	setDebugStatus(`Routing: ${routeKey || "home"}`);
+	try {
+		await loadAuth();
+	} catch (e) {
+		setDebugStatus("Routing: auth probe failed");
+	}
 	initCollapsibleCards();
 	stopAdminLoops();
 	if (routeKey === "signup" && currentUser) {
@@ -2810,6 +2829,7 @@ async function route() {
 		return;
 	}
 	setView(viewMap[routeKey]);
+	setDebugStatus(`View: ${viewMap[routeKey] || "missing"}`);
 	if (currentUser && !document.hidden) {
 		startActiveLoops();
 	} else {
@@ -3174,10 +3194,12 @@ async function refreshModeratorView() {
 
 window.addEventListener("error", (event) => {
 	setToast(`Error: ${event.message}`, "error");
+	setDebugStatus(`Error: ${event.message}`);
 });
 
 window.addEventListener("unhandledrejection", (event) => {
 	setToast("Error: unexpected failure", "error");
+	setDebugStatus("Error: unhandled rejection");
 });
 
 window.addEventListener("hashchange", () => {
