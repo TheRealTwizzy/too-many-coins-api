@@ -1805,7 +1805,18 @@ async function loadSeasons() {
 				const perStarPrice = typeof data.finalStarPrice === "number"
 					? data.finalStarPrice
 					: (data.breakdown && data.breakdown.length > 0 ? data.breakdown[data.breakdown.length - 1].finalPrice : null);
-				if (quoteEl) quoteEl.innerText = perStarPrice != null ? `Per-star price: ${perStarPrice} coins` : "";
+				const totalCost = typeof data.totalCoinsSpent === "number" ? data.totalCoinsSpent : null;
+				if (quoteEl) {
+					if (totalCost != null && perStarPrice != null) {
+						quoteEl.innerText = `Total cost: ${totalCost} coins · Per-star: ${perStarPrice} coins`;
+					} else if (totalCost != null) {
+						quoteEl.innerText = `Total cost: ${totalCost} coins`;
+					} else if (perStarPrice != null) {
+						quoteEl.innerText = `Per-star: ${perStarPrice} coins`;
+					} else {
+						quoteEl.innerText = "";
+					}
+				}
 				if (warningEl) warningEl.innerText = data.warning || "";
 				if (breakdownEl) breakdownEl.innerText = "";
 			};
@@ -1818,7 +1829,11 @@ async function loadSeasons() {
 				const qty = Math.max(1, parseInt(qtyInput?.value, 10) || 1);
 				await refreshQuote();
 				if (qty > 1) {
-					if (!confirm(`Confirm purchase of ${qty} stars?`)) {
+					const totalCost = lastQuote && typeof lastQuote.totalCoinsSpent === "number" ? lastQuote.totalCoinsSpent : null;
+					const confirmMessage = totalCost != null
+						? `Confirm purchase of ${qty} stars for ${totalCost} coins?`
+						: `Confirm purchase of ${qty} stars?`;
+					if (!confirm(confirmMessage)) {
 						return;
 					}
 				}
