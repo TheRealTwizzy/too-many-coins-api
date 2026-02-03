@@ -1788,6 +1788,9 @@ async function loadSeasons() {
 			const refreshQuote = async () => {
 				if (!qtyInput) return;
 				const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
+				if (quoteEl) quoteEl.innerText = "";
+				if (warningEl) warningEl.innerText = "";
+				if (breakdownEl) breakdownEl.innerText = "";
 				const res = await apiFetch("/buy-star/quote", {
 					method: "POST",
 					body: JSON.stringify({ seasonId: season.seasonId, quantity: qty })
@@ -1796,8 +1799,6 @@ async function loadSeasons() {
 				if (!data.ok) {
 					lastQuote = null;
 					if (quoteEl) quoteEl.innerText = data.error || "Quote failed";
-					if (warningEl) warningEl.innerText = "";
-					if (breakdownEl) breakdownEl.innerText = "";
 					return;
 				}
 				lastQuote = data;
