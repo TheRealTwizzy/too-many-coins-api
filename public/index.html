@@ -1377,6 +1377,13 @@
 			el.className = "toast";
 			el.innerText = "Inline JS OK. Waiting for app boot...";
 			window.__INLINE_DEBUG__ = true;
+			window.addEventListener("error", (event) => {
+				const msg = event && event.message ? event.message : "Unknown error";
+				el.innerText = `Inline error: ${msg}`;
+			});
+			window.addEventListener("unhandledrejection", () => {
+				el.innerText = "Inline error: unhandled rejection";
+			});
 		})();
 	</script>
 
