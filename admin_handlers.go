@@ -82,6 +82,20 @@ type AdminAbuseEventsResponse struct {
 	Items []AdminAbuseEvent `json:"items,omitempty"`
 }
 
+type AdminOverviewResponse struct {
+	OK                   bool    `json:"ok"`
+	Error                string  `json:"error,omitempty"`
+	ActiveSeasons        int     `json:"activeSeasons"`
+	CoinsEmittedLastHour int64   `json:"coinsEmittedLastHour"`
+	StarsPurchasedHour   int64   `json:"starsPurchasedLastHour"`
+	MarketPressure       float64 `json:"marketPressure"`
+	MarketPressureRatio  float64 `json:"marketPressureRatio"`
+	ActiveThrottles      int     `json:"activeThrottles"`
+	ActiveAbuseFlags     int     `json:"activeAbuseFlags"`
+	AbuseEventsLastHour  int     `json:"abuseEventsLastHour"`
+	AbuseSevereLastHour  int     `json:"abuseSevereLastHour"`
+}
+
 func requireAdmin(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Account, bool) {
 	account, _, err := getSessionAccount(db, r)
 	if err != nil || account == nil {
@@ -224,6 +238,96 @@ func adminAbuseEventsHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		json.NewEncoder(w).Encode(AdminAbuseEventsResponse{OK: true, Items: items})
+	}
+}
+
+func adminOverviewHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+
+		now := time.Now().UTC()
+		activeSeasons := 1
+		if isSeasonEnded(now) {
+			activeSeasons = 0
+		}
+
+		var coinsEmitted int64
+		_ = db.QueryRow(`
+			SELECT COALESCE(SUM(amount), 0)
+			FROM coin_earning_log
+			WHERE created_at >= $1
+		`, now.Add(-1*time.Hour)).Scan(&coinsEmitted)
+
+		var starsPurchased int64
+		_ = db.QueryRow(`
+			SELECT COUNT(*)
+			FROM star_purchase_log
+			WHERE created_at >= $1
+		`, now.Add(-1*time.Hour)).Scan(&starsPurchased)
+
+		var last24h int64
+		var last7d int64
+		_ = db.QueryRow(`
+			SELECT COUNT(*)
+			FROM star_purchase_log
+			WHERE season_id = $1 AND created_at >= $2
+		`, currentSeasonID(), now.Add(-24*time.Hour)).Scan(&last24h)
+		_ = db.QueryRow(`
+			SELECT COUNT(*)
+			FROM star_purchase_log
+			WHERE season_id = $1 AND created_at >= $2
+		`, currentSeasonID(), now.Add(-7*24*time.Hour)).Scan(&last7d)
+		marketRatio := 0.0
+		if last7d > 0 {
+			marketRatio = float64(last24h) / (float64(last7d) / 7.0)
+		}
+
+		var activeThrottles int
+		_ = db.QueryRow(`
+			SELECT COUNT(*)
+			FROM player_abuse_state
+			WHERE season_id = $1 AND severity >= 1
+		`, currentSeasonID()).Scan(&activeThrottles)
+
+		var activeFlags int
+		_ = db.QueryRow(`
+			SELECT COUNT(*)
+			FROM player_abuse_state
+			WHERE season_id = $1 AND severity >= 2
+		`, currentSeasonID()).Scan(&activeFlags)
+
+		var abuseEvents int
+		_ = db.QueryRow(`
+			SELECT COUNT(*)
+			FROM abuse_events
+			WHERE created_at >= $1
+		`, now.Add(-1*time.Hour)).Scan(&abuseEvents)
+
+		var abuseSevere int
+		_ = db.QueryRow(`
+			SELECT COUNT(*)
+			FROM abuse_events
+			WHERE created_at >= $1 AND severity >= 3
+		`, now.Add(-1*time.Hour)).Scan(&abuseSevere)
+
+		json.NewEncoder(w).Encode(AdminOverviewResponse{
+			OK:                   true,
+			ActiveSeasons:        activeSeasons,
+			CoinsEmittedLastHour: coinsEmitted,
+			StarsPurchasedHour:   starsPurchased,
+			MarketPressure:       economy.MarketPressure(),
+			MarketPressureRatio:  marketRatio,
+			ActiveThrottles:      activeThrottles,
+			ActiveAbuseFlags:     activeFlags,
+			AbuseEventsLastHour:  abuseEvents,
+			AbuseSevereLastHour:  abuseSevere,
+		})
 	}
 }
 

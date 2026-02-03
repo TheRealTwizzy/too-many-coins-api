@@ -1413,6 +1413,15 @@ const heroInflation = document.getElementById("hero-inflation");
 const heroPressure = document.getElementById("hero-pressure");
 const leaderboardResults = document.getElementById("leaderboard-results");
 const leaderboardPageLabel = document.getElementById("leaderboard-page");
+const adminIndicatorServer = document.getElementById("admin-indicator-server");
+const adminIndicatorEconomy = document.getElementById("admin-indicator-economy");
+const adminIndicatorAbuse = document.getElementById("admin-indicator-abuse");
+const adminOverviewSeasons = document.getElementById("admin-overview-seasons");
+const adminOverviewCoins = document.getElementById("admin-overview-coins");
+const adminOverviewStars = document.getElementById("admin-overview-stars");
+const adminOverviewPressure = document.getElementById("admin-overview-pressure");
+const adminOverviewThrottles = document.getElementById("admin-overview-throttles");
+const adminOverviewFlags = document.getElementById("admin-overview-flags");
 
 const views = Array.from(document.querySelectorAll(".view"));
 const viewMap = {
@@ -1456,6 +1465,7 @@ let notificationSettings = {};
 let notificationSettingsSaveTimer = null;
 let notificationPanelOpen = false;
 let notificationsCache = [];
+let adminOverviewTimer = null;
 
 function apiFetch(url, options = {}) {
 	return fetch(url, {
@@ -1717,10 +1727,14 @@ function stopActiveLoops(options = {}) {
 function handleVisibility() {
 	if (document.hidden) {
 		stopActiveLoops({ keepNotifications: true });
+		stopAdminLoops();
 		return;
 	}
 	if (currentUser) {
 		startActiveLoops();
+	}
+	if (currentUser && currentUser.isAdmin && isAdminRoute()) {
+		startAdminLoops();
 	}
 }
 
@@ -2343,6 +2357,71 @@ function refreshAdminView() {
 	if (adminShell) adminShell.style.display = "grid";
 }
 
+function setIndicator(el, text, level) {
+	if (!el) return;
+	el.classList.remove("ok", "warn", "danger");
+	if (level) el.classList.add(level);
+	el.innerText = text;
+}
+
+function abuseSignalState(flags, events, severe) {
+	if (severe >= 5 || flags >= 25) return { label: "Critical", level: "danger" };
+	if (events >= 10 || flags >= 5) return { label: "Elevated", level: "warn" };
+	return { label: "Low", level: "ok" };
+}
+
+function economyState(pressure) {
+	if (typeof pressure !== "number" || !isFinite(pressure)) {
+		return { label: "Stable", level: "ok" };
+	}
+	if (pressure >= 1.3) return { label: "Pressured", level: "warn" };
+	return { label: "Stable", level: "ok" };
+}
+
+async function loadAdminOverview() {
+	if (!currentUser || !currentUser.isAdmin) return;
+	try {
+		const res = await apiFetch("/admin/overview");
+		const data = await res.json();
+		if (!data.ok) {
+			setIndicator(adminIndicatorServer, "Server Status: Degraded", "danger");
+			return;
+		}
+		const economy = economyState(data.marketPressure);
+		const abuse = abuseSignalState(data.activeAbuseFlags || 0, data.abuseEventsLastHour || 0, data.abuseSevereLastHour || 0);
+		setIndicator(adminIndicatorServer, "Server Status: OK", "ok");
+		setIndicator(adminIndicatorEconomy, `Economy State: ${economy.label}`, economy.level);
+		setIndicator(adminIndicatorAbuse, `Abuse Signals: ${abuse.label}`, abuse.level);
+		if (adminOverviewSeasons) adminOverviewSeasons.innerText = `${data.activeSeasons}`;
+		if (adminOverviewCoins) adminOverviewCoins.innerText = `${data.coinsEmittedLastHour}`;
+		if (adminOverviewStars) adminOverviewStars.innerText = `${data.starsPurchasedLastHour}`;
+		if (adminOverviewPressure) {
+			const ratio = typeof data.marketPressureRatio === "number" && isFinite(data.marketPressureRatio)
+				? `${data.marketPressureRatio.toFixed(2)}x`
+				: "--";
+			const pressure = typeof data.marketPressure === "number" && isFinite(data.marketPressure)
+				? `${data.marketPressure.toFixed(2)}x`
+				: "--";
+			adminOverviewPressure.innerText = `${pressure} · ${ratio}`;
+		}
+		if (adminOverviewThrottles) adminOverviewThrottles.innerText = `${data.activeThrottles}`;
+		if (adminOverviewFlags) adminOverviewFlags.innerText = `${data.activeAbuseFlags}`;
+	} catch (e) {
+		setIndicator(adminIndicatorServer, "Server Status: Degraded", "danger");
+	}
+}
+
+function startAdminLoops() {
+	if (adminOverviewTimer) return;
+	loadAdminOverview();
+	adminOverviewTimer = setInterval(loadAdminOverview, 10000);
+}
+
+function stopAdminLoops() {
+	if (adminOverviewTimer) clearInterval(adminOverviewTimer);
+	adminOverviewTimer = null;
+}
+
 function getRouteInfo() {
 	const hash = location.hash.replace("#", "");
 	if (!hash || hash === "/") {
@@ -2355,10 +2434,15 @@ function getRouteInfo() {
 	return { routeKey, query };
 }
 
+function isAdminRoute() {
+	return getRouteInfo().routeKey === "admin";
+}
+
 async function route() {
 	const { routeKey, query } = getRouteInfo();
 	await loadAuth();
 	initCollapsibleCards();
+	stopAdminLoops();
 	if (routeKey === "signup" && currentUser) {
 		location.hash = "#/home";
 		return;
@@ -2394,6 +2478,7 @@ async function route() {
 	if (routeKey === "admin") {
 		if (!adminInitialized) initAdmin();
 		refreshAdminView();
+		startAdminLoops();
 		return;
 	}
 	if (routeKey === "leaderboard") {
