@@ -534,6 +534,112 @@
 	.view { display: none; }
 	.view.active { display: block; }
 	.footer { margin-top: auto; text-align: center; font-size: 0.8rem; color: #9aa3c4; padding: 1.5rem 0; }
+	.admin-layout {
+		display: grid;
+		grid-template-columns: 240px minmax(0, 1fr);
+		gap: 1.5rem;
+		align-items: start;
+	}
+	.admin-sidebar {
+		position: sticky;
+		top: 96px;
+		align-self: start;
+		height: calc(100vh - 120px);
+		padding: 1.25rem 1rem;
+		border-radius: 18px;
+		background: var(--panel-strong);
+		border: 1px solid var(--border);
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.admin-sidebar .label {
+		font-size: 0.75rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+	.admin-nav {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.admin-nav button {
+		text-align: left;
+		padding: 0.5rem 0.75rem;
+		border-radius: 10px;
+		background: transparent;
+		border: 1px solid transparent;
+		color: #c7cce7;
+	}
+	.admin-nav button.active,
+	.admin-nav button:hover {
+		border-color: #3b82f6;
+		background: rgba(59, 130, 246, 0.15);
+		color: #e0e7ff;
+	}
+	.admin-topbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem 1.25rem;
+		border-radius: 16px;
+		background: rgba(12, 16, 34, 0.92);
+		border: 1px solid var(--border);
+		margin-bottom: 1rem;
+	}
+	.admin-indicators {
+		display: flex;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+	.indicator {
+		padding: 0.4rem 0.75rem;
+		border-radius: 999px;
+		border: 1px solid #2a2f55;
+		font-size: 0.75rem;
+		background: #11162b;
+	}
+	.indicator.ok { border-color: rgba(34, 197, 94, 0.6); color: #bbf7d0; }
+	.indicator.warn { border-color: rgba(245, 158, 11, 0.6); color: #fde68a; }
+	.indicator.danger { border-color: rgba(239, 68, 68, 0.6); color: #fecaca; }
+	.admin-section {
+		margin-bottom: 1.5rem;
+	}
+	.admin-section h3 {
+		margin: 0 0 0.5rem;
+		font-size: 1.1rem;
+	}
+	.admin-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 0.85rem;
+	}
+	.admin-metric {
+		padding: 0.85rem;
+		border-radius: 12px;
+		background: rgba(8, 12, 26, 0.7);
+		border: 1px solid rgba(42, 47, 85, 0.8);
+	}
+	.admin-control-strip {
+		border-top: 1px solid var(--border);
+		margin-top: 0.75rem;
+		padding-top: 0.75rem;
+	}
+	.admin-control-strip .row {
+		align-items: flex-start;
+	}
+	.admin-control-strip button[disabled] {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.admin-empty {
+		padding: 0.75rem 0.9rem;
+		border-radius: 10px;
+		border: 1px dashed #2a2f55;
+		color: #9aa3c4;
+		font-size: 0.85rem;
+	}
 	@media (max-width: 720px) {
 		main {
 			padding: 1.25rem;
@@ -584,6 +690,13 @@
 		.footer {
 			position: static;
 		}
+		.admin-layout {
+			grid-template-columns: 1fr;
+		}
+		.admin-sidebar {
+			position: static;
+			height: auto;
+		}
 	}
 	</style>
 </head>
@@ -609,6 +722,7 @@
 				<a href="#/leaderboard">Leaderboard</a>
 				<a id="signup-link" href="#/signup">Sign up</a>
 				<a id="moderator-link" href="#/moderator" style="display:none;">Moderate</a>
+				<a id="admin-link" href="#/admin" style="display:none;">Admin</a>
 			</nav>
 		</div>
 	</header>
@@ -938,6 +1052,238 @@
 			</div>
 		</section>
 
+		<section id="view-admin" class="view">
+			<div class="section-stack">
+				<div class="card hero-card">
+					<div class="card-header">
+						<div>
+							<div class="label">Admin control panel</div>
+							<h2 style="margin:0.35rem 0 0;">System integrity, risk, and accountability.</h2>
+							<div class="muted">Admins observe, constrain, and intervene. No rewards. No shortcuts.</div>
+						</div>
+						<div class="section-nav">
+							<a href="#/home">Back to game</a>
+						</div>
+					</div>
+				</div>
+
+				<div id="admin-access-denied" class="card" style="display:none;">
+					<div class="label">Not authorized</div>
+					<div class="label">Admin access is required to view this panel.</div>
+				</div>
+
+				<div id="admin-shell" class="admin-layout" style="display:none;">
+					<aside class="admin-sidebar">
+						<div>
+							<div class="label">Admin navigation</div>
+							<div class="muted">Risk-first hierarchy. No shortcuts.</div>
+						</div>
+						<nav class="admin-nav" id="admin-nav">
+							<button type="button" data-target="admin-overview">Overview</button>
+							<button type="button" data-target="admin-seasons">Seasons</button>
+							<button type="button" data-target="admin-anti-cheat">Anti-Cheat</button>
+							<button type="button" data-target="admin-players">Players</button>
+							<button type="button" data-target="admin-abuse-monitor">Abuse Monitor</button>
+							<button type="button" data-target="admin-whitelist">Whitelist</button>
+							<button type="button" data-target="admin-emergency">Emergency</button>
+							<button type="button" data-target="admin-audit">Audit Log</button>
+						</nav>
+						<div class="muted" style="margin-top:auto;">Admins do not play the game.</div>
+					</aside>
+
+					<div>
+						<div class="admin-topbar">
+							<div>
+								<div class="label">Global indicators</div>
+								<div class="muted">Read-only system state</div>
+							</div>
+							<div class="admin-indicators">
+								<div id="admin-indicator-server" class="indicator">Server Status: Loading</div>
+								<div id="admin-indicator-economy" class="indicator">Economy State: Loading</div>
+								<div id="admin-indicator-abuse" class="indicator">Abuse Signals: Loading</div>
+							</div>
+						</div>
+
+						<section id="admin-overview" class="admin-section">
+							<h3>System Health</h3>
+							<div class="card">
+								<div class="label">Overview dashboard (read-only)</div>
+								<div class="admin-grid" style="margin-top:0.75rem;">
+									<div class="admin-metric">
+										<div class="label">Active seasons</div>
+										<div id="admin-overview-seasons" class="stat-value">--</div>
+									</div>
+									<div class="admin-metric">
+										<div class="label">Coins emitted (last hour)</div>
+										<div id="admin-overview-coins" class="stat-value">--</div>
+									</div>
+									<div class="admin-metric">
+										<div class="label">Stars purchased (last hour)</div>
+										<div id="admin-overview-stars" class="stat-value">--</div>
+									</div>
+									<div class="admin-metric">
+										<div class="label">Market pressure trend</div>
+										<div id="admin-overview-pressure" class="stat-value">--</div>
+									</div>
+									<div class="admin-metric">
+										<div class="label">Active throttles</div>
+										<div id="admin-overview-throttles" class="stat-value">--</div>
+									</div>
+									<div class="admin-metric">
+										<div class="label">Active abuse flags</div>
+										<div id="admin-overview-flags" class="stat-value">--</div>
+									</div>
+								</div>
+								<div class="muted" style="margin-top:0.75rem;">Live indicators are sourced from server streams. No client-side authority.</div>
+							</div>
+						</section>
+
+						<section id="admin-seasons" class="admin-section">
+							<h3>Season Integrity</h3>
+							<div class="card">
+								<div class="label">Seasons (system state)</div>
+								<div id="admin-season-list" class="section-stack" style="margin-top:0.75rem;"></div>
+								<div class="admin-empty" id="admin-season-empty" style="display:none;">No season data available.</div>
+							</div>
+							<div class="card" id="admin-season-detail" data-collapsible="true" style="display:none;">
+								<div class="card-toggle">
+									<div class="label">Season detail</div>
+									<button class="toggle-btn" type="button">Hide</button>
+								</div>
+								<div class="card-body">
+									<div id="admin-season-metrics" class="admin-grid"></div>
+									<div class="admin-control-strip">
+										<div class="label">Control strip (guarded)</div>
+										<div class="muted">Actions explain impact. All changes are server-enforced and audited.</div>
+										<div class="row" style="margin-top:0.75rem;">
+											<button type="button" disabled>Pause star purchases</button>
+											<div class="muted">Prevents new star buys to stop price acceleration.</div>
+										</div>
+										<div class="row">
+											<button type="button" disabled>Reduce emission rate</button>
+											<div class="muted">Reduces daily emission target to slow inflation.</div>
+										</div>
+										<div class="row">
+											<button type="button" disabled>Disable trading</button>
+											<div class="muted">Suspends trading to halt exploit loops.</div>
+										</div>
+										<div class="row">
+											<button type="button" class="danger" disabled>Freeze season</button>
+											<div class="muted">Freezes all season activity. Requires double-confirmation.</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+
+						<section id="admin-anti-cheat" class="admin-section">
+							<h3>Anti-Cheat &amp; Abuse Controls</h3>
+							<div class="card">
+								<div class="label">Global toggles</div>
+								<div class="admin-grid" style="margin-top:0.75rem;">
+									<div class="admin-metric">Enable IP enforcement · <span id="admin-toggle-ip">--</span></div>
+									<div class="admin-metric">Enable clustering detection · <span id="admin-toggle-cluster">--</span></div>
+									<div class="admin-metric">Enable automatic throttling · <span id="admin-toggle-throttle">--</span></div>
+									<div class="admin-metric">Enable trade tightening · <span id="admin-toggle-trade">--</span></div>
+									<div class="admin-metric">Enable bot heuristics · <span id="admin-toggle-bots">--</span></div>
+								</div>
+								<div class="muted" style="margin-top:0.75rem;">Toggles are server-enforced only. No client authority.</div>
+							</div>
+							<div class="card">
+								<div class="label">Sensitivity controls</div>
+								<div class="admin-grid" style="margin-top:0.75rem;">
+									<div class="admin-metric">Clustering sensitivity: <span id="admin-sense-cluster">--</span></div>
+									<div class="admin-metric">Throttle ramp speed: <span id="admin-sense-throttle">--</span></div>
+									<div class="admin-metric">Trade tightening curve: <span id="admin-sense-trade">--</span></div>
+									<div class="admin-metric">Faucet response: <span id="admin-sense-faucet">--</span></div>
+								</div>
+								<div class="muted" style="margin-top:0.75rem;">Sensitivity shapes system behavior, not individual outcomes.</div>
+							</div>
+							<div class="card">
+								<div class="label">Visibility-only signals</div>
+								<div id="admin-abuse-stream" class="admin-empty" style="margin-top:0.75rem;">Streaming abuse events will appear here.</div>
+								<div class="admin-grid" style="margin-top:0.75rem;">
+									<div class="admin-metric">Severity distribution: <span id="admin-abuse-severity">--</span></div>
+									<div class="admin-metric">IP-group concentration: <span id="admin-abuse-heatmap">--</span></div>
+								</div>
+							</div>
+						</section>
+
+						<section id="admin-players" class="admin-section">
+							<h3>Player &amp; Network Oversight</h3>
+							<div class="card">
+								<div class="label">Player search (precision, not power)</div>
+								<div class="row" style="margin-top:0.75rem;">
+									<input id="admin-player-query" placeholder="Username, Player ID, Account ID" />
+									<select id="admin-player-trust">
+										<option value="">Trust status</option>
+										<option value="normal">Normal</option>
+										<option value="throttled">Throttled</option>
+										<option value="flagged">Flagged</option>
+									</select>
+									<button id="admin-player-search" class="primary" type="button" disabled>Search</button>
+								</div>
+								<div id="admin-player-results" class="section-stack" style="margin-top:0.75rem;"></div>
+								<div class="admin-empty" id="admin-player-empty">Search results will appear here.</div>
+							</div>
+						</section>
+
+						<section id="admin-abuse-monitor" class="admin-section">
+							<h3>Abuse Monitor</h3>
+							<div class="card">
+								<div class="label">Pattern-first signals</div>
+								<div id="admin-abuse-patterns" class="admin-empty" style="margin-top:0.75rem;">Clusters, trade loops, and anomalies will surface here.</div>
+							</div>
+						</section>
+
+						<section id="admin-whitelist" class="admin-section">
+							<h3>Whitelist Management</h3>
+							<div class="card">
+								<div class="label">Batch review only</div>
+								<div class="muted">Requests grouped by IP hash. Approvals happen in waves.</div>
+								<div id="admin-whitelist-queue" class="admin-empty" style="margin-top:0.75rem;">Whitelist queue is offline.</div>
+							</div>
+						</section>
+
+						<section id="admin-emergency" class="admin-section">
+							<h3>Emergency Controls</h3>
+							<div class="card">
+								<div class="label">Acknowledgement required</div>
+								<div class="muted">“I understand this affects all players.”</div>
+								<div class="admin-control-strip" style="margin-top:0.75rem;">
+									<div class="row">
+										<button type="button" class="danger" disabled>Pause all purchases</button>
+										<div class="muted">Stops all star and boost purchases across seasons.</div>
+									</div>
+									<div class="row">
+										<button type="button" class="danger" disabled>Pause all emission</button>
+										<div class="muted">Halts emission for all faucets and drips.</div>
+									</div>
+									<div class="row">
+										<button type="button" class="danger" disabled>Freeze all seasons</button>
+										<div class="muted">Freezes every season immediately. Requires double-confirmation.</div>
+									</div>
+								</div>
+							</div>
+						</section>
+
+						<section id="admin-audit" class="admin-section">
+							<h3>Audit &amp; History</h3>
+							<div class="card">
+								<div class="label">Immutable audit log</div>
+								<div class="row" style="margin-top:0.75rem;">
+									<input id="admin-audit-search" placeholder="Search by actor, action, scope" />
+									<button id="admin-audit-run" type="button" disabled>Search</button>
+								</div>
+								<div id="admin-audit-results" class="section-stack" style="margin-top:0.75rem;"></div>
+								<div class="admin-empty" id="admin-audit-empty">Audit entries will appear here.</div>
+							</div>
+						</section>
+					</div>
+				</div>
+			</div>
+		</section>
+
 		<section id="view-moderator" class="view">
 			<div class="section-stack">
 				<div class="card hero-card">
@@ -1049,6 +1395,7 @@ const notificationUnreadLabel = document.getElementById("notification-unread-lab
 const notificationSettingsList = document.getElementById("notification-settings-list");
 const signupLink = document.getElementById("signup-link");
 const moderatorLink = document.getElementById("moderator-link");
+const adminLink = document.getElementById("admin-link");
 const liveStatus = document.getElementById("live-status");
 const seasonRemaining = document.getElementById("season-remaining");
 const seasonStarPrice = document.getElementById("season-star-price");
@@ -1075,6 +1422,7 @@ const viewMap = {
 	leaderboard: "view-leaderboard",
 	signup: "view-signup",
 	reset: "view-reset",
+	admin: "view-admin",
 	moderator: "view-moderator"
 };
 
@@ -1083,6 +1431,7 @@ let playerStars = 0;
 let currentUser = null;
 let homeInitialized = false;
 let moderatorInitialized = false;
+let adminInitialized = false;
 let signupInitialized = false;
 let resetInitialized = false;
 let leaderboardInitialized = false;
@@ -1262,6 +1611,7 @@ async function loadAuth() {
 		statPill.style.display = "none";
 		signupLink.style.display = "inline";
 		moderatorLink.style.display = "none";
+		adminLink.style.display = "none";
 		notificationsCache = [];
 		updateNotificationBadge(0);
 		setNotificationViewport(false);
@@ -1285,6 +1635,7 @@ async function loadAuth() {
 	statPill.style.display = "inline-flex";
 	signupLink.style.display = "none";
 	moderatorLink.style.display = (data.isModerator || data.isAdmin) ? "inline" : "none";
+	adminLink.style.display = data.isAdmin ? "inline" : "none";
 	document.getElementById("seasons").style.display = "grid";
 	document.getElementById("locked-message").innerText = "";
 }
@@ -1961,6 +2312,37 @@ function initCollapsibleCards() {
 	});
 }
 
+function initAdmin() {
+	adminInitialized = true;
+	const nav = document.getElementById("admin-nav");
+	if (!nav) return;
+	const buttons = Array.from(nav.querySelectorAll("button[data-target]"));
+	buttons.forEach((button) => {
+		button.addEventListener("click", () => {
+			const targetId = button.getAttribute("data-target");
+			if (!targetId) return;
+			const section = document.getElementById(targetId);
+			if (section) {
+				section.scrollIntoView({ behavior: "smooth", block: "start" });
+			}
+			buttons.forEach(btn => btn.classList.toggle("active", btn === button));
+		});
+	});
+	if (buttons[0]) buttons[0].classList.add("active");
+}
+
+function refreshAdminView() {
+	const adminShell = document.getElementById("admin-shell");
+	const adminDenied = document.getElementById("admin-access-denied");
+	if (!currentUser || !currentUser.isAdmin) {
+		if (adminShell) adminShell.style.display = "none";
+		if (adminDenied) adminDenied.style.display = "block";
+		return;
+	}
+	if (adminDenied) adminDenied.style.display = "none";
+	if (adminShell) adminShell.style.display = "grid";
+}
+
 function getRouteInfo() {
 	const hash = location.hash.replace("#", "");
 	if (!hash || hash === "/") {
@@ -2007,6 +2389,11 @@ async function route() {
 	if (routeKey === "moderator") {
 		if (!moderatorInitialized) initModerator();
 		await refreshModeratorView();
+		return;
+	}
+	if (routeKey === "admin") {
+		if (!adminInitialized) initAdmin();
+		refreshAdminView();
 		return;
 	}
 	if (routeKey === "leaderboard") {
