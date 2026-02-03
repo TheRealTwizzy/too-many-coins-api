@@ -65,6 +65,22 @@ func playerHandler(db *sql.DB) http.HandlerFunc {
 		if !ok {
 			return
 		}
+		if remainingCooldown, err := accountCooldownRemaining(db, account.AccountID, time.Now().UTC()); err != nil {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		} else if remainingCooldown > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(int(remainingCooldown.Seconds())))
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "ACCOUNT_COOLDOWN", NextAvailableInSeconds: int64(remainingCooldown.Seconds())})
+			return
+		}
+		if remaining, err := accountCooldownRemaining(db, account.AccountID, time.Now().UTC()); err != nil {
+			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		} else if remaining > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(int(remaining.Seconds())))
+			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "ACCOUNT_COOLDOWN"})
+			return
+		}
 		playerID := account.PlayerID
 
 		player, err := LoadOrCreatePlayer(db, playerID)
@@ -142,6 +158,22 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 		if !ok {
 			return
 		}
+		if remainingCooldown, err := accountCooldownRemaining(db, account.AccountID, time.Now().UTC()); err != nil {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		} else if remainingCooldown > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(int(remainingCooldown.Seconds())))
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "ACCOUNT_COOLDOWN", NextAvailableInSeconds: int64(remainingCooldown.Seconds())})
+			return
+		}
+		if remaining, err := accountCooldownRemaining(db, account.AccountID, time.Now().UTC()); err != nil {
+			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		} else if remaining > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(int(remaining.Seconds())))
+			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "ACCOUNT_COOLDOWN"})
+			return
+		}
 
 		var req BuyStarRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -172,6 +204,16 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(BuyStarResponse{
 				OK: false, Error: "PLAYER_NOT_REGISTERED",
 			})
+			return
+		}
+
+		allowed, err := IsPlayerAllowedByIP(db, playerID)
+		if err != nil {
+			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if !allowed {
+			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "IP_BLOCKED"})
 			return
 		}
 
@@ -324,6 +366,14 @@ func buyStarQuoteHandler(db *sql.DB) http.HandlerFunc {
 		if !ok {
 			return
 		}
+		if remaining, err := accountCooldownRemaining(db, account.AccountID, time.Now().UTC()); err != nil {
+			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		} else if remaining > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(int(remaining.Seconds())))
+			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "ACCOUNT_COOLDOWN"})
+			return
+		}
 
 		var req BuyStarRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -349,6 +399,16 @@ func buyStarQuoteHandler(db *sql.DB) http.HandlerFunc {
 		player, err := LoadPlayer(db, playerID)
 		if err != nil || player == nil {
 			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "PLAYER_NOT_REGISTERED"})
+			return
+		}
+
+		allowed, err := IsPlayerAllowedByIP(db, playerID)
+		if err != nil {
+			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if !allowed {
+			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "IP_BLOCKED"})
 			return
 		}
 
@@ -489,6 +549,14 @@ func buyVariantStarHandler(db *sql.DB) http.HandlerFunc {
 		if !ok {
 			return
 		}
+		if remaining, err := accountCooldownRemaining(db, account.AccountID, time.Now().UTC()); err != nil {
+			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		} else if remaining > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(int(remaining.Seconds())))
+			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "ACCOUNT_COOLDOWN"})
+			return
+		}
 
 		var req BuyVariantStarRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -516,6 +584,16 @@ func buyVariantStarHandler(db *sql.DB) http.HandlerFunc {
 		player, err := LoadPlayer(db, playerID)
 		if err != nil || player == nil {
 			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "PLAYER_NOT_REGISTERED"})
+			return
+		}
+
+		allowed, err := IsPlayerAllowedByIP(db, playerID)
+		if err != nil {
+			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if !allowed {
+			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "IP_BLOCKED"})
 			return
 		}
 
@@ -615,6 +693,14 @@ func buyBoostHandler(db *sql.DB) http.HandlerFunc {
 		if !ok {
 			return
 		}
+		if remaining, err := accountCooldownRemaining(db, account.AccountID, time.Now().UTC()); err != nil {
+			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		} else if remaining > 0 {
+			w.Header().Set("Retry-After", strconv.Itoa(int(remaining.Seconds())))
+			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "ACCOUNT_COOLDOWN"})
+			return
+		}
 
 		var req BuyBoostRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -636,6 +722,16 @@ func buyBoostHandler(db *sql.DB) http.HandlerFunc {
 		player, err := LoadPlayer(db, playerID)
 		if err != nil || player == nil {
 			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "PLAYER_NOT_REGISTERED"})
+			return
+		}
+
+		allowed, err := IsPlayerAllowedByIP(db, playerID)
+		if err != nil {
+			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if !allowed {
+			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "IP_BLOCKED"})
 			return
 		}
 
@@ -698,6 +794,16 @@ func burnCoinsHandler(db *sql.DB) http.HandlerFunc {
 		playerID := account.PlayerID
 		if !isValidPlayerID(playerID) {
 			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "INVALID_PLAYER_ID"})
+			return
+		}
+
+		allowed, err := IsPlayerAllowedByIP(db, playerID)
+		if err != nil {
+			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if !allowed {
+			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "IP_BLOCKED"})
 			return
 		}
 
@@ -968,6 +1074,19 @@ func signupHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		ip := getClientIP(r)
+		limit, window := authRateLimitConfig("signup")
+		allowedRate, retryAfter, err := checkAuthRateLimit(db, ip, "signup", limit, window)
+		if err != nil {
+			log.Println("signup: rate limit error:", err)
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if !allowedRate {
+			w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "RATE_LIMIT"})
+			return
+		}
 		allowed, err := CanSignupFromIP(db, ip)
 		if err != nil {
 			log.Println("signup: CanSignupFromIP error:", err)
@@ -1048,6 +1167,21 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		var req LoginRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+
+		ip := getClientIP(r)
+		limit, window := authRateLimitConfig("login")
+		allowedRate, retryAfter, err := checkAuthRateLimit(db, ip, "login", limit, window)
+		if err != nil {
+			log.Println("login: rate limit error:", err)
+			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if !allowedRate {
+			w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "RATE_LIMIT"})
 			return
 		}
 
@@ -1347,7 +1481,7 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		granted, _, err := GrantCoinsWithCap(db, player.PlayerID, reward, time.Now().UTC())
+		granted, _, err := GrantCoinsWithCap(db, player.PlayerID, reward, time.Now().UTC(), FaucetDaily, &account.AccountID)
 		if err != nil {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
@@ -1456,7 +1590,7 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		granted, _, err := GrantCoinsWithCap(db, player.PlayerID, reward, time.Now().UTC())
+		granted, _, err := GrantCoinsWithCap(db, player.PlayerID, reward, time.Now().UTC(), FaucetActivity, &account.AccountID)
 		if err != nil {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return

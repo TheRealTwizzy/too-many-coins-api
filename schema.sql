@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS player_ip_associations (
 
 CREATE TABLE IF NOT EXISTS ip_whitelist (
     ip TEXT PRIMARY KEY,
-    max_accounts INT NOT NULL DEFAULT 2,
+    max_accounts INT NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ NOT NULL
 );
 
@@ -119,6 +119,15 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     user_agent TEXT,
     ip TEXT,
     purpose TEXT NOT NULL DEFAULT 'auth'
+);
+
+CREATE TABLE IF NOT EXISTS auth_rate_limits (
+    ip TEXT NOT NULL,
+    action TEXT NOT NULL,
+    window_start TIMESTAMPTZ NOT NULL,
+    attempt_count INT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (ip, action)
 );
 
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_account_id
@@ -158,6 +167,18 @@ CREATE TABLE IF NOT EXISTS player_faucet_claims (
     last_claim_at TIMESTAMPTZ NOT NULL,
     claim_count BIGINT NOT NULL DEFAULT 0,
     PRIMARY KEY (player_id, faucet_key)
+);
+
+CREATE TABLE IF NOT EXISTS coin_earning_log (
+    id BIGSERIAL PRIMARY KEY,
+    account_id TEXT,
+    player_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    amount BIGINT NOT NULL,
+    coins_before BIGINT NOT NULL,
+    coins_after BIGINT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS player_star_variants (

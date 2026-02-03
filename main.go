@@ -580,7 +580,7 @@ func runPassiveDrip(db *sql.DB) {
 		if !economy.TryDistributeCoins(adjusted) {
 			return
 		}
-		if _, _, err := GrantCoinsWithCap(db, playerID, adjusted, now); err != nil {
+		if _, _, err := GrantCoinsWithCap(db, playerID, adjusted, now, FaucetPassive, nil); err != nil {
 			log.Println("drip update failed:", err)
 			continue
 		}

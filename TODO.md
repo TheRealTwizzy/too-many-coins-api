@@ -113,9 +113,9 @@ Allowed to be rough or missing in Alpha:
   - [ ] [POST-ALPHA] Task completion + capped rewards
 - [ ] [POST-ALPHA] 4.6 Comeback reward faucet
   - [ ] [POST-ALPHA] Inactivity eligibility + one‑time reward
-- [ ] [ALPHA REQUIRED] 4.7 Append‑only coin earning log
-  - [ ] [ALPHA REQUIRED] Log source_type + amount per grant
-  - [ ] [ALPHA REQUIRED] Write path from faucets and other coin grants
+- [x] [DONE] 4.7 Append‑only coin earning log
+  - [x] [DONE] Log source_type + amount per grant
+  - [x] [DONE] Write path from faucets and other coin grants
 
 ---
 
@@ -123,9 +123,9 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 5.1 Market pressure computed server‑side
   - [x] [DONE] 24h vs 7d rolling averages
   - [x] [DONE] Rate‑limited adjustments per tick
-- [ ] [ALPHA REQUIRED] 5.2 Pressure broadcast to clients
-  - [ ] [ALPHA REQUIRED] Include pressure in SSE snapshot payload
-  - [ ] [ALPHA REQUIRED] UI display of current pressure
+- [x] [DONE] 5.2 Pressure broadcast to clients
+  - [x] [DONE] Include pressure in SSE snapshot payload
+  - [x] [DONE] UI display of current pressure
 
 ---
 
@@ -155,15 +155,15 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 7.2 Whitelist request flow + approvals
   - [x] [DONE] Request submission endpoint
   - [x] [DONE] Admin review + approve/deny
-- [ ] [ALPHA REQUIRED] 7.3 Enforce one active player per IP per season
-  - [ ] [ALPHA REQUIRED] Enforce 1 account/IP by default for season participation (not just signup)
-  - [ ] [ALPHA REQUIRED] Respect whitelist max_accounts for exceptions
-  - [ ] [ALPHA REQUIRED] Remove hardcoded maxPlayersPerIP=2 bypass in faucet gating
+- [x] [DONE] 7.3 Enforce one active player per IP per season
+  - [x] [DONE] Enforce 1 account/IP by default for season participation (not just signup)
+  - [x] [DONE] Respect whitelist max_accounts for exceptions
+  - [x] [DONE] Remove hardcoded maxPlayersPerIP=2 bypass in faucet gating
 - [x] [DONE] 7.4 Soft IP dampening
   - [x] [DONE] Delay + price multiplier for excess accounts
-- [ ] [ALPHA REQUIRED] 7.5 Account creation protections (minimum viable)
-  - [ ] [ALPHA REQUIRED] Rate limiting for signup/login endpoints
-  - [ ] [ALPHA REQUIRED] Cooldown before new accounts can join a season
+- [x] [DONE] 7.5 Account creation protections (minimum viable)
+  - [x] [DONE] Rate limiting for signup/login endpoints
+  - [x] [DONE] Cooldown before new accounts can join a season
   - [ ] [POST-ALPHA] CAPTCHA + verification
 - [ ] [POST-ALPHA] 7.6 Abuse detection + events
   - [ ] [POST-ALPHA] Clustering detection
@@ -195,8 +195,8 @@ Allowed to be rough or missing in Alpha:
 - [ ] [POST-ALPHA] 9.3 Trust status + whitelist group on players
 - [x] [DONE] 9.4 Season calibration persistence
   - [x] [DONE] season_calibration table + load/save
-- [ ] [ALPHA REQUIRED] 9.5 Append‑only coin earning log (duplicate of 4.7)
-  - [ ] [ALPHA REQUIRED] Schema + write path from faucets
+- [x] [DONE] 9.5 Append‑only coin earning log (duplicate of 4.7)
+  - [x] [DONE] Schema + write path from faucets
 
 ---
 
@@ -214,9 +214,9 @@ Allowed to be rough or missing in Alpha:
   - [ ] [POST-ALPHA] Collections / cosmetics view
 - [ ] [POST-ALPHA] 10.10 Settings + accessibility
 - [ ] [POST-ALPHA] 10.11 Trading desk UI
-- [ ] [ALPHA REQUIRED] 10.12 Pressure‑focused UI cues
-  - [ ] [ALPHA REQUIRED] Show late‑season scarcity messaging
-  - [ ] [ALPHA REQUIRED] Display market pressure in the main HUD
+- [x] [DONE] 10.12 Pressure‑focused UI cues
+  - [x] [DONE] Show late‑season scarcity messaging
+  - [x] [DONE] Display market pressure in the main HUD
   - [ ] [POST-ALPHA] Display trade premium burn warnings
 
 ---
@@ -242,7 +242,7 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 12.1 Simulation engine for pricing + pressure
 - [x] [DONE] 12.2 Alpha readiness checklist
 - [ ] [ALPHA REQUIRED] 12.3 Alpha execution cycle
-  - [ ] [ALPHA REQUIRED] Define goals + metrics
+  - [x] [DONE] Define goals + metrics (README/alpha-execution.md)
   - [ ] [ALPHA REQUIRED] Recruit testers
   - [ ] [ALPHA REQUIRED] Run 1–2 week test
   - [ ] [ALPHA REQUIRED] Analyze telemetry + fix priorities
@@ -254,28 +254,28 @@ Allowed to be rough or missing in Alpha:
 ---
 
 ## Phase 13 — Deployment & Live Ops
-- [ ] [ALPHA REQUIRED] 13.1 Production environment configuration
-  - [ ] [ALPHA REQUIRED] Railway deployment config
-  - [ ] [ALPHA REQUIRED] DB migration strategy
-- [ ] [ALPHA REQUIRED] 13.2 Monitoring + alerting (minimum viable)
-  - [ ] [ALPHA REQUIRED] Economy integrity dashboards
-  - [ ] [ALPHA REQUIRED] Error/uptime alerting
+- [x] [DONE] 13.1 Production environment configuration
+  - [x] [DONE] Railway deployment config
+  - [x] [DONE] DB migration strategy
+- [x] [DONE] 13.2 Monitoring + alerting (minimum viable)
+  - [x] [DONE] Economy integrity dashboards
+  - [x] [DONE] Error/uptime alerting
 - [ ] [POST-ALPHA] 13.3 Backup + restore procedures
 
 ---
 
 ## Phase 14 — Documentation Alignment
 - [x] [DONE] 14.1 Canon README set present
-- [ ] [ALPHA REQUIRED] 14.2 Document bot runner usage in primary README
-- [ ] [ALPHA REQUIRED] 14.3 Document notifications + password reset flows
-- [ ] [ALPHA REQUIRED] 14.4 Document admin/role workflows
-- [ ] [ALPHA REQUIRED] 14.5 Resolve README contradictions vs code (Alpha honesty)
-  - [ ] [ALPHA REQUIRED] Main README multi‑season claims vs README/first-playable single‑season reality
-  - [ ] [ALPHA REQUIRED] Admin knobs in README vs enforced removal of admin economic control
-  - [ ] [ALPHA REQUIRED] Trading described as core vs no trading in code
-  - [ ] [ALPHA REQUIRED] Anti‑abuse guarantees vs missing rate limits/throttles
-  - [ ] [ALPHA REQUIRED] Passive drip claim vs current active‑only faucet
-  - [ ] [ALPHA REQUIRED] Market pressure inputs mention trades not implemented
+- [x] [DONE] 14.2 Document bot runner usage in primary README
+- [x] [DONE] 14.3 Document notifications + password reset flows
+- [x] [DONE] 14.4 Document admin/role workflows
+- [x] [DONE] 14.5 Resolve README contradictions vs code (Alpha honesty)
+  - [x] [DONE] Main README multi‑season claims vs README/first-playable single‑season reality
+  - [x] [DONE] Admin knobs in README vs enforced removal of admin economic control
+  - [x] [DONE] Trading described as core vs no trading in code
+  - [x] [DONE] Anti‑abuse guarantees vs missing rate limits/throttles
+  - [x] [DONE] Passive drip claim vs current active‑only faucet
+  - [x] [DONE] Market pressure inputs mention trades not implemented
 
 ---
 

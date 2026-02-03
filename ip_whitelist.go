@@ -52,7 +52,7 @@ func upsertIPWhitelist(db *sql.DB, ip string, maxAccounts int) error {
 		return errors.New("INVALID_IP")
 	}
 	if maxAccounts <= 0 {
-		maxAccounts = 2
+		maxAccounts = 1
 	}
 	_, err := db.Exec(`
 		INSERT INTO ip_whitelist (ip, max_accounts, created_at)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"math"
@@ -88,21 +89,39 @@ func seasonDayIndex(t time.Time) int {
 	return int(t.Sub(start).Hours() / 24)
 }
 
-func GrantCoinsWithCap(db *sql.DB, playerID string, amount int, now time.Time) (int, int, error) {
+func GrantCoinsWithCap(db *sql.DB, playerID string, amount int, now time.Time, sourceType string, accountID *string) (int, int, error) {
 	if amount <= 0 {
 		return 0, 0, nil
 	}
-	if err := resetDailyEarnIfNeeded(db, playerID, now); err != nil {
+
+	tx, err := db.BeginTx(context.Background(), nil)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer tx.Rollback()
+
+	var coinsBefore int64
+	var currentTotal int64
+	var lastReset time.Time
+	if err := tx.QueryRow(`
+		SELECT coins, daily_earn_total, last_earn_reset_at
+		FROM players
+		WHERE player_id = $1
+		FOR UPDATE
+	`, playerID).Scan(&coinsBefore, &currentTotal, &lastReset); err != nil {
 		return 0, 0, err
 	}
 
-	var currentTotal int64
-	if err := db.QueryRow(`
-		SELECT daily_earn_total
-		FROM players
-		WHERE player_id = $1
-	`, playerID).Scan(&currentTotal); err != nil {
-		return 0, 0, err
+	if seasonDayIndex(lastReset) != seasonDayIndex(now) {
+		currentTotal = 0
+		if _, err := tx.Exec(`
+			UPDATE players
+			SET daily_earn_total = 0,
+				last_earn_reset_at = $2
+			WHERE player_id = $1
+		`, playerID, now); err != nil {
+			return 0, 0, err
+		}
 	}
 
 	cap := DailyEarnCap(now)
@@ -116,7 +135,8 @@ func GrantCoinsWithCap(db *sql.DB, playerID string, amount int, now time.Time) (
 		grant = remaining
 	}
 
-	_, err := db.Exec(`
+	coinsAfter := coinsBefore + int64(grant)
+	_, err = tx.Exec(`
 		UPDATE players
 		SET coins = coins + $2,
 			daily_earn_total = daily_earn_total + $2,
@@ -124,6 +144,32 @@ func GrantCoinsWithCap(db *sql.DB, playerID string, amount int, now time.Time) (
 		WHERE player_id = $1
 	`, playerID, grant, now)
 	if err != nil {
+		return 0, remaining, err
+	}
+
+	if grant > 0 {
+		var accountValue sql.NullString
+		if accountID != nil && *accountID != "" {
+			accountValue = sql.NullString{String: *accountID, Valid: true}
+		}
+		if _, err := tx.Exec(`
+			INSERT INTO coin_earning_log (
+				account_id,
+				player_id,
+				season_id,
+				source_type,
+				amount,
+				coins_before,
+				coins_after,
+				created_at
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		`, accountValue, playerID, currentSeasonID(), sourceType, grant, coinsBefore, coinsAfter, now); err != nil {
+			return 0, remaining, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
 		return 0, remaining, err
 	}
 

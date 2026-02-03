@@ -468,6 +468,10 @@
 							<div class="label">Inflation pressure</div>
 							<div id="hero-inflation" class="stat-value">--</div>
 						</div>
+						<div class="metric">
+							<div class="label">Market pressure</div>
+							<div id="hero-pressure" class="stat-value">--</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -501,10 +505,15 @@
 								<div id="season-emission" class="stat-value">--</div>
 							</div>
 							<div class="metric">
+								<div class="label">Market pressure</div>
+								<div id="season-pressure" class="stat-value">--</div>
+							</div>
+							<div class="metric">
 								<div class="label">Next coin wave</div>
 								<div id="season-next-emission" class="stat-value">--</div>
 							</div>
 						</div>
+						<div id="season-scarcity-message" class="label muted" style="margin-top:0.75rem;"></div>
 					</div>
 					<div id="seasons" class="grid">Loading season…</div>
 				</div>
@@ -868,13 +877,16 @@ const seasonRemaining = document.getElementById("season-remaining");
 const seasonStarPrice = document.getElementById("season-star-price");
 const seasonCoins = document.getElementById("season-coins");
 const seasonEmission = document.getElementById("season-emission");
+const seasonPressure = document.getElementById("season-pressure");
 const seasonNextEmission = document.getElementById("season-next-emission");
+const seasonScarcityMessage = document.getElementById("season-scarcity-message");
 const seasonTitle = document.getElementById("season-title");
 const seasonStatus = document.getElementById("season-status");
 const heroSeasonId = document.getElementById("hero-season-id");
 const heroSeasonRemaining = document.getElementById("hero-season-remaining");
 const heroStarPrice = document.getElementById("hero-star-price");
 const heroInflation = document.getElementById("hero-inflation");
+const heroPressure = document.getElementById("hero-pressure");
 const leaderboardResults = document.getElementById("leaderboard-results");
 const leaderboardPageLabel = document.getElementById("leaderboard-page");
 
@@ -936,6 +948,25 @@ function formatRemaining(seconds) {
 	return `${minutes}m`;
 }
 
+function formatPressure(value) {
+	if (typeof value !== "number" || !isFinite(value)) return "--";
+	return `${value.toFixed(2)}x`;
+}
+
+function scarcityMessage(secondsRemaining) {
+	if (typeof secondsRemaining !== "number" || secondsRemaining <= 0) {
+		return "";
+	}
+	const daysRemaining = secondsRemaining / 86400;
+	if (daysRemaining <= 3) {
+		return "Late-season scarcity is peaking. Prices spike faster now.";
+	}
+	if (daysRemaining <= 7) {
+		return "Late-season scarcity is rising. Prices will climb faster.";
+	}
+	return "";
+}
+
 function updateLiveStatus(state, message) {
 	if (!liveStatus) return;
 	liveStatus.classList.remove("offline", "reconnecting");
@@ -959,11 +990,14 @@ function updateSeasonSnapshot(season) {
 	if (seasonStarPrice) seasonStarPrice.innerText = `${season.currentStarPrice} coins`;
 	if (seasonCoins) seasonCoins.innerText = `${season.coinsInCirculation} coins`;
 	if (seasonEmission) seasonEmission.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
+	if (seasonPressure) seasonPressure.innerText = formatPressure(season.marketPressure);
 	if (seasonNextEmission) seasonNextEmission.innerText = `${season.nextEmissionInSeconds || 0}s`;
+	if (seasonScarcityMessage) seasonScarcityMessage.innerText = scarcityMessage(season.secondsRemaining || 0);
 	if (heroSeasonId) heroSeasonId.innerText = "Season 1";
 	if (heroSeasonRemaining) heroSeasonRemaining.innerText = formatRemaining(season.secondsRemaining || 0);
 	if (heroStarPrice) heroStarPrice.innerText = `${season.currentStarPrice} coins`;
 	if (heroInflation) heroInflation.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
+	if (heroPressure) heroPressure.innerText = formatPressure(season.marketPressure);
 	if (seasonStatus) {
 		seasonStatus.innerText = season.secondsRemaining > 0 ? "Active" : "Ended";
 	}
@@ -977,10 +1011,12 @@ function updateSeasonCard(season) {
 	const priceEl = card.querySelector("[data-season-price]");
 	const coinsEl = card.querySelector("[data-season-coins]");
 	const emissionEl = card.querySelector("[data-season-emission]");
+	const pressureEl = card.querySelector("[data-season-pressure]");
 	if (remainingEl) remainingEl.innerText = formatRemaining(season.secondsRemaining || 0);
 	if (priceEl) priceEl.innerText = `${season.currentStarPrice} coins`;
 	if (coinsEl) coinsEl.innerText = `${season.coinsInCirculation} coins`;
 	if (emissionEl) emissionEl.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
+	if (pressureEl) pressureEl.innerText = formatPressure(season.marketPressure);
 }
 
 function applyLiveSnapshot(payload) {
@@ -1194,6 +1230,10 @@ async function loadSeasons() {
 				<div class="metric">
 					<div class="label">Inflation pressure</div>
 					<div class="stat-value" data-season-emission>${(season.coinEmissionPerMinute || 0).toFixed(2)} / min</div>
+				</div>
+				<div class="metric">
+					<div class="label">Market pressure</div>
+					<div class="stat-value" data-season-pressure>${formatPressure(season.marketPressure)}</div>
 				</div>
 			</div>
 			<div class="season-actions">

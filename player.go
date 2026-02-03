@@ -14,10 +14,20 @@ type Player struct {
 }
 
 const (
-	maxPlayersPerIP            = 2
 	ipDampeningPriceMultiplier = 1.5
 	ipDampeningDelay           = 10 * time.Minute
 )
+
+func maxAccountsForIP(db *sql.DB, ip string) (int, error) {
+	maxAllowed, err := getWhitelistMaxForIP(db, ip)
+	if err != nil {
+		return 0, err
+	}
+	if maxAllowed <= 0 {
+		return 1, nil
+	}
+	return maxAllowed, nil
+}
 
 func LoadOrCreatePlayer(
 	db *sql.DB,
@@ -132,8 +142,12 @@ func ApplyIPDampeningDelay(db *sql.DB, playerID string, ip string) error {
 	if err != nil {
 		return err
 	}
+	maxAllowed, err := maxAccountsForIP(db, ip)
+	if err != nil {
+		return err
+	}
 
-	if count <= maxPlayersPerIP {
+	if count <= maxAllowed {
 		return nil
 	}
 
@@ -163,8 +177,12 @@ func IsPlayerAllowedByIP(db *sql.DB, playerID string) (bool, error) {
 	if err != nil {
 		return true, err
 	}
+	maxAllowed, err := maxAccountsForIP(db, ip)
+	if err != nil {
+		return true, err
+	}
 
-	if count <= maxPlayersPerIP {
+	if count <= maxAllowed {
 		return true, nil
 	}
 
@@ -174,7 +192,7 @@ func IsPlayerAllowedByIP(db *sql.DB, playerID string) (bool, error) {
 		WHERE ip = $1
 		ORDER BY first_seen ASC
 		LIMIT $2
-	`, ip, maxPlayersPerIP)
+	`, ip, maxAllowed)
 	if err != nil {
 		return true, err
 	}

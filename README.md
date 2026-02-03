@@ -12,6 +12,19 @@ The game runs in fixed-length seasons and resets regularly, while preserving lon
 
 ---
 
+## Alpha Scope (Current Build)
+
+Alpha is focused on the first playable economy loop:
+
+- Single active season only (no season lobby)
+- Trading is disabled (post‑alpha)
+- Passive drip is disabled (post‑alpha)
+- Admin economy controls are read‑only
+- Market pressure is derived from star purchases only
+- Anti‑abuse protections are minimal but real (rate limiting + cooldowns)
+
+---
+
 ## Core Design Principles
 
 The game must be simple, transparent, and fair  
@@ -29,12 +42,12 @@ Players must have reasons to stay active until the end of a season and return fo
 ## Seasons
 
 Each season lasts exactly 28 calendar days.  
-Up to 4 seasons may be active at the same time.  
-Season start times are staggered one week apart.  
-Players may join any active season at any time.  
+Alpha runs a single active season only.  
+Multi‑season support (staggered starts, season lobby) is post‑alpha.  
+Players may join the active season at any time.  
 Each season has its own independent economy.  
 Coins and Stars reset at the end of each season.  
-Persistent rewards carry over between seasons.
+Persistent rewards carry over between seasons (post‑alpha).
 
 ---
 
@@ -49,9 +62,10 @@ Players may trade with one another only through a brokered, system-controlled pr
 
 ## Core Gameplay Loop
 
-Players earn Coins through limited daily and activity-based systems.  
+Players earn Coins through daily login and active play faucets.  
+Passive drip is post‑alpha and disabled in the current build.  
 Players spend Coins to buy Stars.  
-Players may optionally trade Coins for existing Stars under tight, time-worsening constraints.  
+Players may optionally trade Coins for existing Stars under tight, time-worsening constraints (post‑alpha).  
 Star prices increase over time and with demand.  
 Coin supply decreases over time.  
 Inflation pressure increases monotonically; delay is punished and mistakes are permanent.  
@@ -60,6 +74,8 @@ Late-season decisions become harder and more consequential.
 ---
 
 ## Trading (Conditional, Brokered)
+
+_Trading is post‑alpha and currently disabled. The following describes the planned system._
 
 Trading is optional, costly, asymmetric, and increasingly restrictive as the season progresses.
 
@@ -180,18 +196,17 @@ They are blocked from joining a season unless whitelisted
 A whitelist request system must exist for households, schools, and shared networks.  
 Whitelist approvals must be reviewed and approved manually by admins.
 
-Players earn Coins faster while actively using the site. If the browser/tab is hidden or inactive, passive coin drip slows but does not stop.
+Players earn Coins faster while actively using the site. Passive drip is post‑alpha and disabled in the current build.
 
-Admin knobs:
-Global: daily emission target, faucets/sinks/telemetry toggles.
-Per-player: set/add coins, set/add stars, drip multiplier, pause/resume drip, touch activity.
+Admin tools (alpha):
+Read‑only economy monitoring, telemetry, and whitelist management. No direct coin/star edits.
 
 Additional protections:
-Rate-limited account creation  
-CAPTCHA and verification  
+Rate‑limited account creation  
 Cooldown before new accounts can join a season  
-Detection of suspicious clustering or coordinated behavior  
-Automatic throttles for suspicious market activity  
+CAPTCHA and verification (post‑alpha)  
+Detection of suspicious clustering or coordinated behavior (post‑alpha)  
+Automatic throttles for suspicious market activity (post‑alpha)  
 
 ---
 
@@ -213,14 +228,60 @@ Each season may include a simple modifier that changes presentation or rewards w
 
 Landing page explaining the game quickly  
 Authentication page for signup and login  
-Season lobby showing all active seasons  
 Main season dashboard where gameplay occurs  
 Bulk purchase interface with transparent cost scaling  
 Leaderboard page  
-Player profile and collection page  
-Settings and accessibility page  
 Whitelist request page  
 Internal admin console for moderation and economy monitoring  
+
+Post‑alpha pages:
+Season lobby showing all active seasons  
+Player profile and collection page  
+Settings and accessibility page  
+Trading desk
+
+---
+
+## Bot Runner (Testing)
+
+The bot runner uses the same public HTTP APIs as players and is intended for load/behavior testing. See [README/bot-runner.md](README/bot-runner.md).
+
+---
+
+## Notifications and Password Reset
+
+Notifications are delivered in-app and can be managed from the admin console. Password resets use:
+
+- POST /auth/request-reset
+- POST /auth/reset-password
+
+Email delivery requires SMTP configuration via environment variables (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM).
+
+---
+
+## Roles and Admin Workflow
+
+Admins are created by setting ADMIN_SETUP_KEY and calling POST /admin/set-key with the X-Admin-Setup header while logged in. Admins can then assign roles via POST /admin/role. Moderators have access to the moderator view and limited tooling.
+
+---
+
+## Deployment (Railway)
+
+The server auto-creates schema on startup. For Railway:
+
+- Build: go build -o app .
+- Start: ./app
+- Health check: /health
+
+Set DATABASE_URL and any required secrets (ADMIN_SETUP_KEY, SMTP_* if enabling email). For manual migrations, use schema.sql.
+
+---
+
+## Monitoring (Minimum Viable)
+
+- /health for uptime checks
+- /admin/telemetry for economy/event visibility
+- Admin economy dashboard for read-only snapshots
 
 ---
 

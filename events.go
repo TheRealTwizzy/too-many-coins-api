@@ -14,6 +14,7 @@ type liveSeasonSnapshot struct {
 	CoinEmissionPerMinute float64 `json:"coinEmissionPerMinute"`
 	CurrentStarPrice      int     `json:"currentStarPrice"`
 	NextEmissionInSeconds int64   `json:"nextEmissionInSeconds"`
+	MarketPressure        float64 `json:"marketPressure"`
 }
 
 type liveSnapshot struct {
@@ -38,6 +39,7 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 			CoinEmissionPerMinute: economy.EffectiveEmissionPerMinute(remaining, coins),
 			CurrentStarPrice:      ComputeStarPrice(coins, remaining),
 			NextEmissionInSeconds: nextEmissionSeconds(now),
+			MarketPressure:        economy.MarketPressure(),
 		},
 	}
 
