@@ -121,7 +121,8 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 		now := time.Now().UTC()
 		remaining := seasonSecondsRemaining(now)
 		coins := economy.CoinsInCirculation()
-		emission := economy.EffectiveEmissionPerMinute(remaining, coins)
+		activeCoins := economy.ActiveCoinsInCirculation()
+		emission := economy.EffectiveEmissionPerMinute(remaining, activeCoins)
 
 		currentPrice := ComputeStarPrice(coins, remaining)
 		if account, _, err := getSessionAccount(db, r); err == nil && account != nil {

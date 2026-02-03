@@ -13,6 +13,8 @@ type EconomyState struct {
 	globalCoinPool       int
 	coinsDistributed     int
 	coinsInWallets       int64
+	activeCoinsInWallets int64
+	activePlayers        int
 	globalStarsPurchased int
 	dailyEmissionTarget  int
 	emissionRemainder    float64
@@ -1041,6 +1043,41 @@ func (e *EconomyState) SetCoinsInWallets(total int64) {
 	e.coinsInWallets = total
 }
 
+func (e *EconomyState) SetCirculationStats(total int64, activeCoins int64, activePlayers int) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if total < 0 {
+		total = 0
+	}
+	if activeCoins < 0 {
+		activeCoins = 0
+	}
+	if activePlayers < 0 {
+		activePlayers = 0
+	}
+	e.coinsInWallets = total
+	e.activeCoinsInWallets = activeCoins
+	e.activePlayers = activePlayers
+}
+
+func (e *EconomyState) ActiveCoinsInCirculation() int64 {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.activeCoinsInWallets < 0 {
+		return 0
+	}
+	return e.activeCoinsInWallets
+}
+
+func (e *EconomyState) ActivePlayers() int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.activePlayers < 0 {
+		return 0
+	}
+	return e.activePlayers
+}
+
 func (e *EconomyState) Calibration() CalibrationParams {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -1135,7 +1172,9 @@ func ComputeStarPriceWithStars(
 	secondsRemaining int64,
 ) int {
 	params := economy.Calibration()
-	price := ComputeStarPriceRaw(params, starsPurchased, coinsInCirculation, secondsRemaining, economy.MarketPressure())
+	activeCoins := economy.ActiveCoinsInCirculation()
+	activePlayers := economy.ActivePlayers()
+	price := ComputeStarPriceRawWithActive(params, starsPurchased, coinsInCirculation, activeCoins, activePlayers, secondsRemaining, economy.MarketPressure())
 	return economy.ApplyPriceFloor(price)
 }
 
@@ -1143,6 +1182,18 @@ func ComputeStarPriceRaw(
 	params CalibrationParams,
 	starsPurchased int,
 	coinsInCirculation int64,
+	secondsRemaining int64,
+	marketPressure float64,
+) int {
+	return ComputeStarPriceRawWithActive(params, starsPurchased, coinsInCirculation, coinsInCirculation, 0, secondsRemaining, marketPressure)
+}
+
+func ComputeStarPriceRawWithActive(
+	params CalibrationParams,
+	starsPurchased int,
+	coinsInCirculation int64,
+	activeCoinsInCirculation int64,
+	activePlayers int,
 	secondsRemaining int64,
 	marketPressure float64,
 ) int {
@@ -1165,7 +1216,12 @@ func ComputeStarPriceRaw(
 	if expectedPlayers < 10 {
 		expectedPlayers = 10
 	}
-	coinsPerPlayer := float64(coinsInCirculation) / expectedPlayers
+	coinsPerPlayer := 0.0
+	if activePlayers > 0 {
+		coinsPerPlayer = float64(activeCoinsInCirculation) / float64(activePlayers)
+	} else {
+		coinsPerPlayer = float64(coinsInCirculation) / expectedPlayers
+	}
 	if coinsPerPlayer < 0 {
 		coinsPerPlayer = 0
 	}

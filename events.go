@@ -29,6 +29,7 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 	now := time.Now().UTC()
 	remaining := seasonSecondsRemaining(now)
 	coins := economy.CoinsInCirculation()
+	activeCoins := economy.ActiveCoinsInCirculation()
 
 	snapshot := liveSnapshot{
 		ServerTime: now.Format(time.RFC3339),
@@ -36,7 +37,7 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 			SeasonID:              currentSeasonID(),
 			SecondsRemaining:      remaining,
 			CoinsInCirculation:    coins,
-			CoinEmissionPerMinute: economy.EffectiveEmissionPerMinute(remaining, coins),
+			CoinEmissionPerMinute: economy.EffectiveEmissionPerMinute(remaining, activeCoins),
 			CurrentStarPrice:      ComputeStarPrice(coins, remaining),
 			NextEmissionInSeconds: nextEmissionSeconds(now),
 			MarketPressure:        economy.MarketPressure(),

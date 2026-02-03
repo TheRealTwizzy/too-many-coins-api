@@ -36,14 +36,22 @@ func nextEmissionSeconds(now time.Time) int64 {
 
 func refreshCoinsInWallets(db *sql.DB) {
 	var total int64
+	var activeCoins int64
+	var activePlayers int
+	// 24h window aligns with daily cadence and market-pressure lookback.
+	const activeEconomyWindow = 24 * time.Hour
+	activeSince := time.Now().UTC().Add(-activeEconomyWindow)
 	if err := db.QueryRow(`
-		SELECT COALESCE(SUM(coins), 0)
+		SELECT
+			COALESCE(SUM(coins), 0) AS total_coins,
+			COALESCE(SUM(CASE WHEN last_active_at >= $1 THEN coins ELSE 0 END), 0) AS active_coins,
+			COALESCE(COUNT(DISTINCT CASE WHEN last_active_at >= $1 THEN player_id END), 0) AS active_players
 		FROM players
-	`).Scan(&total); err != nil {
+	`, activeSince).Scan(&total, &activeCoins, &activePlayers); err != nil {
 		log.Println("coins-in-wallets query failed:", err)
 		return
 	}
-	economy.SetCoinsInWallets(total)
+	economy.SetCirculationStats(total, activeCoins, activePlayers)
 }
 
 func startTickLoop(db *sql.DB) {
@@ -95,9 +103,9 @@ func startTickLoop(db *sql.DB) {
 			refreshCoinsInWallets(db)
 
 			// Emission: release coins evenly over the day using dynamic season pressure
-			coinsInCirculation := economy.CoinsInCirculation()
+			activeCoins := economy.ActiveCoinsInCirculation()
 			remaining := seasonSecondsRemaining(now)
-			dailyTarget := economy.EffectiveDailyEmissionTarget(remaining, coinsInCirculation)
+			dailyTarget := economy.EffectiveDailyEmissionTarget(remaining, activeCoins)
 			baseTarget := economy.DailyEmissionTarget()
 			if baseTarget > 0 {
 				ratio := float64(dailyTarget) / float64(baseTarget)

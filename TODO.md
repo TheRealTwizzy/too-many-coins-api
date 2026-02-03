@@ -202,3 +202,13 @@ Allowed to be rough or missing in Alpha:
 - [ ] [ALPHA REQUIRED] All README requirements represented (or explicitly deferred)
 - [ ] [ALPHA REQUIRED] Code‑existing features verified (not just implemented)
 - [ ] [ALPHA REQUIRED] Path from today → Alpha → Post‑Alpha is continuous
+
+---
+
+## Phase 16 — Population‑Invariant Economy Validation
+- [ ] [ALPHA REQUIRED] Audit all population‑coupled inputs (coins in circulation, active coins, market pressure, affordability guardrails) and document effects at 1/5/500 players.
+- [ ] [ALPHA REQUIRED] Verify active circulation window (24h) produces stable emission at low population; adjust if faucet starvation occurs.
+- [ ] [ALPHA REQUIRED] Add telemetry for activeCoinsInCirculation + activePlayers and confirm visibility in admin telemetry.
+- [ ] [ALPHA REQUIRED] Run stress tests: solo season, small group (5–10), large group (500+) using simulation + live tick metrics.
+- [ ] [ALPHA REQUIRED] Validate faucet pacing (daily/activity/passive if enabled) against emission pool under low‑population conditions.
+- [ ] [ALPHA REQUIRED] Confirm star pricing remains purchasable for a solo player over full season without trivializing scarcity.
