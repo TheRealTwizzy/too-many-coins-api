@@ -395,6 +395,9 @@ func main() {
 	if err := economy.load(currentSeasonID(), db); err != nil {
 		log.Fatal("Failed to load economy state:", err)
 	}
+	if _, err := LoadOrCalibrateSeason(db, currentSeasonID()); err != nil {
+		log.Fatal("Failed to calibrate economy:", err)
+	}
 	if err := LoadGlobalSettings(db); err != nil {
 		log.Println("Failed to load global settings:", err)
 	}
@@ -418,10 +421,11 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
-	}
-
-	log.Println("Server starting on :" + port)
-	log.Fatal(http.ListenAndServe(":"+port, mux))
+		params := economy.Calibration()
+		activeDripInterval := time.Duration(params.PassiveActiveIntervalSeconds) * time.Second
+		idleDripInterval := time.Duration(params.PassiveIdleIntervalSeconds) * time.Second
+		activeDripAmount := params.PassiveActiveAmount
+		idleDripAmount := params.PassiveIdleAmount
 }
 
 /* ======================
@@ -481,24 +485,27 @@ func runPassiveDrip(db *sql.DB) {
 	if isSeasonEnded(now) {
 		return
 	}
-	settings := GetGlobalSettings()
-	if !settings.DripEnabled {
-		return
-	}
-	activeDripInterval := time.Duration(settings.ActiveDripIntervalSeconds) * time.Second
+			adjusted := int(float64(dripAmount) * dripMultiplier)
+			if adjusted < 1 {
+				adjusted = 1
+			}
+			remainingCap, err := RemainingDailyCap(db, playerID, now)
+			if err != nil {
+				continue
+			}
+			if remainingCap <= 0 {
+				continue
+			}
+			if adjusted > remainingCap {
+				adjusted = remainingCap
+			}
+			if !economy.TryDistributeCoins(adjusted) {
 	idleDripInterval := time.Duration(settings.IdleDripIntervalSeconds) * time.Second
 	activeDripAmount := settings.ActiveDripAmount
-	idleDripAmount := settings.IdleDripAmount
-	if activeDripInterval <= 0 {
-		activeDripInterval = time.Minute
-	}
-	if idleDripInterval <= 0 {
-		idleDripInterval = 4 * time.Minute
-	}
-	if activeDripAmount <= 0 {
-		activeDripAmount = 2
-	}
-	if idleDripAmount <= 0 {
+			if _, _, err := GrantCoinsWithCap(db, playerID, adjusted, now); err != nil {
+				log.Println("drip update failed:", err)
+				continue
+			}
 		idleDripAmount = 1
 	}
 	activityWindow := ActiveActivityWindow()

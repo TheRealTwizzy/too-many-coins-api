@@ -23,12 +23,17 @@ type AdminTelemetryResponse struct {
 }
 
 type AdminEconomyResponse struct {
-	OK                  bool   `json:"ok"`
-	Error               string `json:"error,omitempty"`
-	DailyEmissionTarget int    `json:"dailyEmissionTarget,omitempty"`
-	FaucetsEnabled      bool   `json:"faucetsEnabled,omitempty"`
-	SinksEnabled        bool   `json:"sinksEnabled,omitempty"`
-	TelemetryEnabled    bool   `json:"telemetryEnabled,omitempty"`
+	OK                  bool    `json:"ok"`
+	Error               string  `json:"error,omitempty"`
+	DailyEmissionTarget int     `json:"dailyEmissionTarget,omitempty"`
+	BaseStarPrice       int     `json:"baseStarPrice,omitempty"`
+	CurrentStarPrice    int     `json:"currentStarPrice,omitempty"`
+	MarketPressure      float64 `json:"marketPressure,omitempty"`
+	DailyCapEarly       int     `json:"dailyCapEarly,omitempty"`
+	DailyCapLate        int     `json:"dailyCapLate,omitempty"`
+	FaucetsEnabled      bool    `json:"faucetsEnabled,omitempty"`
+	SinksEnabled        bool    `json:"sinksEnabled,omitempty"`
+	TelemetryEnabled    bool    `json:"telemetryEnabled,omitempty"`
 }
 
 type AdminEconomyUpdateRequest struct {
@@ -122,47 +127,27 @@ func adminTelemetryHandler(db *sql.DB) http.HandlerFunc {
 
 func adminEconomyHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 		if _, ok := requireAdmin(db, w, r); !ok {
 			return
 		}
 
 		switch r.Method {
 		case http.MethodGet:
+			params := economy.Calibration()
+			coins := economy.CoinsInCirculation()
+			remaining := seasonSecondsRemaining(time.Now().UTC())
 			json.NewEncoder(w).Encode(AdminEconomyResponse{
 				OK:                  true,
 				DailyEmissionTarget: economy.DailyEmissionTarget(),
-				FaucetsEnabled:      featureFlags.FaucetsEnabled,
-				SinksEnabled:        featureFlags.SinksEnabled,
-				TelemetryEnabled:    featureFlags.Telemetry,
-			})
-			return
-		case http.MethodPost:
-			var req AdminEconomyUpdateRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				json.NewEncoder(w).Encode(AdminEconomyResponse{OK: false, Error: "INVALID_REQUEST"})
-				return
-			}
-			if req.DailyEmissionTarget != nil {
-				value := *req.DailyEmissionTarget
-				if value < 0 || value > 10000 {
-					json.NewEncoder(w).Encode(AdminEconomyResponse{OK: false, Error: "INVALID_EMISSION_TARGET"})
-					return
-				}
-				economy.SetDailyEmissionTarget(value)
-			}
-			if req.FaucetsEnabled != nil {
-				featureFlags.FaucetsEnabled = *req.FaucetsEnabled
-			}
-			if req.SinksEnabled != nil {
-				featureFlags.SinksEnabled = *req.SinksEnabled
-			}
-			if req.TelemetryEnabled != nil {
-				featureFlags.Telemetry = *req.TelemetryEnabled
-			}
-
-			json.NewEncoder(w).Encode(AdminEconomyResponse{
-				OK:                  true,
-				DailyEmissionTarget: economy.DailyEmissionTarget(),
+				BaseStarPrice:       params.P0,
+				CurrentStarPrice:    ComputeStarPrice(coins, remaining),
+				MarketPressure:      economy.MarketPressure(),
+				DailyCapEarly:       params.DailyCapEarly,
+				DailyCapLate:        params.DailyCapLate,
 				FaucetsEnabled:      featureFlags.FaucetsEnabled,
 				SinksEnabled:        featureFlags.SinksEnabled,
 				TelemetryEnabled:    featureFlags.Telemetry,
@@ -645,85 +630,11 @@ func adminPlayerControlsHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		if req.SetCoins != nil {
-			if *req.SetCoins < 0 {
-				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INVALID_COINS"})
-				return
-			}
-			_, err := db.Exec(`
-				UPDATE players
-				SET coins = $2
-				WHERE player_id = $1
-			`, playerID, *req.SetCoins)
-			if err != nil {
-				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
+		if req.SetCoins != nil || req.AddCoins != nil || req.SetStars != nil || req.AddStars != nil || req.DripMultiplier != nil || req.DripPaused != nil {
+			json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "ECONOMY_LOCKED"})
+			return
 		}
-		if req.AddCoins != nil && *req.AddCoins != 0 {
-			_, err := db.Exec(`
-				UPDATE players
-				SET coins = GREATEST(coins + $2, 0)
-				WHERE player_id = $1
-			`, playerID, *req.AddCoins)
-			if err != nil {
-				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-		}
-		if req.SetStars != nil {
-			if *req.SetStars < 0 {
-				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INVALID_STARS"})
-				return
-			}
-			_, err := db.Exec(`
-				UPDATE players
-				SET stars = $2
-				WHERE player_id = $1
-			`, playerID, *req.SetStars)
-			if err != nil {
-				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-		}
-		if req.AddStars != nil && *req.AddStars != 0 {
-			_, err := db.Exec(`
-				UPDATE players
-				SET stars = GREATEST(stars + $2, 0)
-				WHERE player_id = $1
-			`, playerID, *req.AddStars)
-			if err != nil {
-				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-		}
-		if req.DripMultiplier != nil {
-			value := *req.DripMultiplier
-			if value < 0.1 || value > 10.0 {
-				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INVALID_MULTIPLIER"})
-				return
-			}
-			_, err := db.Exec(`
-				UPDATE players
-				SET drip_multiplier = $2
-				WHERE player_id = $1
-			`, playerID, value)
-			if err != nil {
-				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-		}
-		if req.DripPaused != nil {
-			_, err := db.Exec(`
-				UPDATE players
-				SET drip_paused = $2
-				WHERE player_id = $1
-			`, playerID, *req.DripPaused)
-			if err != nil {
-				json.NewEncoder(w).Encode(AdminPlayerControlResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-		}
+
 		if req.IsBot != nil {
 			var currentIsBot bool
 			var lastActive time.Time
@@ -819,54 +730,16 @@ func adminPlayerControlsHandler(db *sql.DB) http.HandlerFunc {
 
 func adminSettingsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 		if _, ok := requireAdmin(db, w, r); !ok {
 			return
 		}
 		switch r.Method {
 		case http.MethodGet:
 			json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: true, Settings: GetGlobalSettings()})
-			return
-		case http.MethodPost:
-			var req AdminGlobalSettingsRequest
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: false, Error: "INVALID_REQUEST"})
-				return
-			}
-			updates := map[string]string{}
-			if req.ActiveDripIntervalSeconds != nil {
-				updates["active_drip_interval_seconds"] = strconv.Itoa(*req.ActiveDripIntervalSeconds)
-			}
-			if req.IdleDripIntervalSeconds != nil {
-				updates["idle_drip_interval_seconds"] = strconv.Itoa(*req.IdleDripIntervalSeconds)
-			}
-			if req.ActiveDripAmount != nil {
-				updates["active_drip_amount"] = strconv.Itoa(*req.ActiveDripAmount)
-			}
-			if req.IdleDripAmount != nil {
-				updates["idle_drip_amount"] = strconv.Itoa(*req.IdleDripAmount)
-			}
-			if req.ActivityWindowSeconds != nil {
-				updates["activity_window_seconds"] = strconv.Itoa(*req.ActivityWindowSeconds)
-			}
-			if req.DripEnabled != nil {
-				updates["drip_enabled"] = strconv.FormatBool(*req.DripEnabled)
-			}
-			if req.BotsEnabled != nil {
-				updates["bots_enabled"] = strconv.FormatBool(*req.BotsEnabled)
-			}
-			if req.BotMinStarIntervalSeconds != nil {
-				updates["bot_min_star_interval_seconds"] = strconv.Itoa(*req.BotMinStarIntervalSeconds)
-			}
-			if len(updates) == 0 {
-				json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: false, Error: "NO_UPDATES"})
-				return
-			}
-			settings, err := UpdateGlobalSettings(db, updates)
-			if err != nil {
-				json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-			json.NewEncoder(w).Encode(AdminGlobalSettingsResponse{OK: true, Settings: settings})
 			return
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)

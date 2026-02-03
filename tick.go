@@ -73,6 +73,8 @@ func startTickLoop(db *sql.DB) {
 
 			economy.mu.Unlock()
 
+			updateMarketPressure(db, now)
+
 			tickCount++
 			if tickCount%5 == 0 {
 				economy.persist(currentSeasonID(), db)

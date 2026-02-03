@@ -481,16 +481,7 @@ func bulkStarMaxQty() int {
 }
 
 func bulkStarGamma() float64 {
-	const fallback = 0.08
-	value := strings.TrimSpace(os.Getenv("BULK_STAR_GAMMA"))
-	if value == "" {
-		return fallback
-	}
-	parsed, err := strconv.ParseFloat(value, 64)
-	if err != nil || parsed < 0 {
-		return fallback
-	}
-	return parsed
+	return economy.Calibration().Gamma
 }
 
 func bulkWarning(maxMultiplier float64) (string, string) {
@@ -1032,6 +1023,15 @@ func signupHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
+		_ = createNotification(
+			db,
+			"user",
+			account.AccountID,
+			"Welcome to the season. Prices rise over time, but small goals still stack. Track the curve and set a first-star target—no outcome is guaranteed.",
+			"info",
+			"#/home",
+			nil,
+		)
 		sessionID, expiresAt, err := createSession(db, account.AccountID)
 		if err != nil {
 			log.Println("signup: createSession error:", err)
@@ -1339,8 +1339,9 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		const reward = 20
-		const cooldown = 24 * time.Hour
+		params := economy.Calibration()
+		reward := params.DailyLoginReward
+		cooldown := time.Duration(params.DailyLoginCooldownHours) * time.Hour
 
 		canClaim, remaining, err := CanClaimFaucet(db, playerID, FaucetDaily, cooldown)
 		if err != nil {
@@ -1356,13 +1357,26 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		remainingCap, err := RemainingDailyCap(db, playerID, time.Now().UTC())
+		if err != nil {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if remainingCap <= 0 {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "DAILY_CAP"})
+			return
+		}
+		if reward > remainingCap {
+			reward = remainingCap
+		}
+
 		if !TryDistributeCoinsWithPriority(FaucetDaily, reward) {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "EMISSION_EXHAUSTED"})
 			return
 		}
 
-		player.Coins += int64(reward)
-		if err := UpdatePlayerBalances(db, player.PlayerID, player.Coins, player.Stars); err != nil {
+		granted, _, err := GrantCoinsWithCap(db, player.PlayerID, reward, time.Now().UTC())
+		if err != nil {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
@@ -1370,10 +1384,11 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
+		player.Coins += int64(granted)
 
 		json.NewEncoder(w).Encode(FaucetClaimResponse{
 			OK:          true,
-			Reward:      reward,
+			Reward:      granted,
 			PlayerCoins: int(player.Coins),
 		})
 	}
@@ -1427,8 +1442,9 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		reward := 3
-		const cooldown = 5 * time.Minute
+		params := economy.Calibration()
+		reward := params.ActivityReward
+		cooldown := time.Duration(params.ActivityCooldownSeconds) * time.Second
 
 		if active, _, err := HasActiveBoost(db, playerID, BoostActivity); err != nil {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -1451,13 +1467,25 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		remainingCap, err := RemainingDailyCap(db, playerID, time.Now().UTC())
+		if err != nil {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if remainingCap <= 0 {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "DAILY_CAP"})
+			return
+		}
+		if reward > remainingCap {
+			reward = remainingCap
+		}
 		if !TryDistributeCoinsWithPriority(FaucetActivity, reward) {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "EMISSION_EXHAUSTED"})
 			return
 		}
 
-		player.Coins += int64(reward)
-		if err := UpdatePlayerBalances(db, player.PlayerID, player.Coins, player.Stars); err != nil {
+		granted, _, err := GrantCoinsWithCap(db, player.PlayerID, reward, time.Now().UTC())
+		if err != nil {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
@@ -1465,10 +1493,11 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
+		player.Coins += int64(granted)
 
 		json.NewEncoder(w).Encode(FaucetClaimResponse{
 			OK:          true,
-			Reward:      reward,
+			Reward:      granted,
 			PlayerCoins: int(player.Coins),
 		})
 	}

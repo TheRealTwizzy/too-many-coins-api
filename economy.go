@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"math"
 	"sync"
 	"time"
 )
@@ -14,6 +15,9 @@ type EconomyState struct {
 	globalStarsPurchased int
 	dailyEmissionTarget  int
 	emissionRemainder    float64
+	marketPressure       float64
+	priceFloor           int
+	calibration          CalibrationParams
 }
 
 var economy = &EconomyState{
@@ -21,6 +25,29 @@ var economy = &EconomyState{
 	globalStarsPurchased: 0,
 	dailyEmissionTarget:  1000,
 	emissionRemainder:    0,
+	marketPressure:       1.0,
+	priceFloor:           0,
+	calibration: CalibrationParams{
+		SeasonID:                     defaultSeasonID,
+		P0:                           10,
+		CBase:                        1000,
+		Alpha:                        3.0,
+		SScale:                       25.0,
+		GScale:                       1000.0,
+		Beta:                         2.6,
+		Gamma:                        0.08,
+		DailyLoginReward:             20,
+		DailyLoginCooldownHours:      20,
+		ActivityReward:               3,
+		ActivityCooldownSeconds:      300,
+		DailyCapEarly:                100,
+		DailyCapLate:                 30,
+		PassiveActiveIntervalSeconds: 60,
+		PassiveIdleIntervalSeconds:   240,
+		PassiveActiveAmount:          2,
+		PassiveIdleAmount:            1,
+		HopeThreshold:                0.22,
+	},
 }
 
 func (e *EconomyState) emitCoins(amount int) {
@@ -41,20 +68,26 @@ func (e *EconomyState) persist(seasonID string, db *sql.DB) {
 			global_coin_pool,
 			global_stars_purchased,
 			emission_remainder,
+			market_pressure,
+			price_floor,
 			last_updated
 		)
-		VALUES ($1, $2, $3, $4, NOW())
+		VALUES ($1, $2, $3, $4, $5, $6, NOW())
 		ON CONFLICT (season_id)
 		DO UPDATE SET
 			global_coin_pool = EXCLUDED.global_coin_pool,
 			global_stars_purchased = EXCLUDED.global_stars_purchased,
 			emission_remainder = EXCLUDED.emission_remainder,
+			market_pressure = EXCLUDED.market_pressure,
+			price_floor = EXCLUDED.price_floor,
 			last_updated = NOW()
 	`,
 		seasonID,
 		e.globalCoinPool,
 		e.globalStarsPurchased,
 		e.emissionRemainder,
+		e.marketPressure,
+		e.priceFloor,
 	)
 
 	if err != nil {
@@ -85,7 +118,8 @@ func (e *EconomyState) load(seasonID string, db *sql.DB) error {
 	defer e.mu.Unlock()
 
 	row := db.QueryRow(`
-		SELECT global_coin_pool, global_stars_purchased, coins_distributed, emission_remainder
+		SELECT global_coin_pool, global_stars_purchased, coins_distributed, emission_remainder,
+			COALESCE(market_pressure, 1.0), COALESCE(price_floor, 0)
 		FROM season_economy
 		WHERE season_id = $1
 	`, seasonID)
@@ -94,8 +128,10 @@ func (e *EconomyState) load(seasonID string, db *sql.DB) error {
 	var stars int64
 	var distributed int64
 	var remainder float64
+	var pressure float64
+	var floor int64
 
-	err := row.Scan(&pool, &stars, &distributed, &remainder)
+	err := row.Scan(&pool, &stars, &distributed, &remainder, &pressure, &floor)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Println("Economy: no existing state, starting fresh")
@@ -108,6 +144,8 @@ func (e *EconomyState) load(seasonID string, db *sql.DB) error {
 	e.globalStarsPurchased = int(stars)
 	e.coinsDistributed = int(distributed)
 	e.emissionRemainder = remainder
+	e.marketPressure = pressure
+	e.priceFloor = int(floor)
 
 	log.Println(
 		"Economy: loaded state",
@@ -126,8 +164,25 @@ func ensureSchema(db *sql.DB) error {
 			global_coin_pool BIGINT NOT NULL,
 			global_stars_purchased BIGINT NOT NULL,
 			emission_remainder DOUBLE PRECISION NOT NULL,
+			market_pressure DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+			price_floor BIGINT NOT NULL DEFAULT 0,
 			last_updated TIMESTAMPTZ NOT NULL
 		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE season_economy
+			ADD COLUMN IF NOT EXISTS market_pressure DOUBLE PRECISION NOT NULL DEFAULT 1.0;
+	`)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`
+		ALTER TABLE season_economy
+			ADD COLUMN IF NOT EXISTS price_floor BIGINT NOT NULL DEFAULT 0;
 	`)
 	if err != nil {
 		return err
@@ -251,6 +306,22 @@ func ensureSchema(db *sql.DB) error {
 	_, err = db.Exec(`
 		ALTER TABLE players
 		ADD COLUMN IF NOT EXISTS last_coin_grant_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE players
+		ADD COLUMN IF NOT EXISTS daily_earn_total BIGINT NOT NULL DEFAULT 0;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE players
+		ADD COLUMN IF NOT EXISTS last_earn_reset_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 	`)
 	if err != nil {
 		return err
@@ -578,6 +649,35 @@ func ensureSchema(db *sql.DB) error {
 		return err
 	}
 
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS season_calibration (
+			season_id TEXT PRIMARY KEY,
+			seed BIGINT NOT NULL,
+			p0 INT NOT NULL,
+			c_base INT NOT NULL,
+			alpha DOUBLE PRECISION NOT NULL,
+			s_scale DOUBLE PRECISION NOT NULL,
+			g_scale DOUBLE PRECISION NOT NULL,
+			beta DOUBLE PRECISION NOT NULL,
+			gamma DOUBLE PRECISION NOT NULL,
+			daily_login_reward INT NOT NULL,
+			daily_login_cooldown_hours INT NOT NULL,
+			activity_reward INT NOT NULL,
+			activity_cooldown_seconds INT NOT NULL,
+			daily_cap_early INT NOT NULL,
+			daily_cap_late INT NOT NULL,
+			passive_active_interval_seconds INT NOT NULL,
+			passive_idle_interval_seconds INT NOT NULL,
+			passive_active_amount INT NOT NULL,
+			passive_idle_amount INT NOT NULL,
+			hope_threshold DOUBLE PRECISION NOT NULL DEFAULT 0.22,
+			created_at TIMESTAMPTZ NOT NULL
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
 	// 6️⃣ player_boosts table
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS player_boosts (
@@ -644,47 +744,69 @@ func (e *EconomyState) CoinsInCirculation() int64 {
 	return int64(e.globalCoinPool)
 }
 
+func (e *EconomyState) Calibration() CalibrationParams {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.calibration
+}
+
+func (e *EconomyState) SetCalibration(params CalibrationParams) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.calibration = params
+	e.dailyEmissionTarget = params.CBase
+	if e.priceFloor < params.P0 {
+		e.priceFloor = params.P0
+	}
+}
+
+func (e *EconomyState) MarketPressure() float64 {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.marketPressure
+}
+
+func (e *EconomyState) UpdateMarketPressure(target float64, maxDelta float64) float64 {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if target < 0.6 {
+		target = 0.6
+	}
+	if target > 1.8 {
+		target = 1.8
+	}
+	delta := target - e.marketPressure
+	if delta > maxDelta {
+		delta = maxDelta
+	}
+	if delta < -maxDelta {
+		delta = -maxDelta
+	}
+	e.marketPressure += delta
+	if e.marketPressure < 0.6 {
+		e.marketPressure = 0.6
+	}
+	return e.marketPressure
+}
+
+func (e *EconomyState) ApplyPriceFloor(price int) int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if price < e.priceFloor {
+		return e.priceFloor
+	}
+	e.priceFloor = price
+	return price
+}
+
 func (e *EconomyState) EmissionPerMinute() float64 {
 	// dailyEmissionTarget is coins per day
 	return float64(e.dailyEmissionTarget) / (24 * 60)
 }
 
 func (e *EconomyState) EffectiveDailyEmissionTarget(secondsRemaining int64, coinsInCirculation int64) int {
-	e.mu.Lock()
-	baseTarget := e.dailyEmissionTarget
-	e.mu.Unlock()
-
-	const seasonSeconds = 28 * 24 * 3600
-	if seasonSeconds <= 0 {
-		return baseTarget
-	}
-
-	progress := 1 - (float64(secondsRemaining) / float64(seasonSeconds))
-	if progress < 0 {
-		progress = 0
-	}
-	if progress > 1 {
-		progress = 1
-	}
-
-	// Time multiplier: tapers down as the season advances.
-	timeMultiplier := 1 - (0.7 * progress)
-	if timeMultiplier < 0.15 {
-		timeMultiplier = 0.15
-	}
-
-	// Circulation multiplier: dampens emission as coins in circulation grow.
-	const circulationScale = 5000.0
-	coinMultiplier := 1 / (1 + (float64(coinsInCirculation) / circulationScale))
-	if coinMultiplier < 0.2 {
-		coinMultiplier = 0.2
-	}
-
-	effective := int(float64(baseTarget)*timeMultiplier*coinMultiplier + 0.5)
-	if effective < 0 {
-		effective = 0
-	}
-	return effective
+	params := economy.Calibration()
+	return EffectiveDailyEmissionTargetForParams(params, secondsRemaining, coinsInCirculation)
 }
 
 func (e *EconomyState) EffectiveEmissionPerMinute(secondsRemaining int64, coinsInCirculation int64) float64 {
@@ -715,37 +837,93 @@ func ComputeStarPriceWithStars(
 	coinsInCirculation int64,
 	secondsRemaining int64,
 ) int {
-	const (
-		BASE_STAR_PRICE      = 10
-		STAR_SCARCITY_SCALE  = 25.0
-		COIN_INFLATION_SCALE = 1000.0
-		SEASON_SECONDS       = 28 * 24 * 3600
-	)
+	params := economy.Calibration()
+	price := ComputeStarPriceRaw(params, starsPurchased, coinsInCirculation, secondsRemaining, economy.MarketPressure())
+	return economy.ApplyPriceFloor(price)
+}
 
-	// 1. Star scarcity (PRIMARY driver)
-	scarcityMultiplier := 1 + (float64(starsPurchased) / STAR_SCARCITY_SCALE)
-
-	// 2. Coin inflation (SECONDARY driver)
-	coinMultiplier := 1 + (float64(coinsInCirculation) / COIN_INFLATION_SCALE)
-
-	// 3. Time pressure (AMPLIFIER)
-	progress := 1 - (float64(secondsRemaining) / float64(SEASON_SECONDS))
+func ComputeStarPriceRaw(
+	params CalibrationParams,
+	starsPurchased int,
+	coinsInCirculation int64,
+	secondsRemaining int64,
+	marketPressure float64,
+) int {
+	const seasonSeconds = 28 * 24 * 3600
+	progress := 1 - (float64(secondsRemaining) / float64(seasonSeconds))
 	if progress < 0 {
 		progress = 0
 	}
 	if progress > 1 {
 		progress = 1
 	}
-	timeMultiplier := 1 + progress
+
+	scarcityMultiplier := 1 + (float64(starsPurchased) / params.SScale)
+	coinMultiplier := 1 + (float64(coinsInCirculation) / params.GScale)
+	timeMultiplier := 1 + params.Alpha*math.Pow(progress, 2)
+
+	lateSpike := 1.0
+	if progress > 0.75 {
+		lateProgress := (progress - 0.75) / 0.25
+		if lateProgress < 0 {
+			lateProgress = 0
+		}
+		if lateProgress > 1 {
+			lateProgress = 1
+		}
+		lateSpike = 1 + 0.6*math.Pow(lateProgress, params.Beta)
+	}
+
+	if marketPressure < 0.6 {
+		marketPressure = 0.6
+	}
+	if marketPressure > 1.8 {
+		marketPressure = 1.8
+	}
 
 	price :=
-		float64(BASE_STAR_PRICE) *
+		float64(params.P0) *
 			scarcityMultiplier *
 			coinMultiplier *
-			timeMultiplier
+			timeMultiplier *
+			lateSpike *
+			marketPressure
 
-	// ceil without math.Ceil
 	return int(price + 0.9999)
+}
+
+func EffectiveDailyEmissionTargetForParams(params CalibrationParams, secondsRemaining int64, coinsInCirculation int64) int {
+	const seasonSeconds = 28 * 24 * 3600
+	if seasonSeconds <= 0 {
+		return params.CBase
+	}
+	progress := 1 - (float64(secondsRemaining) / float64(seasonSeconds))
+	if progress < 0 {
+		progress = 0
+	}
+	if progress > 1 {
+		progress = 1
+	}
+
+	timeMultiplier := 1 - (0.75 * progress)
+	if timeMultiplier < 0.12 {
+		timeMultiplier = 0.12
+	}
+
+	circulationScale := params.GScale * 4.0
+	if circulationScale < 2000 {
+		circulationScale = 2000
+	}
+	coinMultiplier := 1 / (1 + (float64(coinsInCirculation) / circulationScale))
+	if coinMultiplier < 0.2 {
+		coinMultiplier = 0.2
+	}
+
+	effective := int(float64(params.CBase)*timeMultiplier*coinMultiplier + 0.5)
+	if effective < 0 {
+		effective = 0
+	}
+	return effective
 }
 
 func (e *EconomyState) AvailableCoins() int {
