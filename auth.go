@@ -21,6 +21,11 @@ type Account struct {
 	DisplayName  string
 	PlayerID     string
 	Email        string
+	Bio          string
+	Pronouns     string
+	Location     string
+	Website      string
+	AvatarURL    string
 	AdminKeyHash string
 	Role         string
 }
@@ -90,11 +95,17 @@ func authenticate(db *sql.DB, username string, password string) (*Account, error
 	var adminKey sql.NullString
 	var role string
 	var email sql.NullString
+	var bio sql.NullString
+	var pronouns sql.NullString
+	var location sql.NullString
+	var website sql.NullString
+	var avatarURL sql.NullString
 	if err := db.QueryRow(`
-		SELECT account_id, username, display_name, player_id, password_hash, admin_key_hash, role, email
+		SELECT account_id, username, display_name, player_id, password_hash, admin_key_hash, role, email,
+			bio, pronouns, location, website, avatar_url
 		FROM accounts
 		WHERE username = $1
-	`, username).Scan(&account.AccountID, &account.Username, &account.DisplayName, &account.PlayerID, &hash, &adminKey, &role, &email); err != nil {
+	`, username).Scan(&account.AccountID, &account.Username, &account.DisplayName, &account.PlayerID, &hash, &adminKey, &role, &email, &bio, &pronouns, &location, &website, &avatarURL); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("INVALID_CREDENTIALS")
 		}
@@ -102,6 +113,21 @@ func authenticate(db *sql.DB, username string, password string) (*Account, error
 	}
 	if email.Valid {
 		account.Email = email.String
+	}
+	if bio.Valid {
+		account.Bio = bio.String
+	}
+	if pronouns.Valid {
+		account.Pronouns = pronouns.String
+	}
+	if location.Valid {
+		account.Location = location.String
+	}
+	if website.Valid {
+		account.Website = website.String
+	}
+	if avatarURL.Valid {
+		account.AvatarURL = avatarURL.String
 	}
 	if adminKey.Valid {
 		account.AdminKeyHash = adminKey.String
@@ -157,16 +183,37 @@ func getSessionAccount(db *sql.DB, r *http.Request) (*Account, string, error) {
 	var adminKey sql.NullString
 	var role string
 	var email sql.NullString
+	var bio sql.NullString
+	var pronouns sql.NullString
+	var location sql.NullString
+	var website sql.NullString
+	var avatarURL sql.NullString
 	if err := db.QueryRow(`
-		SELECT a.account_id, a.username, a.display_name, a.player_id, a.admin_key_hash, a.role, a.email, s.expires_at
+		SELECT a.account_id, a.username, a.display_name, a.player_id, a.admin_key_hash, a.role, a.email,
+			a.bio, a.pronouns, a.location, a.website, a.avatar_url, s.expires_at
 		FROM sessions s
 		JOIN accounts a ON a.account_id = s.account_id
 		WHERE s.session_id = $1
-	`, cookie.Value).Scan(&account.AccountID, &account.Username, &account.DisplayName, &account.PlayerID, &adminKey, &role, &email, &expiresAt); err != nil {
+	`, cookie.Value).Scan(&account.AccountID, &account.Username, &account.DisplayName, &account.PlayerID, &adminKey, &role, &email, &bio, &pronouns, &location, &website, &avatarURL, &expiresAt); err != nil {
 		return nil, "", err
 	}
 	if email.Valid {
 		account.Email = email.String
+	}
+	if bio.Valid {
+		account.Bio = bio.String
+	}
+	if pronouns.Valid {
+		account.Pronouns = pronouns.String
+	}
+	if location.Valid {
+		account.Location = location.String
+	}
+	if website.Valid {
+		account.Website = website.String
+	}
+	if avatarURL.Valid {
+		account.AvatarURL = avatarURL.String
 	}
 	if adminKey.Valid {
 		account.AdminKeyHash = adminKey.String

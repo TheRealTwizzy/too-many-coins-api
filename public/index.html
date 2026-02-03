@@ -287,14 +287,28 @@
 
 			<div class="grid" id="player-panels" style="display:none;">
 				<div class="card" id="profile-card">
-					<div class="label">Profile</div>
-					<div id="profile-name"></div>
-					<div id="profile-role" class="label"></div>
-					<div id="profile-coins" class="label"></div>
-					<div id="profile-stars" class="label"></div>
-					<input id="profile-display" placeholder="Display name" />
-					<input id="profile-email" placeholder="Email (for password reset)" />
-					<button id="profile-save">Save</button>
+					<div class="card-toggle">
+						<div class="label">User panel</div>
+					</div>
+					<div class="card-body">
+						<div class="row">
+							<img id="profile-avatar-img" alt="Avatar" style="width:64px; height:64px; border-radius:12px; object-fit:cover; border:1px solid #2a2f55;" />
+							<div>
+								<div id="profile-name"></div>
+								<div id="profile-role" class="label"></div>
+								<div id="profile-coins" class="label"></div>
+								<div id="profile-stars" class="label"></div>
+							</div>
+						</div>
+						<input id="profile-display" placeholder="Display name" />
+						<input id="profile-pronouns" placeholder="Pronouns" />
+						<input id="profile-location" placeholder="Location" />
+						<input id="profile-website" placeholder="Website" />
+						<input id="profile-avatar" placeholder="Avatar URL" />
+						<textarea id="profile-bio" rows="3" placeholder="Bio"></textarea>
+						<input id="profile-email" placeholder="Email (for password reset)" />
+						<button id="profile-save">Save</button>
+					</div>
 				</div>
 			</div>
 
@@ -302,12 +316,6 @@
 				<div class="label">Quick start</div>
 				<div>Play the current season. Earn coins over time. Spend them on stars.</div>
 				<button id="dismiss-hint">Got it</button>
-			</div>
-
-			<div class="card" id="feedback-card" style="display:none;">
-				<div class="label">Playtest feedback</div>
-				<textarea id="feedback-text" rows="3" style="width:100%;"></textarea>
-				<button id="feedback-send">Send</button>
 			</div>
 
 			<div class="card" id="actions-card" style="display:none;">
@@ -329,6 +337,7 @@
 			</div>
 
 			<div id="locked-message" class="label"></div>
+			<div class="card" id="season-snapshot" style="display:none;"></div>
 			<div id="seasons" class="grid">Loading season…</div>
 		</section>
 
@@ -596,15 +605,6 @@
 				</div>
 			</div>
 
-			<div class="card" data-collapsible="true">
-				<div class="card-toggle">
-					<div class="label">Recent feedback</div>
-					<button class="toggle-btn" type="button">Hide</button>
-				</div>
-				<div class="card-body">
-					<div id="feedback-list"></div>
-				</div>
-			</div>
 		</section>
 
 		<section id="view-admin-star-log" class="view">
@@ -704,12 +704,18 @@ const profileName = document.getElementById("profile-name");
 const profileRole = document.getElementById("profile-role");
 const profileDisplay = document.getElementById("profile-display");
 const profileEmail = document.getElementById("profile-email");
+const profilePronouns = document.getElementById("profile-pronouns");
+const profileLocation = document.getElementById("profile-location");
+const profileWebsite = document.getElementById("profile-website");
+const profileAvatar = document.getElementById("profile-avatar");
+const profileAvatarImg = document.getElementById("profile-avatar-img");
+const profileBio = document.getElementById("profile-bio");
+const seasonSnapshot = document.getElementById("season-snapshot");
 const profileSave = document.getElementById("profile-save");
 const playerPanels = document.getElementById("player-panels");
 const coinsDiv = document.getElementById("profile-coins");
 const starsDiv = document.getElementById("profile-stars");
 const onboarding = document.getElementById("onboarding");
-const feedbackCard = document.getElementById("feedback-card");
 const actionsCard = document.getElementById("actions-card");
 const whitelistRequestCard = document.getElementById("whitelist-request-card");
 const actionsStatus = document.getElementById("actions-status");
@@ -792,7 +798,7 @@ async function loadAuth() {
 		authForms.style.display = "block";
 		logoutBtn.style.display = "none";
 		playerPanels.style.display = "none";
-		feedbackCard.style.display = "none";
+		seasonSnapshot.style.display = "none";
 		actionsCard.style.display = "none";
 		whitelistRequestCard.style.display = "none";
 		statPill.style.display = "none";
@@ -817,7 +823,7 @@ async function loadAuth() {
 	profileDisplay.value = data.displayName;
 	await loadProfile();
 	playerPanels.style.display = "grid";
-	feedbackCard.style.display = "block";
+	seasonSnapshot.style.display = "block";
 	actionsCard.style.display = "block";
 	whitelistRequestCard.style.display = "block";
 	statPill.style.display = "inline-flex";
@@ -902,6 +908,12 @@ async function loadProfile() {
 	if (!data.ok) return;
 	profileDisplay.value = data.displayName || "";
 	profileEmail.value = data.email || "";
+	profilePronouns.value = data.pronouns || "";
+	profileLocation.value = data.location || "";
+	profileWebsite.value = data.website || "";
+	profileAvatar.value = data.avatarUrl || "";
+	profileBio.value = data.bio || "";
+	profileAvatarImg.src = data.avatarUrl || "https://placehold.co/64x64?text=User";
 }
 
 async function loadSeasons() {
@@ -921,6 +933,10 @@ async function loadSeasons() {
 		const isThisSeasonJoined = season.seasonId === joinedSeasonId;
 		const hoursLeft = Math.floor(season.secondsRemaining / 3600);
 		const starPrice = season.currentStarPrice;
+		seasonSnapshot.innerHTML = `
+			<div class="label">Season snapshot</div>
+			<div>Season 1 · ${hoursLeft}h left · Star price ${starPrice}</div>
+		`;
 
 		div.className = "card";
 		if (isJoined && !isThisSeasonJoined) {
@@ -1217,7 +1233,15 @@ function initHome() {
 		const email = profileEmail.value;
 		const res = await apiFetch("/profile", {
 			method: "POST",
-			body: JSON.stringify({ displayName, email })
+			body: JSON.stringify({
+				displayName,
+				email,
+				bio: profileBio.value,
+				pronouns: profilePronouns.value,
+				location: profileLocation.value,
+				website: profileWebsite.value,
+				avatarUrl: profileAvatar.value
+			})
 		});
 		const data = await res.json();
 		if (!data.ok) {
@@ -1225,18 +1249,10 @@ function initHome() {
 			return;
 		}
 		authStatus.innerText = `Logged in as ${data.displayName}`;
+		if (profileAvatar.value.trim()) {
+			profileAvatarImg.src = profileAvatar.value.trim();
+		}
 		setToast("Profile updated.", "success");
-	});
-
-	document.getElementById("feedback-send").addEventListener("click", async () => {
-		const message = document.getElementById("feedback-text").value.trim();
-		if (!message) return;
-		await apiFetch("/feedback", {
-			method: "POST",
-			body: JSON.stringify({ message })
-		});
-		document.getElementById("feedback-text").value = "";
-		setToast("Thanks for the feedback.", "success");
 	});
 
 	document.getElementById("claim-daily").addEventListener("click", async () => {
@@ -1869,12 +1885,7 @@ async function loadTelemetry() {
 		return `<tr><td>${time}</td><td>${row.eventType}</td><td>${row.count}</td></tr>`;
 	}).join("");
 
-	const feedback = data.feedback || [];
-	document.getElementById("feedback-list").innerHTML = feedback.map(item => {
-		const time = new Date(item.createdAt).toLocaleString();
-		const rating = item.rating !== null && item.rating !== undefined ? ` (${item.rating}/5)` : "";
-		return `<div class='label'>${time}${rating} — ${item.message}</div>`;
-	}).join("") || "<div class='label'>No feedback yet.</div>";
+	
 }
 
 function initModerator() {

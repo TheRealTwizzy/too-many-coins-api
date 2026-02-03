@@ -31,6 +31,21 @@ ALTER TABLE accounts
     ADD COLUMN IF NOT EXISTS email TEXT;
 
 ALTER TABLE accounts
+    ADD COLUMN IF NOT EXISTS bio TEXT;
+
+ALTER TABLE accounts
+    ADD COLUMN IF NOT EXISTS pronouns TEXT;
+
+ALTER TABLE accounts
+    ADD COLUMN IF NOT EXISTS location TEXT;
+
+ALTER TABLE accounts
+    ADD COLUMN IF NOT EXISTS website TEXT;
+
+ALTER TABLE accounts
+    ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
+ALTER TABLE accounts
     ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -181,12 +196,3 @@ CREATE TABLE IF NOT EXISTS player_telemetry (
     created_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS player_feedback (
-    id BIGSERIAL PRIMARY KEY,
-    account_id TEXT,
-    player_id TEXT,
-    rating INT,
-    message TEXT NOT NULL,
-    context JSONB,
-    created_at TIMESTAMPTZ NOT NULL
-);

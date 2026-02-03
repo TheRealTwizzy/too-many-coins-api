@@ -845,6 +845,11 @@ func profileHandler(db *sql.DB) http.HandlerFunc {
 				Username:    account.Username,
 				DisplayName: account.DisplayName,
 				Email:       account.Email,
+				Bio:         account.Bio,
+				Pronouns:    account.Pronouns,
+				Location:    account.Location,
+				Website:     account.Website,
+				AvatarURL:   account.AvatarURL,
 			})
 			return
 		case http.MethodPost:
@@ -858,6 +863,15 @@ func profileHandler(db *sql.DB) http.HandlerFunc {
 				json.NewEncoder(w).Encode(ProfileResponse{OK: false, Error: "INVALID_DISPLAY_NAME"})
 				return
 			}
+			bio := strings.TrimSpace(req.Bio)
+			pronouns := strings.TrimSpace(req.Pronouns)
+			location := strings.TrimSpace(req.Location)
+			website := strings.TrimSpace(req.Website)
+			avatarURL := strings.TrimSpace(req.AvatarURL)
+			if len(bio) > 240 || len(pronouns) > 32 || len(location) > 48 || len(website) > 200 || len(avatarURL) > 200 {
+				json.NewEncoder(w).Encode(ProfileResponse{OK: false, Error: "INVALID_PROFILE_FIELD"})
+				return
+			}
 			normalizedEmail := ""
 			if strings.TrimSpace(req.Email) != "" {
 				var err error
@@ -868,34 +882,39 @@ func profileHandler(db *sql.DB) http.HandlerFunc {
 				}
 			}
 
-			if normalizedEmail != "" {
-				_, err := db.Exec(`
-					UPDATE accounts
-					SET display_name = $2, email = $3
-					WHERE account_id = $1
-				`, account.AccountID, displayName, normalizedEmail)
-				if err != nil {
-					json.NewEncoder(w).Encode(ProfileResponse{OK: false, Error: "INTERNAL_ERROR"})
-					return
-				}
-				account.Email = normalizedEmail
-			} else {
-				_, err := db.Exec(`
-					UPDATE accounts
-					SET display_name = $2
-					WHERE account_id = $1
-				`, account.AccountID, displayName)
-				if err != nil {
-					json.NewEncoder(w).Encode(ProfileResponse{OK: false, Error: "INTERNAL_ERROR"})
-					return
-				}
+			emailValue := sql.NullString{String: normalizedEmail, Valid: normalizedEmail != ""}
+			_, err := db.Exec(`
+				UPDATE accounts
+				SET display_name = $2,
+					email = $3,
+					bio = $4,
+					pronouns = $5,
+					location = $6,
+					website = $7,
+					avatar_url = $8
+				WHERE account_id = $1
+			`, account.AccountID, displayName, emailValue, bio, pronouns, location, website, avatarURL)
+			if err != nil {
+				json.NewEncoder(w).Encode(ProfileResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
 			}
+			account.Email = normalizedEmail
+			account.Bio = bio
+			account.Pronouns = pronouns
+			account.Location = location
+			account.Website = website
+			account.AvatarURL = avatarURL
 
 			json.NewEncoder(w).Encode(ProfileResponse{
 				OK:          true,
 				Username:    account.Username,
 				DisplayName: displayName,
 				Email:       account.Email,
+				Bio:         account.Bio,
+				Pronouns:    account.Pronouns,
+				Location:    account.Location,
+				Website:     account.Website,
+				AvatarURL:   account.AvatarURL,
 			})
 			return
 		default:

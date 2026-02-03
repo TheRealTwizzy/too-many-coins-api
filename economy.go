@@ -182,6 +182,46 @@ func ensureSchema(db *sql.DB) error {
 
 	_, err = db.Exec(`
 		ALTER TABLE accounts
+			ADD COLUMN IF NOT EXISTS bio TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE accounts
+			ADD COLUMN IF NOT EXISTS pronouns TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE accounts
+			ADD COLUMN IF NOT EXISTS location TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE accounts
+			ADD COLUMN IF NOT EXISTS website TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE accounts
+			ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE accounts
 		ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
 	`)
 	if err != nil {
@@ -447,22 +487,6 @@ func ensureSchema(db *sql.DB) error {
 			player_id TEXT,
 			event_type TEXT NOT NULL,
 			payload JSONB,
-			created_at TIMESTAMPTZ NOT NULL
-		);
-	`)
-	if err != nil {
-		return err
-	}
-
-	// 🔟b player_feedback table
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS player_feedback (
-			id BIGSERIAL PRIMARY KEY,
-			account_id TEXT,
-			player_id TEXT,
-			rating INT,
-			message TEXT NOT NULL,
-			context JSONB,
 			created_at TIMESTAMPTZ NOT NULL
 		);
 	`)

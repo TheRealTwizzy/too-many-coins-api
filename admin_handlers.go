@@ -17,16 +17,9 @@ type AdminTelemetrySeriesPoint struct {
 }
 
 type AdminTelemetryResponse struct {
-	OK       bool                        `json:"ok"`
-	Error    string                      `json:"error,omitempty"`
-	Series   []AdminTelemetrySeriesPoint `json:"series,omitempty"`
-	Feedback []AdminFeedbackItem         `json:"feedback,omitempty"`
-}
-
-type AdminFeedbackItem struct {
-	Rating    *int      `json:"rating,omitempty"`
-	Message   string    `json:"message"`
-	CreatedAt time.Time `json:"createdAt"`
+	OK     bool                        `json:"ok"`
+	Error  string                      `json:"error,omitempty"`
+	Series []AdminTelemetrySeriesPoint `json:"series,omitempty"`
 }
 
 type AdminEconomyResponse struct {
@@ -120,41 +113,9 @@ func adminTelemetryHandler(db *sql.DB) http.HandlerFunc {
 			series = append(series, point)
 		}
 
-		feedbackRows, err := db.Query(`
-			SELECT rating, message, created_at
-			FROM player_feedback
-			ORDER BY created_at DESC
-			LIMIT 25
-		`)
-		if err != nil {
-			json.NewEncoder(w).Encode(AdminTelemetryResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		defer feedbackRows.Close()
-
-		feedback := []AdminFeedbackItem{}
-		for feedbackRows.Next() {
-			var rating sql.NullInt64
-			var message string
-			var created time.Time
-			if err := feedbackRows.Scan(&rating, &message, &created); err != nil {
-				continue
-			}
-			item := AdminFeedbackItem{
-				Message:   message,
-				CreatedAt: created,
-			}
-			if rating.Valid {
-				value := int(rating.Int64)
-				item.Rating = &value
-			}
-			feedback = append(feedback, item)
-		}
-
 		json.NewEncoder(w).Encode(AdminTelemetryResponse{
-			OK:       true,
-			Series:   series,
-			Feedback: feedback,
+			OK:     true,
+			Series: series,
 		})
 	}
 }

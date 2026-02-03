@@ -104,6 +104,11 @@ type AuthResponse struct {
 type ProfileUpdateRequest struct {
 	DisplayName string `json:"displayName"`
 	Email       string `json:"email,omitempty"`
+	Bio         string `json:"bio,omitempty"`
+	Pronouns    string `json:"pronouns,omitempty"`
+	Location    string `json:"location,omitempty"`
+	Website     string `json:"website,omitempty"`
+	AvatarURL   string `json:"avatarUrl,omitempty"`
 }
 
 type ProfileResponse struct {
@@ -112,6 +117,11 @@ type ProfileResponse struct {
 	Username    string `json:"username,omitempty"`
 	DisplayName string `json:"displayName,omitempty"`
 	Email       string `json:"email,omitempty"`
+	Bio         string `json:"bio,omitempty"`
+	Pronouns    string `json:"pronouns,omitempty"`
+	Location    string `json:"location,omitempty"`
+	Website     string `json:"website,omitempty"`
+	AvatarURL   string `json:"avatarUrl,omitempty"`
 }
 
 type PasswordResetRequest struct {
@@ -321,7 +331,6 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/activity", activityHandler(db))
 	mux.HandleFunc("/profile", profileHandler(db))
 	mux.HandleFunc("/telemetry", telemetryHandler(db))
-	mux.HandleFunc("/feedback", feedbackHandler(db))
 	mux.HandleFunc("/admin/telemetry", adminTelemetryHandler(db))
 	mux.HandleFunc("/admin/economy", adminEconomyHandler(db))
 	mux.HandleFunc("/admin/set-key", adminKeySetHandler(db))
