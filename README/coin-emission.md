@@ -22,11 +22,11 @@ Coin faucets include:
 
 Daily login rewards
 
-Daily tasks
-
 Capped active play rewards
 
-Limited comeback rewards
+Daily tasks (post‑alpha)
+
+Limited comeback rewards (post‑alpha)
 
 Each player has a per-day earning cap.
 
@@ -40,7 +40,7 @@ Coin earning rates are automatically throttled.
 
 Faucets slow down rather than shutting off abruptly.
 
-Trade burn is a modeled sink. The daily emission budget accounts for expected trade burn so liquidity remains sufficient for meaningful daily action. Coin shortage is possible but rare; the economy must not stall.
+Trade burn is a modeled sink (post‑alpha when trading is enabled). The daily emission budget accounts for expected trade burn so liquidity remains sufficient for meaningful daily action. Coin shortage is possible but rare; the economy must not stall.
 Burned Coins are removed permanently and never redistributed.
 
 Coins are never created directly by player actions.

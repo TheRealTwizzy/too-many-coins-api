@@ -8,9 +8,9 @@ Total stars purchased in the last 24 hours
 
 Total stars purchased in the last 7 days
 
-Total stars transferred via brokered trades in the last 24 hours
+Total stars transferred via brokered trades in the last 24 hours (post‑alpha)
 
-Total stars transferred via brokered trades in the last 7 days
+Total stars transferred via brokered trades in the last 7 days (post‑alpha)
 
 Market pressure calculation:
 
@@ -32,5 +32,7 @@ Clients only receive the current pressure value and never compute it.
 Market pressure is applied multiplicatively to star prices.
 
 Brokered trading always contributes to market pressure, never relieves it.
+
+Alpha note: trading is disabled; market pressure is derived from star purchases only.
 
 Market pressure must be resistant to day-one coordinated activity and bot-driven bursts.

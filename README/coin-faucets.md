@@ -10,6 +10,8 @@ Designed to reward consistency, not grinding.
 
 Daily Tasks:
 
+Post‑alpha only.
+
 A small set of simple tasks refreshed at daily reset.
 
 Tasks grant moderate coin rewards.
@@ -25,6 +27,8 @@ Active play rewards are capped per hour and per day.
 AFK or idle behavior does not generate coins.
 
 Comeback Reward:
+
+Post‑alpha only.
 
 Available only to players who have been inactive for a defined period.
 

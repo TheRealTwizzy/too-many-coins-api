@@ -1,5 +1,7 @@
 The database stores only authoritative facts required to reconstruct the game state.
 
+Alpha note: the current schema is minimal and does not yet include all entities below. The list is the target canonical model and is post‑alpha unless explicitly implemented.
+
 Persistent entities include:
 
 Players:

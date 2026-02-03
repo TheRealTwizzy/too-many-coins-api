@@ -21,7 +21,7 @@ This plan defines the minimum goals and metrics for the first alpha test. It ali
 
 Economy:
 - Coins emitted per hour (from emission pool)
-- Coins earned per hour (faucets + drip if enabled)
+- Coins earned per hour (faucets; drip is post‑alpha and disabled in current build)
 - Coins in circulation
 - Stars purchased per hour
 - Average star price per hour
@@ -46,6 +46,8 @@ Abuse/Access:
 
 - buy_star
 - join_season
+
+Alpha note: additional faucet, emission, and pressure events are planned but not yet emitted.
 
 ## Test Window
 

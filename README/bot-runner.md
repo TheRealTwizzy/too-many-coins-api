@@ -56,7 +56,9 @@ The workflow is defined in `.github/workflows/bot_runner.yml` and runs every 5 m
 
 ## Tagging Bots
 
-Mark bot accounts in the database or via Admin → Player Controls:
+Mark bot accounts in the database (alpha).
+
+Post‑alpha admin UI may provide Player Controls for tagging:
 - Set **Bot status** to "Bot"
 - Set **Bot profile** to the strategy label
 

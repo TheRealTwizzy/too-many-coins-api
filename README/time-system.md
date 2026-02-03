@@ -20,7 +20,7 @@ Daily resets include:
 
 Resetting per-player daily earning totals
 
-Refreshing daily tasks
+Refreshing daily tasks (post‑alpha)
 
 Daily reset logic must be guarded so it runs exactly once per season-day.
 

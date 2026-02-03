@@ -2,7 +2,7 @@ Game: Too Many Coins! (MMO web)
 
 Seasons: 28 days
 
-Concurrent seasons: max 4, start dates staggered 7 days
+Concurrent seasons: max 4, start dates staggered 7 days (post‑alpha; alpha runs a single active season)
 
 Join rules: players can join any active season anytime
 

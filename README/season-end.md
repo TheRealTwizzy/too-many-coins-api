@@ -9,7 +9,7 @@ Final star balances determine leaderboard rankings.
 
 Rankings are snapshotted and stored permanently.
 
-Rewards:
+Rewards (post‑alpha):
 
 Players earn persistent rewards based on season participation and performance.
 
@@ -25,16 +25,16 @@ Endgame achievement badges
 
 Profile history entries showing season rank and stats
 
-Late-season recognition:
+Late-season recognition (post‑alpha):
 
 Players who participate during the final week earn additional recognition.
 
 Completing late-season challenges grants exclusive cosmetic rewards.
 
-Season closure:
+Season closure (post‑alpha):
 
 A summary screen shows final rank, earned rewards, and season highlights.
 
 Players are encouraged to join another active season or the next upcoming season.
 
-All rewards are granted automatically and recorded server-side.
+All rewards are granted automatically and recorded server-side (post‑alpha).

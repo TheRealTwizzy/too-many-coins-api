@@ -12,7 +12,7 @@ Account protections:
 
 Account creation is rate-limited.
 
-CAPTCHA and verification are required.
+CAPTCHA and verification are post‑alpha.
 
 New accounts must wait a short cooldown period before joining a season.
 
@@ -40,6 +40,8 @@ Repeated reciprocal trades between the same accounts
 Trading patterns that concentrate Stars across related IP ranges
 
 Unusual trade volume spikes relative to participation
+
+(Trade-specific detection is post‑alpha while trading is disabled.)
 
 Enforcement:
 

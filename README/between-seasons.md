@@ -1,5 +1,7 @@
 Between seasons, player power resets but identity and progression persist.
 
+Post‑alpha: between‑season progression is not implemented in Alpha.
+
 Persistent progression includes:
 
 Account level based on lifetime participation

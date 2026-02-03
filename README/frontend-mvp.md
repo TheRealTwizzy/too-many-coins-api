@@ -12,15 +12,9 @@ Authentication Page:
 
 Signup and login.
 
-Account verification and CAPTCHA.
+Account verification and CAPTCHA are post‑alpha.
 
-Season Lobby:
-
-Lists active seasons.
-
-Shows start date, current day, and population.
-
-Allows joining one season.
+Season Lobby is post‑alpha (alpha has a single active season only).
 
 Season Dashboard:
 
@@ -32,7 +26,7 @@ Provides actions to earn coins and buy stars.
 
 Shows basic feedback for price changes and throttles.
 
-Shows trading eligibility status and current trade premium/burn.
+Shows trading eligibility status and current trade premium/burn (post‑alpha).
 
 Bulk Purchase Modal:
 
@@ -48,15 +42,9 @@ Shows player ranking and tiers.
 
 Displays the player’s current rank.
 
-Profile Page:
+Profile Page is post‑alpha (badges, titles, cosmetics, season history).
 
-Displays badges, titles, cosmetics, and season history.
-
-Settings Page:
-
-Accessibility options.
-
-Account preferences.
+Settings Page is post‑alpha (accessibility options, account preferences).
 
 
 All pages must be simple, fast, and functional.

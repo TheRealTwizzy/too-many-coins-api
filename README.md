@@ -19,6 +19,7 @@ Alpha is focused on the first playable economy loop:
 - Single active season only (no season lobby)
 - Trading is disabled (post‑alpha)
 - Passive drip is disabled (post‑alpha)
+- Daily tasks and comeback rewards are disabled (post‑alpha)
 - Admin economy controls are read‑only
 - Market pressure is derived from star purchases only
 - Anti‑abuse protections are minimal but real (rate limiting + cooldowns)
@@ -64,6 +65,7 @@ Players may trade with one another only through a brokered, system-controlled pr
 
 Players earn Coins through daily login and active play faucets.  
 Passive drip is post‑alpha and disabled in the current build.  
+Daily tasks and comeback rewards are post‑alpha and disabled in the current build.  
 Alpha safeguard: on login, the server may top up very low balances to keep the game playable within minutes (draws from the emission pool, short cooldown).  
 Players spend Coins to buy Stars.  
 Players may optionally trade Coins for existing Stars under tight, time-worsening constraints (post‑alpha).  
