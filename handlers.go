@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -496,153 +495,6 @@ func burnCoinsHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func auctionStatusHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		status, err := GetAuctionStatus(db)
-		if err != nil {
-			json.NewEncoder(w).Encode(AuctionStatusResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-
-		json.NewEncoder(w).Encode(AuctionStatusResponse{OK: true, Status: status})
-	}
-}
-
-func auctionBidHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		if isSeasonEnded(time.Now().UTC()) {
-			json.NewEncoder(w).Encode(AuctionBidResponse{OK: false, Error: "SEASON_ENDED"})
-			return
-		}
-		if !featureFlags.SinksEnabled {
-			json.NewEncoder(w).Encode(AuctionBidResponse{OK: false, Error: "FEATURE_DISABLED"})
-			return
-		}
-
-		account, ok := requireSession(db, w, r)
-		if !ok {
-			return
-		}
-		playerID := account.PlayerID
-		if !isValidPlayerID(playerID) {
-			json.NewEncoder(w).Encode(AuctionBidResponse{OK: false, Error: "INVALID_PLAYER_ID"})
-			return
-		}
-
-		var req AuctionBidRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			json.NewEncoder(w).Encode(AuctionBidResponse{OK: false, Error: "INVALID_REQUEST"})
-			return
-		}
-
-		if req.Bid <= 0 {
-			json.NewEncoder(w).Encode(AuctionBidResponse{OK: false, Error: "INVALID_BID"})
-			return
-		}
-
-		status, err := PlaceAuctionBid(db, playerID, req.Bid)
-		if err != nil {
-			switch {
-			case errors.Is(err, errAuctionNotFound):
-				json.NewEncoder(w).Encode(AuctionBidResponse{OK: false, Error: "AUCTION_NOT_FOUND"})
-			case err.Error() == "BID_TOO_LOW":
-				json.NewEncoder(w).Encode(AuctionBidResponse{OK: false, Error: "BID_TOO_LOW"})
-			case err.Error() == "NOT_ENOUGH_COINS":
-				json.NewEncoder(w).Encode(AuctionBidResponse{OK: false, Error: "NOT_ENOUGH_COINS"})
-			default:
-				json.NewEncoder(w).Encode(AuctionBidResponse{OK: false, Error: "INTERNAL_ERROR"})
-			}
-			return
-		}
-
-		json.NewEncoder(w).Encode(AuctionBidResponse{OK: true, Status: status})
-	}
-}
-
-func signupHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		if account, _, err := getSessionAccount(db, r); err == nil && account != nil {
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "ALREADY_LOGGED_IN"})
-			return
-		}
-
-		if ip := getClientIP(r); ip != "" {
-			allowed, err := CanSignupFromIP(db, ip)
-			if err != nil {
-				json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-			if !allowed {
-				json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "IP_SIGNUP_BLOCKED"})
-				return
-			}
-		}
-
-		var req SignupRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INVALID_REQUEST"})
-			return
-		}
-
-		account, err := createAccount(db, req.Username, req.Password, req.DisplayName, req.Email)
-		if err != nil {
-			if strings.Contains(strings.ToLower(err.Error()), "duplicate") {
-				json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "USERNAME_TAKEN"})
-				return
-			}
-			if err.Error() == "INVALID_USERNAME" || err.Error() == "INVALID_PASSWORD" || err.Error() == "INVALID_EMAIL" {
-				json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: err.Error()})
-				return
-			}
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-
-		if _, err := LoadOrCreatePlayer(db, account.PlayerID); err != nil {
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-
-		if ip := getClientIP(r); ip != "" {
-			isNew, err := RecordPlayerIP(db, account.PlayerID, ip)
-			if err != nil {
-				log.Println("Failed to record player IP on signup:", err)
-			} else if isNew {
-				if err := ApplyIPDampeningDelay(db, account.PlayerID, ip); err != nil {
-					log.Println("Failed to apply IP dampening delay on signup:", err)
-				}
-			}
-		}
-
-		sessionID, expiresAt, err := createSession(db, account.AccountID)
-		if err != nil {
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-
-		writeSessionCookie(w, sessionID, expiresAt)
-		json.NewEncoder(w).Encode(AuthResponse{
-			OK:          true,
-			Username:    account.Username,
-			DisplayName: account.DisplayName,
-			PlayerID:    account.PlayerID,
-			IsAdmin:     account.Role == "admin",
-			IsModerator: account.Role == "moderator",
-			Role:        account.Role,
-		})
-	}
-}
-
 func requestPasswordResetHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -851,6 +703,52 @@ func activityHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
+		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
+	}
+}
+
+func signupHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		var req SignupRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+		ip := getClientIP(r)
+		allowed, err := CanSignupFromIP(db, ip)
+		if err != nil {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if !allowed {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "IP_LIMIT"})
+			return
+		}
+		account, err := createAccount(db, req.Username, req.Password, req.DisplayName, req.Email)
+		if err != nil {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: err.Error()})
+			return
+		}
+		if ip != "" {
+			isNew, err := RecordPlayerIP(db, account.PlayerID, ip)
+			if err == nil && isNew {
+				_ = ApplyIPDampeningDelay(db, account.PlayerID, ip)
+			}
+		}
+		if _, err := LoadOrCreatePlayer(db, account.PlayerID); err != nil {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		sessionID, expiresAt, err := createSession(db, account.AccountID)
+		if err != nil {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		writeSessionCookie(w, sessionID, expiresAt)
 		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 	}
 }

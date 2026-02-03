@@ -78,23 +78,6 @@ type BurnCoinsResponse struct {
 	BurnedTotal int    `json:"burnedTotal,omitempty"`
 }
 
-type AuctionBidRequest struct {
-	PlayerID string `json:"playerId"`
-	Bid      int    `json:"bid"`
-}
-
-type AuctionStatusResponse struct {
-	OK     bool           `json:"ok"`
-	Error  string         `json:"error,omitempty"`
-	Status *AuctionStatus `json:"status,omitempty"`
-}
-
-type AuctionBidResponse struct {
-	OK     bool           `json:"ok"`
-	Error  string         `json:"error,omitempty"`
-	Status *AuctionStatus `json:"status,omitempty"`
-}
-
 type SignupRequest struct {
 	Username    string `json:"username"`
 	Password    string `json:"password"`
@@ -326,8 +309,6 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/burn-coins", burnCoinsHandler(db))
 	mux.HandleFunc("/claim-daily", dailyClaimHandler(db))
 	mux.HandleFunc("/claim-activity", activityClaimHandler(db))
-	mux.HandleFunc("/auction-status", auctionStatusHandler(db))
-	mux.HandleFunc("/auction-bid", auctionBidHandler(db))
 	mux.HandleFunc("/auth/signup", signupHandler(db))
 	mux.HandleFunc("/auth/login", loginHandler(db))
 	mux.HandleFunc("/auth/logout", logoutHandler(db))

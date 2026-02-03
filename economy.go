@@ -410,42 +410,6 @@ func ensureSchema(db *sql.DB) error {
 		return err
 	}
 
-	// 7️⃣ system_auctions table
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS system_auctions (
-			auction_id TEXT PRIMARY KEY,
-			item_key TEXT NOT NULL,
-			min_bid BIGINT NOT NULL,
-			current_bid BIGINT NOT NULL,
-			current_winner TEXT,
-			ends_at TIMESTAMPTZ NOT NULL,
-			settled_at TIMESTAMPTZ
-		);
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS auction_bids (
-			auction_id TEXT NOT NULL,
-			player_id TEXT NOT NULL,
-			bid BIGINT NOT NULL,
-			created_at TIMESTAMPTZ NOT NULL
-		);
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		CREATE INDEX IF NOT EXISTS idx_auction_bids_auction_id
-		ON auction_bids (auction_id);
-	`)
-	if err != nil {
-		return err
-	}
-
 	// 8️⃣ season_end_snapshots table
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS season_end_snapshots (

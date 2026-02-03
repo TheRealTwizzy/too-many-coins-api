@@ -155,26 +155,6 @@ CREATE TABLE IF NOT EXISTS player_boosts (
     PRIMARY KEY (player_id, boost_type)
 );
 
-CREATE TABLE IF NOT EXISTS system_auctions (
-    auction_id TEXT PRIMARY KEY,
-    item_key TEXT NOT NULL,
-    min_bid BIGINT NOT NULL,
-    current_bid BIGINT NOT NULL,
-    current_winner TEXT,
-    ends_at TIMESTAMPTZ NOT NULL,
-    settled_at TIMESTAMPTZ
-);
-
-CREATE TABLE IF NOT EXISTS auction_bids (
-    auction_id TEXT NOT NULL,
-    player_id TEXT NOT NULL,
-    bid BIGINT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_auction_bids_auction_id
-    ON auction_bids (auction_id);
-
 CREATE TABLE IF NOT EXISTS season_end_snapshots (
     season_id TEXT PRIMARY KEY,
     ended_at TIMESTAMPTZ NOT NULL,

@@ -290,15 +290,11 @@
 					<div class="label">Profile</div>
 					<div id="profile-name"></div>
 					<div id="profile-role" class="label"></div>
+					<div id="profile-coins" class="label"></div>
+					<div id="profile-stars" class="label"></div>
 					<input id="profile-display" placeholder="Display name" />
 					<input id="profile-email" placeholder="Email (for password reset)" />
 					<button id="profile-save">Save</button>
-				</div>
-
-				<div class="card" id="player-stats">
-					<div class="label">Your stats</div>
-					<div id="player-coins" class="label"></div>
-					<div id="player-stars" class="label"></div>
 				</div>
 			</div>
 
@@ -542,16 +538,6 @@
 				</div>
 			</div>
 
-			<div class="card" id="auction-card" data-collapsible="true" style="display:none;">
-				<div class="card-toggle">
-					<div class="label">Auction</div>
-					<button class="toggle-btn" type="button">Hide</button>
-				</div>
-				<div class="card-body">
-					<div id="auction-status">Loading…</div>
-				</div>
-			</div>
-
 			<div class="card" id="no-access" style="display:none;">
 				<div class="label">Not authorized</div>
 				<div class="label">You need an admin account to view this page.</div>
@@ -720,8 +706,8 @@ const profileDisplay = document.getElementById("profile-display");
 const profileEmail = document.getElementById("profile-email");
 const profileSave = document.getElementById("profile-save");
 const playerPanels = document.getElementById("player-panels");
-const coinsDiv = document.getElementById("player-coins");
-const starsDiv = document.getElementById("player-stars");
+const coinsDiv = document.getElementById("profile-coins");
+const starsDiv = document.getElementById("profile-stars");
 const onboarding = document.getElementById("onboarding");
 const feedbackCard = document.getElementById("feedback-card");
 const actionsCard = document.getElementById("actions-card");
@@ -1361,7 +1347,6 @@ function initAdmin() {
 	adminInitialized = true;
 	document.getElementById("refresh").addEventListener("click", () => {
 		loadSummary();
-		loadAuction();
 	});
 
 	document.getElementById("save-key").addEventListener("click", async () => {
@@ -1379,7 +1364,6 @@ function initAdmin() {
 		document.getElementById("key-status").innerText = "Admin enabled.";
 		await refreshAdminView();
 		loadSummary();
-		loadAuction();
 		loadWhitelistRequests();
 	});
 
@@ -1541,7 +1525,6 @@ async function refreshAdminView() {
 	if (!data.ok || !data.isAdmin) {
 		document.getElementById("no-access").style.display = "block";
 		document.getElementById("admin-content").style.display = "none";
-		document.getElementById("auction-card").style.display = "none";
 		document.getElementById("role-management").style.display = "none";
 		document.getElementById("ip-whitelist").style.display = "none";
 		document.getElementById("whitelist-requests").style.display = "none";
@@ -1554,7 +1537,6 @@ async function refreshAdminView() {
 	document.getElementById("no-access").style.display = "none";
 	document.getElementById("admin-setup").style.display = "none";
 	document.getElementById("admin-content").style.display = "block";
-	document.getElementById("auction-card").style.display = "block";
 	document.getElementById("role-management").style.display = "block";
 	document.getElementById("ip-whitelist").style.display = "block";
 	document.getElementById("whitelist-requests").style.display = "block";
@@ -1749,18 +1731,6 @@ async function loadSummary() {
 	const hoursLeft = Math.floor(season.secondsRemaining / 3600);
 	document.getElementById("season-summary").innerText =
 		`Season 1 · ${hoursLeft}h left · Coins in circulation: ${season.coinsInCirculation} · Star price: ${season.currentStarPrice}`;
-}
-
-async function loadAuction() {
-	const res = await apiFetch("/auction-status");
-	const data = await res.json();
-	if (!data.ok || !data.status) {
-		document.getElementById("auction-status").innerText = "Auction unavailable.";
-		return;
-	}
-	const endsAt = new Date(data.status.endsAt).toLocaleString();
-	document.getElementById("auction-status").innerText =
-		`${data.status.itemKey} · min ${data.status.minBid} · current ${data.status.currentBid} · ends ${endsAt}`;
 }
 
 function initAdminEconomy() {
