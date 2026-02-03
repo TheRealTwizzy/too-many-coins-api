@@ -226,6 +226,10 @@ Each season may include a simple modifier that changes presentation or rewards w
 
 ## Changelog (Alpha)
 
+- [Alpha] Expanded role-based notification system
+- Added player, moderator, and admin notification tiers
+- Introduced priority alerts for admin-critical events
+- Improved observability without affecting economy behavior
 - [Alpha] Introduced passive anti-cheat behavior monitoring
 - Server now observes long-term abuse patterns and applies quiet throttles
 - No player-facing penalties or rewards

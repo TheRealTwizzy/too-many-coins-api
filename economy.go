@@ -584,12 +584,145 @@ func ensureSchema(db *sql.DB) error {
 	}
 
 	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS recipient_role TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS recipient_account_id TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS season_id TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS category TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS type TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'normal';
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS payload JSONB;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS ack_required BOOLEAN NOT NULL DEFAULT FALSE;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS acknowledged_at TIMESTAMPTZ;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS dedupe_key TEXT;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS notification_reads (
 			notification_id BIGINT NOT NULL,
 			account_id TEXT NOT NULL,
 			read_at TIMESTAMPTZ NOT NULL,
 			PRIMARY KEY (notification_id, account_id)
 		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS notification_acks (
+			notification_id BIGINT NOT NULL,
+			account_id TEXT NOT NULL,
+			acknowledged_at TIMESTAMPTZ NOT NULL,
+			PRIMARY KEY (notification_id, account_id)
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS notification_deletes (
+			notification_id BIGINT NOT NULL,
+			account_id TEXT NOT NULL,
+			deleted_at TIMESTAMPTZ NOT NULL,
+			PRIMARY KEY (notification_id, account_id)
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS notification_settings (
+			account_id TEXT NOT NULL,
+			category TEXT NOT NULL,
+			enabled BOOLEAN NOT NULL DEFAULT TRUE,
+			updated_at TIMESTAMPTZ NOT NULL,
+			PRIMARY KEY (account_id, category)
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_notifications_created_at
+		ON notifications (created_at);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		CREATE INDEX IF NOT EXISTS idx_notifications_dedupe
+		ON notifications (dedupe_key, created_at);
 	`)
 	if err != nil {
 		return err

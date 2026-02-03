@@ -43,5 +43,46 @@ func updateMarketPressure(db *sql.DB, now time.Time) {
 
 	maxDeltaPerHour := 0.02
 	maxDelta := maxDeltaPerHour / 60
-	economy.UpdateMarketPressure(desired, maxDelta)
+	current := economy.MarketPressure()
+	updated := economy.UpdateMarketPressure(desired, maxDelta)
+	if current < 1.5 && updated >= 1.5 {
+		priority := NotificationPriorityHigh
+		if updated >= 1.7 {
+			priority = NotificationPriorityCritical
+		}
+		emitNotification(db, NotificationInput{
+			RecipientRole: NotificationRoleAdmin,
+			Category:      NotificationCategoryMarket,
+			Type:          "market_pressure_spike",
+			Priority:      priority,
+			Message:       "Market pressure spike detected.",
+			Payload: map[string]interface{}{
+				"last24h":        last24h,
+				"last7d":         last7d,
+				"ratio":          ratio,
+				"desired":        desired,
+				"marketPressure": updated,
+			},
+			DedupKey:    "market_pressure_spike",
+			DedupWindow: 60 * time.Minute,
+		})
+	}
+	if current > 0.8 && updated <= 0.8 {
+		emitNotification(db, NotificationInput{
+			RecipientRole: NotificationRoleAdmin,
+			Category:      NotificationCategoryMarket,
+			Type:          "market_pressure_drop",
+			Priority:      NotificationPriorityHigh,
+			Message:       "Market pressure dropped below guardrail.",
+			Payload: map[string]interface{}{
+				"last24h":        last24h,
+				"last7d":         last7d,
+				"ratio":          ratio,
+				"desired":        desired,
+				"marketPressure": updated,
+			},
+			DedupKey:    "market_pressure_drop",
+			DedupWindow: 60 * time.Minute,
+		})
+	}
 }

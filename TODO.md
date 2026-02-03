@@ -190,6 +190,14 @@ Allowed to be rough or missing in Alpha:
 - [ ] [POST-ALPHA] 8.6 Abuse event review + resolution UI
 - [ ] [POST-ALPHA] 8.7 Trade monitoring for admins
   - [ ] [POST-ALPHA] Trade volume + burn metrics
+- [ ] [ALPHA REQUIRED] 8.8 Notification system expansion
+  - [ ] [ALPHA REQUIRED] Add notification schema + migration
+  - [ ] [ALPHA REQUIRED] Implement server-side notification emitter
+  - [ ] [ALPHA REQUIRED] Define notification categories and enums
+  - [ ] [ALPHA REQUIRED] Add admin priority alert handling
+  - [ ] [ALPHA REQUIRED] Implement notification filters and toggles (frontend)
+  - [ ] [ALPHA REQUIRED] Add retention / pruning strategy (ALPHA)
+  - [ ] [ALPHA REQUIRED] Add notification observability logging
 
 ---
 

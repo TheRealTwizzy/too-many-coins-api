@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -461,6 +462,39 @@ func logAbuseEvent(db *sql.DB, signal AbuseSignal, accountID string, seasonID st
 			account_id, player_id, season_id, event_type, severity, score_delta, details, created_at
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`, nullableString(accountID), signal.PlayerID, seasonID, signal.EventType, signal.Severity, signal.Delta, payload, now)
+
+	if signal.Severity < 2 || signal.PlayerID == "" {
+		return
+	}
+	if isBot, _, err := getPlayerBotInfo(db, signal.PlayerID); err == nil && isBot {
+		return
+	}
+
+	priority := NotificationPriorityHigh
+	if signal.Severity >= 3 {
+		priority = NotificationPriorityCritical
+	}
+	message := "Abuse signal: " + signal.EventType + " (severity " + strconv.Itoa(signal.Severity) + ")"
+	input := NotificationInput{
+		Category: NotificationCategoryAbuse,
+		Type:     "abuse_signal",
+		Priority: priority,
+		Message:  message,
+		Payload: map[string]interface{}{
+			"playerId":   signal.PlayerID,
+			"accountId":  accountID,
+			"eventType":  signal.EventType,
+			"severity":   signal.Severity,
+			"scoreDelta": signal.Delta,
+			"seasonId":   seasonID,
+		},
+		DedupKey:    "abuse:" + signal.EventType + ":" + signal.PlayerID + ":" + strconv.Itoa(signal.Severity),
+		DedupWindow: 30 * time.Minute,
+	}
+	input.RecipientRole = NotificationRoleModerator
+	emitNotification(db, input)
+	input.RecipientRole = NotificationRoleAdmin
+	emitNotification(db, input)
 }
 
 func nullableString(value string) interface{} {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -223,13 +224,20 @@ type AdminWhitelistResolveRequest struct {
 }
 
 type NotificationItem struct {
-	ID        int64      `json:"id"`
-	Message   string     `json:"message"`
-	Level     string     `json:"level"`
-	Link      string     `json:"link,omitempty"`
-	IsRead    bool       `json:"isRead"`
-	CreatedAt time.Time  `json:"createdAt"`
-	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+	ID             int64           `json:"id"`
+	Message        string          `json:"message"`
+	Level          string          `json:"level"`
+	Link           string          `json:"link,omitempty"`
+	Category       string          `json:"category,omitempty"`
+	Type           string          `json:"type,omitempty"`
+	Priority       string          `json:"priority,omitempty"`
+	Payload        json.RawMessage `json:"payload,omitempty"`
+	AckRequired    bool            `json:"ackRequired"`
+	IsAcknowledged bool            `json:"isAcknowledged"`
+	AcknowledgedAt *time.Time      `json:"acknowledgedAt,omitempty"`
+	IsRead         bool            `json:"isRead"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	ExpiresAt      *time.Time      `json:"expiresAt,omitempty"`
 }
 
 type NotificationsResponse struct {
@@ -242,13 +250,40 @@ type NotificationAckRequest struct {
 	IDs []int64 `json:"ids"`
 }
 
+type NotificationDeleteRequest struct {
+	IDs []int64 `json:"ids"`
+}
+
+type NotificationSettingItem struct {
+	Category string `json:"category"`
+	Enabled  bool   `json:"enabled"`
+}
+
+type NotificationSettingsResponse struct {
+	OK       bool                      `json:"ok"`
+	Error    string                    `json:"error,omitempty"`
+	Settings []NotificationSettingItem `json:"settings,omitempty"`
+}
+
+type NotificationSettingsUpdateRequest struct {
+	Categories []NotificationSettingItem `json:"categories"`
+}
+
 type AdminNotificationCreateRequest struct {
-	TargetRole string `json:"targetRole"`
-	AccountID  string `json:"accountId,omitempty"`
-	Message    string `json:"message"`
-	Link       string `json:"link,omitempty"`
-	Level      string `json:"level,omitempty"`
-	ExpiresAt  string `json:"expiresAt,omitempty"`
+	TargetRole         string          `json:"targetRole,omitempty"`
+	RecipientRole      string          `json:"recipientRole,omitempty"`
+	AccountID          string          `json:"accountId,omitempty"`
+	RecipientAccountID string          `json:"recipientAccountId,omitempty"`
+	SeasonID           string          `json:"seasonId,omitempty"`
+	Category           string          `json:"category,omitempty"`
+	Type               string          `json:"type,omitempty"`
+	Priority           string          `json:"priority,omitempty"`
+	Payload            json.RawMessage `json:"payload,omitempty"`
+	Message            string          `json:"message"`
+	Link               string          `json:"link,omitempty"`
+	Level              string          `json:"level,omitempty"`
+	ExpiresAt          string          `json:"expiresAt,omitempty"`
+	AckRequired        bool            `json:"ackRequired,omitempty"`
 }
 
 type AdminPlayerControlRequest struct {
@@ -403,6 +438,7 @@ func main() {
 	}
 
 	startTickLoop(db)
+	startNotificationPruner(db)
 
 	// Passive drip
 	go func() {
@@ -458,6 +494,9 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/auth/request-whitelist", whitelistRequestHandler(db))
 	mux.HandleFunc("/notifications", notificationsHandler(db))
 	mux.HandleFunc("/notifications/ack", notificationsAckHandler(db))
+	mux.HandleFunc("/notifications/delete", notificationsDeleteHandler(db))
+	mux.HandleFunc("/notifications/settings", notificationsSettingsHandler(db))
+	mux.HandleFunc("/notifications/stream", notificationsStreamHandler(db))
 	mux.HandleFunc("/activity", activityHandler(db))
 	mux.HandleFunc("/profile", profileHandler(db))
 	mux.HandleFunc("/telemetry", telemetryHandler(db))
@@ -582,6 +621,18 @@ func runPassiveDrip(db *sql.DB) {
 			adjusted = remainingCap
 		}
 		if !economy.TryDistributeCoins(adjusted) {
+			emitNotification(db, NotificationInput{
+				RecipientRole: NotificationRoleAdmin,
+				Category:      NotificationCategoryEconomy,
+				Type:          "emission_exhausted_passive",
+				Priority:      NotificationPriorityHigh,
+				Message:       "Passive drip blocked by emission pool exhaustion.",
+				Payload: map[string]interface{}{
+					"attempted": adjusted,
+				},
+				DedupKey:    "emission_exhausted_passive",
+				DedupWindow: 30 * time.Minute,
+			})
 			return
 		}
 		if _, _, err := GrantCoinsWithCap(db, playerID, adjusted, now, FaucetPassive, nil); err != nil {

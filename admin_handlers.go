@@ -317,6 +317,17 @@ func adminRoleHandler(db *sql.DB) http.HandlerFunc {
 				}
 			}
 		}
+		emitNotification(db, NotificationInput{
+			RecipientRole: NotificationRoleAdmin,
+			Category:      NotificationCategoryAdmin,
+			Type:          "role_updated",
+			Priority:      NotificationPriorityNormal,
+			Message:       "Role updated for @" + strings.ToLower(strings.TrimSpace(req.Username)) + ": " + normalizeRole(req.Role),
+			Payload: map[string]interface{}{
+				"username": strings.ToLower(strings.TrimSpace(req.Username)),
+				"role":     normalizeRole(req.Role),
+			},
+		})
 		json.NewEncoder(w).Encode(AdminRoleResponse{OK: true})
 	}
 }
@@ -529,6 +540,16 @@ func adminIPWhitelistHandler(db *sql.DB) http.HandlerFunc {
 				json.NewEncoder(w).Encode(AdminIPWhitelistResponse{OK: false, Error: "INTERNAL_ERROR"})
 				return
 			}
+			emitNotification(db, NotificationInput{
+				RecipientRole: NotificationRoleAdmin,
+				Category:      NotificationCategoryAdmin,
+				Type:          "ip_whitelist_removed",
+				Priority:      NotificationPriorityNormal,
+				Message:       "IP whitelist removed: " + req.IP,
+				Payload: map[string]interface{}{
+					"ip": req.IP,
+				},
+			})
 			json.NewEncoder(w).Encode(AdminIPWhitelistResponse{OK: true})
 			return
 		}
@@ -536,6 +557,17 @@ func adminIPWhitelistHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(AdminIPWhitelistResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
+		emitNotification(db, NotificationInput{
+			RecipientRole: NotificationRoleAdmin,
+			Category:      NotificationCategoryAdmin,
+			Type:          "ip_whitelist_upserted",
+			Priority:      NotificationPriorityNormal,
+			Message:       "IP whitelist updated: " + req.IP,
+			Payload: map[string]interface{}{
+				"ip":          req.IP,
+				"maxAccounts": req.MaxAccounts,
+			},
+		})
 		json.NewEncoder(w).Encode(AdminIPWhitelistResponse{OK: true})
 	}
 }
@@ -604,13 +636,36 @@ func adminWhitelistRequestsHandler(db *sql.DB) http.HandlerFunc {
 			}
 			if accountID != "" {
 				message := "Whitelist request denied."
-				level := "warn"
 				if status == "approved" {
 					message = "Whitelist request approved. You may create another account from your IP."
-					level = "info"
 				}
-				_ = createNotification(db, "user", accountID, message, level, "#/home", nil)
+				emitNotification(db, NotificationInput{
+					RecipientRole:      NotificationRolePlayer,
+					RecipientAccountID: accountID,
+					Category:           NotificationCategorySystem,
+					Type:               "whitelist_request_resolved",
+					Priority:           NotificationPriorityNormal,
+					Message:            message,
+					Link:               "#/home",
+					Payload: map[string]interface{}{
+						"ip":     ip,
+						"status": status,
+					},
+				})
 			}
+			emitNotification(db, NotificationInput{
+				RecipientRole: NotificationRoleAdmin,
+				Category:      NotificationCategoryAdmin,
+				Type:          "whitelist_request_resolved",
+				Priority:      NotificationPriorityNormal,
+				Message:       "Whitelist request " + status + " for IP: " + ip,
+				Link:          "#/moderator",
+				Payload: map[string]interface{}{
+					"ip":        ip,
+					"status":    status,
+					"accountId": accountID,
+				},
+			})
 			json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 			return
 		default:
@@ -630,22 +685,43 @@ func adminNotificationsHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		var req AdminNotificationCreateRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Message == "" || req.TargetRole == "" {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Message) == "" {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_REQUEST"})
 			return
 		}
-		level := strings.ToLower(strings.TrimSpace(req.Level))
-		if level == "" {
-			level = "info"
+		roleInput := strings.TrimSpace(req.RecipientRole)
+		if roleInput == "" {
+			roleInput = req.TargetRole
 		}
-		if level != "info" && level != "warn" && level != "urgent" {
-			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_LEVEL"})
-			return
-		}
-		targetRole := strings.ToLower(strings.TrimSpace(req.TargetRole))
-		if targetRole != "all" && targetRole != "user" && targetRole != "moderator" && targetRole != "admin" {
+		roleInput = strings.ToLower(strings.TrimSpace(roleInput))
+		if roleInput == "" {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_TARGET"})
 			return
+		}
+		role := normalizeNotificationRole(roleInput)
+		if role != "all" && role != NotificationRolePlayer && role != NotificationRoleModerator && role != NotificationRoleAdmin {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_TARGET"})
+			return
+		}
+		priority := normalizeNotificationPriority(req.Priority)
+		if strings.TrimSpace(req.Priority) == "" {
+			level := strings.ToLower(strings.TrimSpace(req.Level))
+			switch level {
+			case "urgent":
+				priority = NotificationPriorityCritical
+			case "warn":
+				priority = NotificationPriorityHigh
+			default:
+				priority = NotificationPriorityNormal
+			}
+		}
+		category := normalizeNotificationCategory(req.Category)
+		if strings.TrimSpace(req.Category) == "" {
+			category = NotificationCategoryAdmin
+		}
+		accountID := strings.TrimSpace(req.RecipientAccountID)
+		if accountID == "" {
+			accountID = strings.TrimSpace(req.AccountID)
 		}
 		var expiresAt sql.NullTime
 		if strings.TrimSpace(req.ExpiresAt) != "" {
@@ -660,9 +736,27 @@ func adminNotificationsHandler(db *sql.DB) http.HandlerFunc {
 		if expiresAt.Valid {
 			exp = &expiresAt.Time
 		}
-		if err := createNotification(db, targetRole, req.AccountID, req.Message, level, req.Link, exp); err != nil {
-			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
+		targetRoles := []string{role}
+		if role == "all" {
+			targetRoles = []string{NotificationRolePlayer, NotificationRoleModerator, NotificationRoleAdmin}
+		}
+		for _, targetRole := range targetRoles {
+			if err := createNotification(db, NotificationInput{
+				RecipientRole:      targetRole,
+				RecipientAccountID: accountID,
+				SeasonID:           strings.TrimSpace(req.SeasonID),
+				Category:           category,
+				Type:               strings.TrimSpace(req.Type),
+				Priority:           priority,
+				Payload:            req.Payload,
+				Message:            strings.TrimSpace(req.Message),
+				Link:               strings.TrimSpace(req.Link),
+				AckRequired:        req.AckRequired,
+				ExpiresAt:          exp,
+			}); err != nil {
+				json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
 		}
 		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 	}
@@ -1272,6 +1366,17 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 			}
 			_, _ = db.Exec(`DELETE FROM sessions WHERE account_id = $1`, accountID)
 			_, _ = db.Exec(`DELETE FROM refresh_tokens WHERE account_id = $1`, accountID)
+			emitNotification(db, NotificationInput{
+				RecipientRole: NotificationRoleAdmin,
+				Category:      NotificationCategoryAdmin,
+				Type:          "profile_frozen",
+				Priority:      NotificationPriorityHigh,
+				Message:       "Profile frozen: @" + username,
+				Payload: map[string]interface{}{
+					"username": username,
+					"action":   "freeze",
+				},
+			})
 			json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: true, Username: username, Role: baseRoleFromRaw(frozenRole), Frozen: true})
 			return
 		case "unfreeze":
@@ -1284,6 +1389,17 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
 				return
 			}
+			emitNotification(db, NotificationInput{
+				RecipientRole: NotificationRoleAdmin,
+				Category:      NotificationCategoryAdmin,
+				Type:          "profile_unfrozen",
+				Priority:      NotificationPriorityNormal,
+				Message:       "Profile unfrozen: @" + username,
+				Payload: map[string]interface{}{
+					"username": username,
+					"action":   "unfreeze",
+				},
+			})
 			json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: true, Username: username, Role: baseRole, Frozen: false})
 			return
 		case "delete":
@@ -1341,6 +1457,17 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
 				return
 			}
+			emitNotification(db, NotificationInput{
+				RecipientRole: NotificationRoleAdmin,
+				Category:      NotificationCategoryAdmin,
+				Type:          "profile_deleted",
+				Priority:      NotificationPriorityHigh,
+				Message:       "Profile deleted: @" + username,
+				Payload: map[string]interface{}{
+					"username": username,
+					"action":   "delete",
+				},
+			})
 			json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: true, Username: username})
 			return
 		}

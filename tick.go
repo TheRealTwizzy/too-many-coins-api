@@ -64,6 +64,30 @@ func startTickLoop(db *sql.DB) {
 					log.Println("Season finalization failed:", err)
 				} else if finalized {
 					log.Println("Season finalized:", currentSeasonID())
+					emitNotification(db, NotificationInput{
+						RecipientRole: NotificationRolePlayer,
+						Category:      NotificationCategorySystem,
+						Type:          "season_ended",
+						Priority:      NotificationPriorityHigh,
+						Message:       "Season has ended. Final results are available.",
+						Payload: map[string]interface{}{
+							"seasonId": currentSeasonID(),
+						},
+						DedupKey:    "season_end:" + currentSeasonID(),
+						DedupWindow: 6 * time.Hour,
+					})
+					emitNotification(db, NotificationInput{
+						RecipientRole: NotificationRoleAdmin,
+						Category:      NotificationCategorySystem,
+						Type:          "season_ended",
+						Priority:      NotificationPriorityHigh,
+						Message:       "Season finalized: " + currentSeasonID(),
+						Payload: map[string]interface{}{
+							"seasonId": currentSeasonID(),
+						},
+						DedupKey:    "season_end_admin:" + currentSeasonID(),
+						DedupWindow: 6 * time.Hour,
+					})
 				}
 				continue
 			}
@@ -74,6 +98,30 @@ func startTickLoop(db *sql.DB) {
 			coinsInCirculation := economy.CoinsInCirculation()
 			remaining := seasonSecondsRemaining(now)
 			dailyTarget := economy.EffectiveDailyEmissionTarget(remaining, coinsInCirculation)
+			baseTarget := economy.DailyEmissionTarget()
+			if baseTarget > 0 {
+				ratio := float64(dailyTarget) / float64(baseTarget)
+				if ratio <= 0.7 {
+					priority := NotificationPriorityHigh
+					if ratio <= 0.5 {
+						priority = NotificationPriorityCritical
+					}
+					emitNotification(db, NotificationInput{
+						RecipientRole: NotificationRoleAdmin,
+						Category:      NotificationCategoryEconomy,
+						Type:          "emission_throttle",
+						Priority:      priority,
+						Message:       "Daily emission target throttled below baseline.",
+						Payload: map[string]interface{}{
+							"effectiveTarget": dailyTarget,
+							"baseTarget":      baseTarget,
+							"ratio":           ratio,
+						},
+						DedupKey:    "emission_throttle",
+						DedupWindow: 45 * time.Minute,
+					})
+				}
+			}
 
 			economy.mu.Lock()
 			coinsPerTick := float64(dailyTarget) / (24 * 60)

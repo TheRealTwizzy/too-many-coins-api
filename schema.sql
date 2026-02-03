@@ -136,12 +136,70 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_account_id
 ALTER TABLE notifications
     ADD COLUMN IF NOT EXISTS link TEXT;
 
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS recipient_role TEXT;
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS recipient_account_id TEXT;
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS season_id TEXT;
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS category TEXT;
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS type TEXT;
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'normal';
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS payload JSONB;
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS ack_required BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS acknowledged_at TIMESTAMPTZ;
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS dedupe_key TEXT;
+
 CREATE TABLE IF NOT EXISTS notification_reads (
     notification_id BIGINT NOT NULL,
     account_id TEXT NOT NULL,
     read_at TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (notification_id, account_id)
 );
+
+CREATE TABLE IF NOT EXISTS notification_acks (
+    notification_id BIGINT NOT NULL,
+    account_id TEXT NOT NULL,
+    acknowledged_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (notification_id, account_id)
+);
+
+CREATE TABLE IF NOT EXISTS notification_deletes (
+    notification_id BIGINT NOT NULL,
+    account_id TEXT NOT NULL,
+    deleted_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (notification_id, account_id)
+);
+
+CREATE TABLE IF NOT EXISTS notification_settings (
+    account_id TEXT NOT NULL,
+    category TEXT NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (account_id, category)
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at
+    ON notifications (created_at);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_dedupe
+    ON notifications (dedupe_key, created_at);
 
 CREATE TABLE IF NOT EXISTS global_settings (
     key TEXT PRIMARY KEY,

@@ -332,6 +332,52 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 		if len(quote.Breakdown) > 0 {
 			lastPrice = quote.Breakdown[len(quote.Breakdown)-1].FinalPrice
 		}
+		if !isBot {
+			message := "Star purchased."
+			if quantity > 1 {
+				message = "Purchased " + strconv.Itoa(quantity) + " stars."
+			}
+			emitNotification(db, NotificationInput{
+				RecipientRole:      NotificationRolePlayer,
+				RecipientAccountID: account.AccountID,
+				SeasonID:           currentSeasonID(),
+				Category:           NotificationCategoryPlayerAction,
+				Type:               "star_purchase",
+				Priority:           NotificationPriorityNormal,
+				Message:            message,
+				Link:               "#/home",
+				Payload: map[string]interface{}{
+					"quantity":        quantity,
+					"totalCoinsSpent": quote.TotalCoinsSpent,
+					"finalStarPrice":  quote.FinalStarPrice,
+					"playerCoins":     coinsAfter,
+					"playerStars":     starsAfter,
+				},
+			})
+			if quantity >= 3 {
+				priority := NotificationPriorityNormal
+				if quantity >= maxQty {
+					priority = NotificationPriorityHigh
+				}
+				emitNotification(db, NotificationInput{
+					RecipientRole: NotificationRoleAdmin,
+					SeasonID:      currentSeasonID(),
+					Category:      NotificationCategoryEconomy,
+					Type:          "bulk_star_purchase",
+					Priority:      priority,
+					Message:       "Bulk star purchase: " + strconv.Itoa(quantity) + " stars.",
+					Payload: map[string]interface{}{
+						"accountId":       account.AccountID,
+						"playerId":        playerID,
+						"quantity":        quantity,
+						"totalCoinsSpent": quote.TotalCoinsSpent,
+						"finalStarPrice":  quote.FinalStarPrice,
+					},
+					DedupKey:    "bulk_star_purchase:" + account.AccountID + ":" + strconv.Itoa(quantity),
+					DedupWindow: 10 * time.Minute,
+				})
+			}
+		}
 		json.NewEncoder(w).Encode(BuyStarResponse{
 			OK:              true,
 			StarPricePaid:   lastPrice,
@@ -965,8 +1011,30 @@ func whitelistRequestHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
-		_ = createNotification(db, "admin", "", "Whitelist request pending for IP: "+ip, "warn", "#/moderator", nil)
-		_ = createNotification(db, "user", account.AccountID, "Whitelist request submitted. An admin will review it.", "info", "#/home", nil)
+		emitNotification(db, NotificationInput{
+			RecipientRole: NotificationRoleAdmin,
+			Category:      NotificationCategorySystem,
+			Type:          "whitelist_request_pending",
+			Priority:      NotificationPriorityHigh,
+			Message:       "Whitelist request pending for IP: " + ip,
+			Link:          "#/moderator",
+			Payload: map[string]interface{}{
+				"ip":        ip,
+				"accountId": account.AccountID,
+			},
+		})
+		emitNotification(db, NotificationInput{
+			RecipientRole:      NotificationRolePlayer,
+			RecipientAccountID: account.AccountID,
+			Category:           NotificationCategorySystem,
+			Type:               "whitelist_request_submitted",
+			Priority:           NotificationPriorityNormal,
+			Message:            "Whitelist request submitted. An admin will review it.",
+			Link:               "#/home",
+			Payload: map[string]interface{}{
+				"ip": ip,
+			},
+		})
 		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 	}
 }
@@ -981,40 +1049,26 @@ func notificationsHandler(db *sql.DB) http.HandlerFunc {
 		if !ok {
 			return
 		}
-		rows, err := db.Query(`
-			SELECT n.id, n.message, n.level, n.link, n.created_at, n.expires_at,
-				(r.notification_id IS NOT NULL) AS is_read
-			FROM notifications n
-			LEFT JOIN notification_reads r
-				ON r.notification_id = n.id AND r.account_id = $1
-			WHERE (n.expires_at IS NULL OR n.expires_at > NOW())
-				AND (n.account_id IS NULL OR n.account_id = $1)
-				AND (
-					n.target_role = 'all'
-					OR n.target_role = $2
-					OR (n.target_role = 'user' AND $2 = 'user')
-				)
-			ORDER BY n.created_at DESC
-			LIMIT 60
-		`, account.AccountID, account.Role)
+		query := r.URL.Query()
+		afterID := int64(0)
+		if raw := strings.TrimSpace(query.Get("after")); raw != "" {
+			if parsed, err := strconv.ParseInt(raw, 10, 64); err == nil && parsed > 0 {
+				afterID = parsed
+			}
+		}
+		limit := 60
+		if raw := strings.TrimSpace(query.Get("limit")); raw != "" {
+			if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+				limit = parsed
+			}
+		}
+		role := notificationRoleForAccount(account)
+		items, err := fetchNotifications(db, account.AccountID, role, afterID, limit, afterID > 0)
 		if err != nil {
 			json.NewEncoder(w).Encode(NotificationsResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
-		defer rows.Close()
-		list := []NotificationItem{}
-		for rows.Next() {
-			var item NotificationItem
-			var expires sql.NullTime
-			if err := rows.Scan(&item.ID, &item.Message, &item.Level, &item.Link, &item.CreatedAt, &expires, &item.IsRead); err != nil {
-				continue
-			}
-			if expires.Valid {
-				item.ExpiresAt = &expires.Time
-			}
-			list = append(list, item)
-		}
-		json.NewEncoder(w).Encode(NotificationsResponse{OK: true, Notifications: list})
+		json.NewEncoder(w).Encode(NotificationsResponse{OK: true, Notifications: items})
 	}
 }
 
@@ -1033,14 +1087,210 @@ func notificationsAckHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_REQUEST"})
 			return
 		}
+		role := notificationRoleForAccount(account)
 		for _, id := range req.IDs {
 			_, _ = db.Exec(`
 				INSERT INTO notification_reads (notification_id, account_id, read_at)
-				VALUES ($1, $2, NOW())
+				SELECT n.id, $1, NOW()
+				FROM notifications n
+				LEFT JOIN notification_deletes d
+					ON d.notification_id = n.id AND d.account_id = $1
+				WHERE n.id = $3
+					AND d.notification_id IS NULL
+`+notificationAccessSQL+`
 				ON CONFLICT (notification_id, account_id) DO NOTHING
-			`, id, account.AccountID)
+			`, account.AccountID, role, id)
+
+			_, _ = db.Exec(`
+				INSERT INTO notification_acks (notification_id, account_id, acknowledged_at)
+				SELECT n.id, $1, NOW()
+				FROM notifications n
+				LEFT JOIN notification_deletes d
+					ON d.notification_id = n.id AND d.account_id = $1
+				WHERE n.id = $3
+					AND d.notification_id IS NULL
+					AND (n.ack_required OR COALESCE(n.priority, 'normal') <> 'normal')
+`+notificationAccessSQL+`
+				ON CONFLICT (notification_id, account_id) DO NOTHING
+			`, account.AccountID, role, id)
 		}
 		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
+	}
+}
+
+func notificationsDeleteHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		account, ok := requireSession(db, w, r)
+		if !ok {
+			return
+		}
+		var req NotificationDeleteRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.IDs) == 0 {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+		role := notificationRoleForAccount(account)
+		for _, id := range req.IDs {
+			_, _ = db.Exec(`
+				INSERT INTO notification_deletes (notification_id, account_id, deleted_at)
+				SELECT n.id, $1, NOW()
+				FROM notifications n
+				LEFT JOIN notification_acks a
+					ON a.notification_id = n.id AND a.account_id = $1
+				WHERE n.id = $3
+					AND (COALESCE(n.priority, 'normal') = 'normal' OR a.notification_id IS NOT NULL)
+`+notificationAccessSQL+`
+				ON CONFLICT (notification_id, account_id) DO NOTHING
+			`, account.AccountID, role, id)
+		}
+		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
+	}
+}
+
+func notificationsSettingsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		account, ok := requireSession(db, w, r)
+		if !ok {
+			return
+		}
+		switch r.Method {
+		case http.MethodGet:
+			rows, err := db.Query(`
+				SELECT category, enabled
+				FROM notification_settings
+				WHERE account_id = $1
+			`, account.AccountID)
+			if err != nil {
+				json.NewEncoder(w).Encode(NotificationSettingsResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+			defer rows.Close()
+			settings := map[string]bool{}
+			for rows.Next() {
+				var category string
+				var enabled bool
+				if err := rows.Scan(&category, &enabled); err != nil {
+					continue
+				}
+				settings[category] = enabled
+			}
+			items := []NotificationSettingItem{}
+			for _, category := range NotificationCategories() {
+				enabled := true
+				if value, ok := settings[category]; ok {
+					enabled = value
+				}
+				items = append(items, NotificationSettingItem{Category: category, Enabled: enabled})
+			}
+			json.NewEncoder(w).Encode(NotificationSettingsResponse{OK: true, Settings: items})
+			return
+		case http.MethodPost:
+			var req NotificationSettingsUpdateRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.Categories) == 0 {
+				json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_REQUEST"})
+				return
+			}
+			for _, item := range req.Categories {
+				category := normalizeNotificationCategory(item.Category)
+				_, _ = db.Exec(`
+					INSERT INTO notification_settings (account_id, category, enabled, updated_at)
+					VALUES ($1, $2, $3, NOW())
+					ON CONFLICT (account_id, category)
+					DO UPDATE SET enabled = EXCLUDED.enabled, updated_at = NOW()
+				`, account.AccountID, category, item.Enabled)
+			}
+			json.NewEncoder(w).Encode(SimpleResponse{OK: true})
+			return
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+	}
+}
+
+func notificationsStreamHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		account, ok := requireSession(db, w, r)
+		if !ok {
+			return
+		}
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("X-Accel-Buffering", "no")
+
+		lastID := int64(0)
+		if raw := strings.TrimSpace(r.Header.Get("Last-Event-ID")); raw != "" {
+			if parsed, err := strconv.ParseInt(raw, 10, 64); err == nil && parsed > 0 {
+				lastID = parsed
+			}
+		}
+		if raw := strings.TrimSpace(r.URL.Query().Get("after")); raw != "" {
+			if parsed, err := strconv.ParseInt(raw, 10, 64); err == nil && parsed > lastID {
+				lastID = parsed
+			}
+		}
+
+		role := notificationRoleForAccount(account)
+		ticker := time.NewTicker(3 * time.Second)
+		heartbeat := time.NewTicker(25 * time.Second)
+		defer ticker.Stop()
+		defer heartbeat.Stop()
+
+		flusher.Flush()
+		for {
+			select {
+			case <-r.Context().Done():
+				return
+			case <-heartbeat.C:
+				_, _ = w.Write([]byte(": ping\n\n"))
+				flusher.Flush()
+			case <-ticker.C:
+				items, err := fetchNotifications(db, account.AccountID, role, lastID, 25, true)
+				if err != nil {
+					continue
+				}
+				for _, item := range items {
+					payload, err := json.Marshal(item)
+					if err != nil {
+						continue
+					}
+					if _, err := w.Write([]byte("id: " + strconv.FormatInt(item.ID, 10) + "\n")); err != nil {
+						return
+					}
+					if _, err := w.Write([]byte("event: notification\n")); err != nil {
+						return
+					}
+					if _, err := w.Write([]byte("data: ")); err != nil {
+						return
+					}
+					if _, err := w.Write(payload); err != nil {
+						return
+					}
+					if _, err := w.Write([]byte("\n\n")); err != nil {
+						return
+					}
+					flusher.Flush()
+					if item.ID > lastID {
+						lastID = item.ID
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -1119,15 +1369,15 @@ func signupHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
-		_ = createNotification(
-			db,
-			"user",
-			account.AccountID,
-			"Welcome to the season. Prices rise over time, but small goals still stack. Track the curve and set a first-star target—no outcome is guaranteed.",
-			"info",
-			"#/home",
-			nil,
-		)
+		emitNotification(db, NotificationInput{
+			RecipientRole:      NotificationRolePlayer,
+			RecipientAccountID: account.AccountID,
+			Category:           NotificationCategorySystem,
+			Type:               "welcome",
+			Priority:           NotificationPriorityNormal,
+			Message:            "Welcome to the season. Prices rise over time, but small goals still stack. Track the curve and set a first-star target—no outcome is guaranteed.",
+			Link:               "#/home",
+		})
 		sessionID, expiresAt, err := createSession(db, account.AccountID)
 		if err != nil {
 			log.Println("signup: createSession error:", err)
@@ -1485,6 +1735,19 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		if !TryDistributeCoinsWithPriority(FaucetDaily, reward) {
+			emitNotification(db, NotificationInput{
+				RecipientRole: NotificationRoleAdmin,
+				Category:      NotificationCategoryEconomy,
+				Type:          "emission_exhausted_daily",
+				Priority:      NotificationPriorityHigh,
+				Message:       "Daily faucet blocked by emission pool exhaustion.",
+				Payload: map[string]interface{}{
+					"playerId":  playerID,
+					"attempted": reward,
+				},
+				DedupKey:    "emission_exhausted_daily",
+				DedupWindow: 30 * time.Minute,
+			})
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "EMISSION_EXHAUSTED"})
 			return
 		}
@@ -1597,6 +1860,19 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			reward = remainingCap
 		}
 		if !TryDistributeCoinsWithPriority(FaucetActivity, reward) {
+			emitNotification(db, NotificationInput{
+				RecipientRole: NotificationRoleAdmin,
+				Category:      NotificationCategoryEconomy,
+				Type:          "emission_exhausted_activity",
+				Priority:      NotificationPriorityHigh,
+				Message:       "Activity faucet blocked by emission pool exhaustion.",
+				Payload: map[string]interface{}{
+					"playerId":  playerID,
+					"attempted": reward,
+				},
+				DedupKey:    "emission_exhausted_activity",
+				DedupWindow: 30 * time.Minute,
+			})
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "EMISSION_EXHAUSTED"})
 			return
 		}
