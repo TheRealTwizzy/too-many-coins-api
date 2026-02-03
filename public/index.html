@@ -1432,15 +1432,22 @@ async function refreshModeratorView() {
 	return true;
 }
 
-window.addEventListener("hashchange", route);
-route();
-
 window.addEventListener("error", (event) => {
 	setToast(`Error: ${event.message}`, "error");
 });
 
 window.addEventListener("unhandledrejection", (event) => {
 	setToast("Error: unexpected failure", "error");
+});
+
+window.addEventListener("hashchange", () => {
+	route().catch((err) => {
+		setToast(`Error: ${err?.message || "route failed"}`, "error");
+	});
+});
+
+route().catch((err) => {
+	setToast(`Error: ${err?.message || "route failed"}`, "error");
 });
 	</script>
 </body>
