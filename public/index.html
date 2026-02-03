@@ -374,7 +374,6 @@
 			<div class="card" id="admin-setup" style="display:none;">
 				<div class="label">Admin setup</div>
 				<input id="admin-setup-key" placeholder="Setup key" />
-				<input id="admin-key" placeholder="Set admin key" />
 				<button id="save-key" class="primary">Save</button>
 				<div id="key-status" class="label"></div>
 			</div>
@@ -398,16 +397,6 @@
 					<button id="role-save" class="primary">Set role</button>
 				</div>
 				<div id="role-status" class="label"></div>
-			</div>
-
-			<div class="card" id="admin-key-management" style="display:none;">
-				<div class="label">Set user admin key</div>
-				<div class="row" style="margin-top:0.5rem;">
-					<input id="user-key-username" placeholder="Username" />
-					<input id="user-key-value" placeholder="New admin key" />
-					<button id="user-key-save" class="primary">Save key</button>
-				</div>
-				<div id="user-key-status" class="label"></div>
 			</div>
 
 			<div class="card" id="ip-whitelist" style="display:none;">
@@ -562,13 +551,6 @@
 		<section id="view-admin-economy" class="view">
 			<p class="label"><a href="#/admin">Admin home</a></p>
 
-			<div class="card">
-				<div class="label">Admin key</div>
-				<input id="econ-admin-key" placeholder="Enter admin key" />
-				<button id="econ-save-key">Save</button>
-				<div id="econ-key-status" class="label"></div>
-			</div>
-
 			<div class="card" id="econ-no-access" style="display:none;">
 				<div class="label">Not authorized</div>
 			</div>
@@ -594,13 +576,6 @@
 		<section id="view-admin-telemetry" class="view">
 			<p class="label"><a href="#/admin">Admin home</a></p>
 
-			<div class="card">
-				<div class="label">Admin key</div>
-				<input id="tele-admin-key" placeholder="Enter admin key" />
-				<button id="tele-save-key">Save</button>
-				<div id="tele-key-status" class="label"></div>
-			</div>
-
 			<div class="card" id="tele-no-access" style="display:none;">
 				<div class="label">Not authorized</div>
 			</div>
@@ -623,15 +598,6 @@
 
 		<section id="view-moderator" class="view">
 			<p class="label"><a href="#/home">Back to game</a></p>
-
-			<div class="card">
-				<div class="label">Local admin key</div>
-				<div class="row" style="margin-top:0.5rem;">
-					<input id="mod-local-key" placeholder="Admin key" />
-					<button id="mod-save-local-key" class="primary">Save</button>
-				</div>
-				<div id="mod-local-key-status" class="label"></div>
-			</div>
 
 			<div class="card" id="moderator-content" style="display:none;">
 				<div class="label">Edit profile</div>
@@ -728,10 +694,6 @@ function apiFetch(url, options = {}) {
 		},
 		credentials: "include"
 	});
-}
-
-function getAdminKey() {
-	return localStorage.getItem("adminKey") || "";
 }
 
 async function track(eventType, payload) {
@@ -1287,19 +1249,17 @@ function initAdmin() {
 
 	document.getElementById("save-key").addEventListener("click", async () => {
 		const setupKey = document.getElementById("admin-setup-key").value.trim();
-		const key = document.getElementById("admin-key").value.trim();
 		const res = await apiFetch("/admin/set-key", {
 			method: "POST",
 			headers: { "X-Admin-Setup": setupKey },
-			body: JSON.stringify({ adminKey: key })
+			body: JSON.stringify({})
 		});
 		const data = await res.json();
 		if (!data.ok) {
 			document.getElementById("key-status").innerText = data.error || "Setup failed.";
 			return;
 		}
-		localStorage.setItem("adminKey", key);
-		document.getElementById("key-status").innerText = "Admin key set.";
+		document.getElementById("key-status").innerText = "Admin enabled.";
 		await refreshAdminView();
 		loadSummary();
 		loadAuction();
@@ -1311,23 +1271,10 @@ function initAdmin() {
 		const role = document.getElementById("role-value").value;
 		const res = await apiFetch("/admin/role", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify({ username, role })
 		});
 		const data = await res.json();
 		document.getElementById("role-status").innerText = data.ok ? "Role updated." : (data.error || "Role update failed.");
-	});
-
-	document.getElementById("user-key-save").addEventListener("click", async () => {
-		const username = document.getElementById("user-key-username").value.trim();
-		const adminKey = document.getElementById("user-key-value").value.trim();
-		const res = await apiFetch("/admin/set-user-key", {
-			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
-			body: JSON.stringify({ username, adminKey })
-		});
-		const data = await res.json();
-		document.getElementById("user-key-status").innerText = data.ok ? "Admin key updated." : (data.error || "Key update failed.");
 	});
 
 	document.getElementById("ip-whitelist-save").addEventListener("click", async () => {
@@ -1335,7 +1282,6 @@ function initAdmin() {
 		const maxAccounts = parseInt(document.getElementById("ip-whitelist-max").value, 10) || 2;
 		const res = await apiFetch("/admin/ip-whitelist", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify({ ip, maxAccounts, action: "set" })
 		});
 		const data = await res.json();
@@ -1346,7 +1292,6 @@ function initAdmin() {
 		const ip = document.getElementById("ip-whitelist-value").value.trim();
 		const res = await apiFetch("/admin/ip-whitelist", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify({ ip, action: "remove" })
 		});
 		const data = await res.json();
@@ -1355,9 +1300,7 @@ function initAdmin() {
 
 	document.getElementById("mod-load").addEventListener("click", async () => {
 		const username = document.getElementById("mod-username").value.trim();
-		const res = await apiFetch(`/moderator/profile?username=${encodeURIComponent(username)}`, {
-			headers: { "X-Admin-Key": getAdminKey() }
-		});
+		const res = await apiFetch(`/moderator/profile?username=${encodeURIComponent(username)}`);
 		const data = await res.json();
 		if (!data.ok) {
 			document.getElementById("mod-status").innerText = data.error || "Load failed.";
@@ -1372,7 +1315,6 @@ function initAdmin() {
 		const displayName = document.getElementById("mod-display-name").value.trim();
 		const res = await apiFetch("/moderator/profile", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify({ username, displayName })
 		});
 		const data = await res.json();
@@ -1388,7 +1330,6 @@ function initAdmin() {
 		const message = document.getElementById("notify-message").value.trim();
 		const res = await apiFetch("/admin/notifications", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify({ targetRole, accountId, level, expiresAt, link, message })
 		});
 		const data = await res.json();
@@ -1400,7 +1341,7 @@ function initAdmin() {
 	});
 
 	document.getElementById("gs-load").addEventListener("click", async () => {
-		const res = await apiFetch("/admin/settings", { headers: { "X-Admin-Key": getAdminKey() } });
+		const res = await apiFetch("/admin/settings");
 		const data = await res.json();
 		const status = document.getElementById("gs-status");
 		if (!data.ok) {
@@ -1434,7 +1375,6 @@ function initAdmin() {
 		if (dripEnabled === "false") payload.dripEnabled = false;
 		const res = await apiFetch("/admin/settings", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify(payload)
 		});
 		const data = await res.json();
@@ -1446,7 +1386,6 @@ function initAdmin() {
 		const playerId = document.getElementById("pc-player-id").value.trim();
 		const res = await apiFetch("/admin/player-controls", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify({ username, playerId })
 		});
 		const data = await res.json();
@@ -1479,7 +1418,6 @@ function initAdmin() {
 
 		const res = await apiFetch("/admin/player-controls", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify(payload)
 		});
 		const data = await res.json();
@@ -1492,7 +1430,6 @@ function initAdmin() {
 		const playerId = document.getElementById("pc-player-id").value.trim();
 		const res = await apiFetch("/admin/player-controls", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify({ username, playerId, touchActive: true })
 		});
 		const data = await res.json();
@@ -1512,12 +1449,6 @@ function initAdmin() {
 		await exportStarPurchaseLog("json");
 	});
 
-	const storedKey = getAdminKey();
-	if (storedKey) {
-		document.getElementById("admin-key").value = storedKey;
-		document.getElementById("key-status").innerText = "Key loaded.";
-	}
-
 	loadWhitelistRequests();
 }
 
@@ -1529,7 +1460,6 @@ async function refreshAdminView() {
 		document.getElementById("admin-content").style.display = "none";
 		document.getElementById("auction-card").style.display = "none";
 		document.getElementById("role-management").style.display = "none";
-		document.getElementById("admin-key-management").style.display = "none";
 		document.getElementById("ip-whitelist").style.display = "none";
 		document.getElementById("whitelist-requests").style.display = "none";
 		document.getElementById("moderator-profile").style.display = "none";
@@ -1545,7 +1475,6 @@ async function refreshAdminView() {
 	document.getElementById("admin-content").style.display = "block";
 	document.getElementById("auction-card").style.display = "block";
 	document.getElementById("role-management").style.display = "block";
-	document.getElementById("admin-key-management").style.display = "block";
 	document.getElementById("ip-whitelist").style.display = "block";
 	document.getElementById("whitelist-requests").style.display = "block";
 	document.getElementById("moderator-profile").style.display = "block";
@@ -1600,7 +1529,7 @@ async function loadStarPurchaseLog() {
 	if (maxStarsAfter) params.set("maxStarsAfter", maxStarsAfter);
 
 	const url = params.toString() ? `/admin/star-purchases?${params.toString()}` : "/admin/star-purchases";
-	const res = await apiFetch(url, { headers: { "X-Admin-Key": getAdminKey() } });
+	const res = await apiFetch(url);
 	const data = await res.json();
 	if (!data.ok) {
 		status.innerText = data.error || "Load failed.";
@@ -1697,7 +1626,7 @@ function triggerDownload(blob, filename) {
 }
 
 async function loadWhitelistRequests() {
-	const res = await apiFetch("/admin/whitelist-requests", { headers: { "X-Admin-Key": getAdminKey() } });
+	const res = await apiFetch("/admin/whitelist-requests");
 	const data = await res.json();
 	const container = document.getElementById("whitelist-requests-list");
 	if (!data.ok) {
@@ -1744,7 +1673,6 @@ async function loadWhitelistRequests() {
 async function resolveWhitelistRequest(requestId, decision, maxAccounts) {
 	const res = await apiFetch("/admin/whitelist-requests", {
 		method: "POST",
-		headers: { "X-Admin-Key": getAdminKey() },
 		body: JSON.stringify({ requestId, decision, maxAccounts })
 	});
 	const data = await res.json();
@@ -1769,7 +1697,7 @@ async function loadSummary() {
 }
 
 async function loadAuction() {
-	const res = await apiFetch("/auction-status", { headers: { "X-Admin-Key": getAdminKey() } });
+	const res = await apiFetch("/auction-status");
 	const data = await res.json();
 	if (!data.ok || !data.status) {
 		document.getElementById("auction-status").innerText = "Auction unavailable.";
@@ -1795,7 +1723,6 @@ function initAdminEconomy() {
 		};
 		const res = await apiFetch("/admin/economy", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify(payload)
 		});
 		const data = await res.json();
@@ -1807,18 +1734,7 @@ function initAdminEconomy() {
 		loadEconomy();
 	});
 
-	document.getElementById("econ-save-key").addEventListener("click", () => {
-		const key = document.getElementById("econ-admin-key").value.trim();
-		localStorage.setItem("adminKey", key);
-		document.getElementById("econ-key-status").innerText = key ? "Key saved." : "Key cleared.";
-		loadEconomy();
-	});
-
-	const storedKey = getAdminKey();
-	if (storedKey) {
-		document.getElementById("econ-admin-key").value = storedKey;
-		document.getElementById("econ-key-status").innerText = "Key loaded.";
-	}
+	
 }
 
 async function refreshAdminEconomyView() {
@@ -1834,7 +1750,7 @@ async function refreshAdminEconomyView() {
 }
 
 async function loadEconomy() {
-	const res = await apiFetch("/admin/economy", { headers: { "X-Admin-Key": getAdminKey() } });
+	const res = await apiFetch("/admin/economy");
 	const data = await res.json();
 	if (!data.ok) {
 		document.getElementById("econ-status").innerText = "Unauthorized.";
@@ -1850,18 +1766,6 @@ async function loadEconomy() {
 
 function initAdminTelemetry() {
 	adminTelemetryInitialized = true;
-	document.getElementById("tele-save-key").addEventListener("click", () => {
-		const key = document.getElementById("tele-admin-key").value.trim();
-		localStorage.setItem("adminKey", key);
-		document.getElementById("tele-key-status").innerText = key ? "Key saved." : "Key cleared.";
-		loadTelemetry();
-	});
-
-	const storedKey = getAdminKey();
-	if (storedKey) {
-		document.getElementById("tele-admin-key").value = storedKey;
-		document.getElementById("tele-key-status").innerText = "Key loaded.";
-	}
 }
 
 async function refreshAdminTelemetryView() {
@@ -1877,7 +1781,7 @@ async function refreshAdminTelemetryView() {
 }
 
 async function loadTelemetry() {
-	const res = await apiFetch("/admin/telemetry", { headers: { "X-Admin-Key": getAdminKey() } });
+	const res = await apiFetch("/admin/telemetry");
 	const data = await res.json();
 	if (!data.ok) {
 		document.getElementById("telemetry-body").innerHTML = "<tr><td colspan='3'>Unauthorized</td></tr>";
@@ -1900,18 +1804,9 @@ async function loadTelemetry() {
 
 function initModerator() {
 	moderatorInitialized = true;
-	document.getElementById("mod-save-local-key").addEventListener("click", () => {
-		const key = document.getElementById("mod-local-key").value.trim();
-		if (!key) return;
-		localStorage.setItem("adminKey", key);
-		document.getElementById("mod-local-key-status").innerText = "Key saved locally.";
-	});
-
 	document.getElementById("mod-load-view").addEventListener("click", async () => {
 		const username = document.getElementById("mod-username-view").value.trim();
-		const res = await apiFetch(`/moderator/profile?username=${encodeURIComponent(username)}`, {
-			headers: { "X-Admin-Key": getAdminKey() }
-		});
+		const res = await apiFetch(`/moderator/profile?username=${encodeURIComponent(username)}`);
 		const data = await res.json();
 		if (!data.ok) {
 			document.getElementById("mod-status-view").innerText = data.error || "Load failed.";
@@ -1926,18 +1821,12 @@ function initModerator() {
 		const displayName = document.getElementById("mod-display-name-view").value.trim();
 		const res = await apiFetch("/moderator/profile", {
 			method: "POST",
-			headers: { "X-Admin-Key": getAdminKey() },
 			body: JSON.stringify({ username, displayName })
 		});
 		const data = await res.json();
 		document.getElementById("mod-status-view").innerText = data.ok ? "Profile updated." : (data.error || "Update failed.");
 	});
 
-	const storedKey = getAdminKey();
-	if (storedKey) {
-		document.getElementById("mod-local-key").value = storedKey;
-		document.getElementById("mod-local-key-status").innerText = "Key loaded.";
-	}
 }
 
 async function refreshModeratorView() {

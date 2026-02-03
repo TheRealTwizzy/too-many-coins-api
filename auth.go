@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"strings"
@@ -362,6 +363,14 @@ func setAdminKey(db *sql.DB, accountID string, key string) error {
 		WHERE account_id = $1
 	`, accountID, hash)
 	return err
+}
+
+func generateAdminKey() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
 
 func verifyAdminKey(stored string, provided string) bool {

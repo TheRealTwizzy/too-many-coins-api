@@ -345,7 +345,6 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/admin/economy", adminEconomyHandler(db))
 	mux.HandleFunc("/admin/set-key", adminKeySetHandler(db))
 	mux.HandleFunc("/admin/role", adminRoleHandler(db))
-	mux.HandleFunc("/admin/set-user-key", adminKeyForUserHandler(db))
 	mux.HandleFunc("/admin/ip-whitelist", adminIPWhitelistHandler(db))
 	mux.HandleFunc("/admin/whitelist-requests", adminWhitelistRequestsHandler(db))
 	mux.HandleFunc("/admin/notifications", adminNotificationsHandler(db))
