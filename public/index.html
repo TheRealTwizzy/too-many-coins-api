@@ -1494,6 +1494,20 @@ function apiFetch(url, options = {}) {
 	});
 }
 
+async function apiFetchJson(url, options = {}, timeoutMs = 3000) {
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), timeoutMs);
+	try {
+		const res = await apiFetch(url, { ...options, signal: controller.signal });
+		const data = await res.json();
+		return { res, data };
+	} catch (e) {
+		return { res: null, data: null };
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
 async function track(eventType, payload) {
 	try {
 		await apiFetch("/telemetry", {
@@ -1624,14 +1638,9 @@ function disconnectLiveStream() {
 }
 
 async function loadAuth() {
-	let data = null;
-	try {
-		const res = await apiFetch("/auth/me");
-		data = await res.json();
-	} catch (e) {
-		data = { ok: false };
-	}
-	if (!data || !data.ok) {
+	const result = await apiFetchJson("/auth/me", {}, 2500);
+	const data = result.data || { ok: false };
+	if (!data.ok) {
 		currentUser = null;
 		authStatus.innerText = "Log in to save your profile.";
 		authForms.style.display = "block";
@@ -1790,11 +1799,9 @@ async function loadProfile() {
 async function loadSeasons() {
 	const container = document.getElementById("seasons");
 	if (!container) return;
-	let data = null;
-	try {
-		const res = await fetch("/seasons");
-		data = await res.json();
-	} catch (e) {
+	const result = await apiFetchJson("/seasons", {}, 2500);
+	const data = result.data;
+	if (!data) {
 		container.innerHTML = "<div class='card'>Unable to load seasons.</div>";
 		return;
 	}
