@@ -232,7 +232,7 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		tx, err := db.Begin()
+		tx, err := db.BeginTx(r.Context(), nil)
 		if err != nil {
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
@@ -240,14 +240,17 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 		defer tx.Rollback()
 
 		var coinsBefore int64
-		var coinsBefore int64
 		var starsBefore int64
+
+		err = tx.QueryRowContext(r.Context(), `
 			SELECT coins, stars, burned_coins
 			FROM players
 			WHERE player_id = $1
 			FOR UPDATE
-		`, playerID).Scan(&coinsBefore, &starsBefore, &burnedBefore); err != nil {
-		`).Scan(&coinsBefore, &starsBefore, new(int64)); err != nil {
+		`, playerID).Scan(&coinsBefore, &starsBefore, new(int64))
+
+		if err != nil {
+			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
 
@@ -258,7 +261,8 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 
 		coinsAfter := coinsBefore - quote.TotalCoinsSpent
 		starsAfter := starsBefore + int64(quantity)
-		_, err = tx.Exec(`
+
+		_, err = tx.ExecContext(r.Context(), `
 			UPDATE players
 			SET coins = $2,
 				stars = $3,
@@ -266,6 +270,7 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 				last_active_at = NOW()
 			WHERE player_id = $1
 		`, playerID, coinsAfter, starsAfter, quote.TotalCoinsSpent)
+
 		if err != nil {
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
