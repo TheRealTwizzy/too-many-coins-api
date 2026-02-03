@@ -935,7 +935,6 @@ function initHome() {
 		const reason = document.getElementById("whitelist-reason").value.trim();
 		const res = await apiFetch("/auth/request-whitelist", {
 			method: "POST",
-		refreshNotifications();
 			body: JSON.stringify({ reason })
 		});
 		const data = await res.json();
@@ -1442,12 +1441,14 @@ window.addEventListener("unhandledrejection", (event) => {
 
 window.addEventListener("hashchange", () => {
 	route().catch((err) => {
-		setToast(`Error: ${err?.message || "route failed"}`, "error");
+		const message = err && err.message ? err.message : "route failed";
+		setToast(`Error: ${message}`, "error");
 	});
 });
 
 route().catch((err) => {
-	setToast(`Error: ${err?.message || "route failed"}`, "error");
+	const message = err && err.message ? err.message : "route failed";
+	setToast(`Error: ${message}`, "error");
 });
 	</script>
 </body>
