@@ -1816,6 +1816,7 @@ async function loadSeasons() {
 
 			buyButton.addEventListener("click", async () => {
 				const qty = Math.max(1, parseInt(qtyInput?.value, 10) || 1);
+				await refreshQuote();
 				if (qty > 1) {
 					const total = lastQuote && lastQuote.totalCoinsSpent ? lastQuote.totalCoinsSpent : "unknown";
 					if (!confirm(`Confirm bulk purchase of ${qty} stars for ${total} coins?`)) {

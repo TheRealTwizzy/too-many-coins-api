@@ -427,7 +427,7 @@ func buildBulkStarQuote(db *sql.DB, playerID string, quantity int) (bulkStarQuot
 		return bulkStarQuote{}, nil
 	}
 	coinsInCirculation := economy.CoinsInCirculation()
-	secondsRemaining := int64(28 * 24 * 3600)
+	secondsRemaining := seasonSecondsRemaining(time.Now().UTC())
 	baseStars := economy.StarsPurchased()
 	gamma := bulkStarGamma()
 
@@ -453,7 +453,10 @@ func buildBulkStarQuote(db *sql.DB, playerID string, quantity int) (bulkStarQuot
 		})
 		total += int64(finalPrice)
 	}
-	finalStarPrice := ComputeStarPriceWithStars(baseStars+quantity, coinsInCirculation, secondsRemaining)
+	finalStarPrice := 0
+	if len(breakdown) > 0 {
+		finalStarPrice = breakdown[len(breakdown)-1].FinalPrice
+	}
 	warning, warningLevel := bulkWarning(maxMultiplier)
 	return bulkStarQuote{
 		TotalCoinsSpent: total,
