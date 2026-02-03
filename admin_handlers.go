@@ -111,6 +111,26 @@ type AdminAntiCheatResponse struct {
 	Sensitivity map[string]string   `json:"sensitivity,omitempty"`
 }
 
+type AdminPlayerSearchItem struct {
+	Username    string `json:"username"`
+	DisplayName string `json:"displayName"`
+	PlayerID    string `json:"playerId"`
+	AccountID   string `json:"accountId"`
+	TrustStatus string `json:"trustStatus"`
+	SeasonID    string `json:"seasonId"`
+	FlagCount   int    `json:"flagCount"`
+}
+
+type AdminPlayerSearchResponse struct {
+	OK     bool                    `json:"ok"`
+	Error  string                  `json:"error,omitempty"`
+	Items  []AdminPlayerSearchItem `json:"items,omitempty"`
+	Total  int                     `json:"total"`
+	Limit  int                     `json:"limit"`
+	Query  string                  `json:"query,omitempty"`
+	Status string                  `json:"trustStatus,omitempty"`
+}
+
 func requireAdmin(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Account, bool) {
 	account, _, err := getSessionAccount(db, r)
 	if err != nil || account == nil {
@@ -430,6 +450,88 @@ func adminAntiCheatHandler(db *sql.DB) http.HandlerFunc {
 				"trade":      "not-configured",
 				"faucet":     "not-configured",
 			},
+		})
+	}
+}
+
+func adminPlayerSearchHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+
+		query := strings.TrimSpace(r.URL.Query().Get("q"))
+		trust := strings.TrimSpace(r.URL.Query().Get("trust"))
+		limit := 25
+		if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+			if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+				limit = parsed
+			}
+		}
+		if limit > 100 {
+			limit = 100
+		}
+
+		clauses := []string{}
+		args := []interface{}{}
+		argIndex := 1
+		if query != "" {
+			clauses = append(clauses, "(a.username ILIKE $"+strconv.Itoa(argIndex)+" OR a.player_id = $"+strconv.Itoa(argIndex+1)+" OR a.account_id = $"+strconv.Itoa(argIndex+2)+")")
+			args = append(args, "%"+strings.ToLower(query)+"%", query, query)
+			argIndex += 3
+		}
+		if trust != "" {
+			clauses = append(clauses, "a.trust_status = $"+strconv.Itoa(argIndex))
+			args = append(args, trust)
+			argIndex++
+		}
+
+		where := ""
+		if len(clauses) > 0 {
+			where = "WHERE " + strings.Join(clauses, " AND ")
+		}
+
+		sqlQuery := `
+			SELECT a.username, a.display_name, a.player_id, a.account_id, a.trust_status,
+				(
+					SELECT COUNT(*)
+					FROM abuse_events e
+					WHERE e.player_id = a.player_id AND e.season_id = $` + strconv.Itoa(argIndex) + `
+				) AS flag_count
+			FROM accounts a
+			` + where + `
+			ORDER BY a.username ASC
+			LIMIT ` + strconv.Itoa(limit)
+		args = append(args, currentSeasonID())
+
+		rows, err := db.Query(sqlQuery, args...)
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminPlayerSearchResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		defer rows.Close()
+
+		items := []AdminPlayerSearchItem{}
+		for rows.Next() {
+			var item AdminPlayerSearchItem
+			if err := rows.Scan(&item.Username, &item.DisplayName, &item.PlayerID, &item.AccountID, &item.TrustStatus, &item.FlagCount); err != nil {
+				continue
+			}
+			item.SeasonID = currentSeasonID()
+			items = append(items, item)
+		}
+
+		json.NewEncoder(w).Encode(AdminPlayerSearchResponse{
+			OK:     true,
+			Items:  items,
+			Total:  len(items),
+			Limit:  limit,
+			Query:  query,
+			Status: trust,
 		})
 	}
 }
