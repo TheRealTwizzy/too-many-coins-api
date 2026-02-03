@@ -121,6 +121,31 @@
 	.notice.warn { border-color: #f59e0b; color: #fde68a; }
 	.notice.urgent { border-color: #ef4444; color: #fecaca; }
 	.notice button { padding: 0.25rem 0.6rem; }
+	.notice.read {
+		opacity: 0.55;
+		filter: saturate(0.7);
+	}
+	.notice.unread {
+		box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.45), 0 0 18px rgba(59, 130, 246, 0.15);
+	}
+	.notice.clickable { cursor: pointer; }
+	.notification-panel {
+		position: fixed;
+		right: 1.5rem;
+		bottom: 1.5rem;
+		width: min(420px, 92vw);
+		max-height: 70vh;
+		overflow: auto;
+		padding: 1rem;
+		border-radius: 12px;
+		background: #141a2e;
+		border: 1px solid #2a2f55;
+		box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+		z-index: 20;
+	}
+	.notification-section {
+		margin-top: 0.75rem;
+	}
 	.view { display: none; }
 	.view.active { display: block; }
 	.footer { margin-top: auto; text-align: center; font-size: 0.8rem; color: #9aa3c4; }
@@ -148,9 +173,22 @@
 		</div>
 	</header>
 
-	<div id="notification-bar" class="card" style="display:none;">
-		<div class="label">Notifications</div>
-		<div id="notification-list"></div>
+	<div id="notification-panel" class="notification-panel" style="display:none;">
+		<div class="row" style="justify-content:space-between; align-items:center;">
+			<div>
+				<strong>Notifications</strong>
+				<span id="notification-count" class="badge accent" style="display:none; margin-left:0.5rem;"></span>
+			</div>
+			<button id="notification-hide">Hide</button>
+		</div>
+		<div class="notification-section">
+			<div class="label">Unread</div>
+			<div id="notification-unread" class="stack"></div>
+		</div>
+		<div class="notification-section">
+			<div class="label">Read</div>
+			<div id="notification-read" class="stack"></div>
+		</div>
 	</div>
 
 	<main id="app">
@@ -364,6 +402,7 @@
 				</div>
 				<div class="row" style="margin-top:0.5rem;">
 					<input id="notify-expires" placeholder="Expires (RFC3339, optional)" />
+					<input id="notify-link" placeholder="Link (e.g. #/admin)" />
 					<input id="notify-message" placeholder="Message" style="flex:1;" />
 					<button id="notify-send" class="primary">Send</button>
 				</div>
@@ -429,6 +468,26 @@
 					<input id="star-log-variant" placeholder="Variant" />
 					<input id="star-log-limit" placeholder="Limit (max 250)" />
 					<button id="star-log-load" class="primary">Load</button>
+					<button id="star-log-export-csv">Export CSV</button>
+					<button id="star-log-export-json">Export JSON</button>
+				</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="star-log-from" placeholder="From (RFC3339)" />
+					<input id="star-log-to" placeholder="To (RFC3339)" />
+					<input id="star-log-min-price" placeholder="Min price" />
+					<input id="star-log-max-price" placeholder="Max price" />
+				</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="star-log-min-coins-before" placeholder="Min coins before" />
+					<input id="star-log-max-coins-before" placeholder="Max coins before" />
+					<input id="star-log-min-coins-after" placeholder="Min coins after" />
+					<input id="star-log-max-coins-after" placeholder="Max coins after" />
+				</div>
+				<div class="row" style="margin-top:0.5rem;">
+					<input id="star-log-min-stars-before" placeholder="Min stars before" />
+					<input id="star-log-max-stars-before" placeholder="Max stars before" />
+					<input id="star-log-min-stars-after" placeholder="Min stars after" />
+					<input id="star-log-max-stars-after" placeholder="Max stars after" />
 				</div>
 				<div id="star-log-status" class="label"></div>
 				<div id="star-log-list" class="stack" style="margin-top:0.5rem;"></div>
@@ -560,8 +619,11 @@ const whitelistRequestCard = document.getElementById("whitelist-request-card");
 const actionsStatus = document.getElementById("actions-status");
 const toast = document.getElementById("toast");
 const statPill = document.getElementById("stat-pill");
-const notificationBar = document.getElementById("notification-bar");
-const notificationList = document.getElementById("notification-list");
+const notificationPanel = document.getElementById("notification-panel");
+const notificationCount = document.getElementById("notification-count");
+const notificationUnreadList = document.getElementById("notification-unread");
+const notificationReadList = document.getElementById("notification-read");
+const notificationHideBtn = document.getElementById("notification-hide");
 const signupLink = document.getElementById("signup-link");
 const moderatorLink = document.getElementById("moderator-link");
 const adminLink = document.getElementById("admin-link");
@@ -595,6 +657,7 @@ let seasonRefreshInterval = null;
 let notificationRefreshInterval = null;
 let activityPingInterval = null;
 const ALPHA_SEASON_ID = "season-1";
+let lastStarLogRows = [];
 
 if (joinedSeasonId && joinedSeasonId !== ALPHA_SEASON_ID) {
 	localStorage.removeItem("joinedSeasonId");
@@ -641,8 +704,10 @@ async function loadAuth() {
 		signupLink.style.display = "inline";
 		moderatorLink.style.display = "none";
 		adminLink.style.display = "none";
-		notificationBar.style.display = "none";
-		notificationList.innerHTML = "";
+		notificationPanel.style.display = "none";
+		notificationUnreadList.innerHTML = "";
+		notificationReadList.innerHTML = "";
+		notificationCount.style.display = "none";
 		document.getElementById("seasons").style.display = "none";
 		document.getElementById("locked-message").innerText = "Log in to access seasons.";
 		return;
@@ -667,6 +732,10 @@ async function loadAuth() {
 	document.getElementById("seasons").style.display = "grid";
 	document.getElementById("locked-message").innerText = "";
 }
+
+notificationHideBtn.addEventListener("click", () => {
+	notificationPanel.style.display = "none";
+});
 
 async function pingActivity() {
 	if (!currentUser) return;
@@ -825,40 +894,80 @@ function setToast(message, type) {
 
 async function refreshNotifications() {
 	if (!currentUser) {
-		notificationBar.style.display = "none";
-		notificationList.innerHTML = "";
+		notificationPanel.style.display = "none";
+		notificationUnreadList.innerHTML = "";
+		notificationReadList.innerHTML = "";
+		notificationCount.style.display = "none";
 		return;
 	}
 	const res = await apiFetch("/notifications");
 	const data = await res.json();
 	if (!data.ok) {
-		notificationBar.style.display = "none";
+		notificationPanel.style.display = "none";
 		return;
 	}
 	const items = data.notifications || [];
+	const unread = items.filter(item => !item.isRead);
+	const read = items.filter(item => item.isRead);
 	if (items.length === 0) {
-		notificationBar.style.display = "none";
-		notificationList.innerHTML = "";
+		notificationPanel.style.display = "none";
+		notificationUnreadList.innerHTML = "";
+		notificationReadList.innerHTML = "";
+		notificationCount.style.display = "none";
 		return;
 	}
-	notificationBar.style.display = "block";
-	notificationList.innerHTML = items.map(item => {
+	notificationPanel.style.display = "block";
+	if (unread.length > 0) {
+		notificationCount.style.display = "inline-flex";
+		notificationCount.innerText = `${unread.length} unread`;
+	} else {
+		notificationCount.style.display = "none";
+	}
+
+	const renderItem = (item) => {
+		const level = item.level || "info";
+		const stateClass = item.isRead ? "read" : "unread";
+		const safeLink = item.link || "#/home";
 		return `
-			<div class="notice ${item.level || "info"}">
+			<div class="notice clickable ${level} ${stateClass}" data-id="${item.id}" data-link="${safeLink}" data-read="${item.isRead}">
 				<div>${item.message}</div>
-				<button data-ack="${item.id}">Dismiss</button>
+				<div class="label">${new Date(item.createdAt).toLocaleString()}</div>
 			</div>
 		`;
-	}).join("");
+	};
 
-	notificationList.querySelectorAll("button[data-ack]").forEach(btn => {
-		btn.addEventListener("click", async () => {
-			const id = parseInt(btn.getAttribute("data-ack"), 10);
-			await apiFetch("/notifications/ack", {
-				method: "POST",
-				body: JSON.stringify({ ids: [id] })
-			});
-			refreshNotifications();
+	notificationUnreadList.innerHTML = unread.length > 0
+		? unread.map(renderItem).join("")
+		: "<div class='label'>No unread notifications.</div>";
+	notificationReadList.innerHTML = read.length > 0
+		? read.map(renderItem).join("")
+		: "<div class='label'>No read notifications.</div>";
+
+	[...notificationPanel.querySelectorAll(".notice[data-id]")].forEach(item => {
+		item.addEventListener("click", async () => {
+			const id = parseInt(item.getAttribute("data-id"), 10);
+			const link = item.getAttribute("data-link") || "#/home";
+			const isRead = item.getAttribute("data-read") === "true";
+			if (!isRead) {
+				await apiFetch("/notifications/ack", {
+					method: "POST",
+					body: JSON.stringify({ ids: [id] })
+				});
+				await refreshNotifications();
+			}
+			if (link.startsWith("http")) {
+				window.location.href = link;
+				return;
+			}
+			if (link.startsWith("#/")) {
+				location.hash = link;
+				return;
+			}
+			if (link.startsWith("/")) {
+				location.hash = `#${link}`;
+				return;
+			}
+			location.hash = `#/${link}`;
 		});
 	});
 }
@@ -1220,16 +1329,18 @@ function initAdmin() {
 		const accountId = document.getElementById("notify-account").value.trim();
 		const level = document.getElementById("notify-level").value;
 		const expiresAt = document.getElementById("notify-expires").value.trim();
+		const link = document.getElementById("notify-link").value.trim();
 		const message = document.getElementById("notify-message").value.trim();
 		const res = await apiFetch("/admin/notifications", {
 			method: "POST",
 			headers: { "X-Admin-Key": getAdminKey() },
-			body: JSON.stringify({ targetRole, accountId, level, expiresAt, message })
+			body: JSON.stringify({ targetRole, accountId, level, expiresAt, link, message })
 		});
 		const data = await res.json();
 		document.getElementById("notify-status").innerText = data.ok ? "Notification sent." : (data.error || "Send failed.");
 		if (data.ok) {
 			document.getElementById("notify-message").value = "";
+			document.getElementById("notify-link").value = "";
 		}
 	});
 
@@ -1338,6 +1449,14 @@ function initAdmin() {
 		await loadStarPurchaseLog();
 	});
 
+	document.getElementById("star-log-export-csv").addEventListener("click", async () => {
+		await exportStarPurchaseLog("csv");
+	});
+
+	document.getElementById("star-log-export-json").addEventListener("click", async () => {
+		await exportStarPurchaseLog("json");
+	});
+
 	const storedKey = getAdminKey();
 	if (storedKey) {
 		document.getElementById("admin-key").value = storedKey;
@@ -1392,6 +1511,18 @@ async function loadStarPurchaseLog() {
 	const purchaseType = document.getElementById("star-log-type").value.trim();
 	const variant = document.getElementById("star-log-variant").value.trim();
 	const limitValue = parseInt(document.getElementById("star-log-limit").value, 10);
+	const from = document.getElementById("star-log-from").value.trim();
+	const to = document.getElementById("star-log-to").value.trim();
+	const minPrice = document.getElementById("star-log-min-price").value.trim();
+	const maxPrice = document.getElementById("star-log-max-price").value.trim();
+	const minCoinsBefore = document.getElementById("star-log-min-coins-before").value.trim();
+	const maxCoinsBefore = document.getElementById("star-log-max-coins-before").value.trim();
+	const minCoinsAfter = document.getElementById("star-log-min-coins-after").value.trim();
+	const maxCoinsAfter = document.getElementById("star-log-max-coins-after").value.trim();
+	const minStarsBefore = document.getElementById("star-log-min-stars-before").value.trim();
+	const maxStarsBefore = document.getElementById("star-log-max-stars-before").value.trim();
+	const minStarsAfter = document.getElementById("star-log-min-stars-after").value.trim();
+	const maxStarsAfter = document.getElementById("star-log-max-stars-after").value.trim();
 
 	const params = new URLSearchParams();
 	if (accountId) params.set("accountId", accountId);
@@ -1400,6 +1531,18 @@ async function loadStarPurchaseLog() {
 	if (purchaseType) params.set("purchaseType", purchaseType);
 	if (variant) params.set("variant", variant);
 	if (!Number.isNaN(limitValue)) params.set("limit", limitValue);
+	if (from) params.set("from", from);
+	if (to) params.set("to", to);
+	if (minPrice) params.set("minPrice", minPrice);
+	if (maxPrice) params.set("maxPrice", maxPrice);
+	if (minCoinsBefore) params.set("minCoinsBefore", minCoinsBefore);
+	if (maxCoinsBefore) params.set("maxCoinsBefore", maxCoinsBefore);
+	if (minCoinsAfter) params.set("minCoinsAfter", minCoinsAfter);
+	if (maxCoinsAfter) params.set("maxCoinsAfter", maxCoinsAfter);
+	if (minStarsBefore) params.set("minStarsBefore", minStarsBefore);
+	if (maxStarsBefore) params.set("maxStarsBefore", maxStarsBefore);
+	if (minStarsAfter) params.set("minStarsAfter", minStarsAfter);
+	if (maxStarsAfter) params.set("maxStarsAfter", maxStarsAfter);
 
 	const url = params.toString() ? `/admin/star-purchases?${params.toString()}` : "/admin/star-purchases";
 	const res = await apiFetch(url, { headers: { "X-Admin-Key": getAdminKey() } });
@@ -1411,6 +1554,7 @@ async function loadStarPurchaseLog() {
 	}
 
 	const rows = data.items || [];
+	lastStarLogRows = rows;
 	status.innerText = `Loaded ${rows.length} entries.`;
 	if (rows.length === 0) {
 		container.innerText = "No results.";
@@ -1428,6 +1572,73 @@ async function loadStarPurchaseLog() {
 			</div>
 		`;
 	}).join("");
+}
+
+async function exportStarPurchaseLog(format) {
+	if (!lastStarLogRows || lastStarLogRows.length === 0) {
+		await loadStarPurchaseLog();
+	}
+	const rows = lastStarLogRows || [];
+	if (rows.length === 0) {
+		setToast("No entries to export.", "error");
+		return;
+	}
+	if (format === "json") {
+		const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
+		triggerDownload(blob, "star-purchase-log.json");
+		return;
+	}
+	const headers = [
+		"id",
+		"createdAt",
+		"seasonId",
+		"purchaseType",
+		"variant",
+		"accountId",
+		"playerId",
+		"pricePaid",
+		"coinsBefore",
+		"coinsAfter",
+		"starsBefore",
+		"starsAfter"
+	];
+	const csvLines = [headers.join(",")];
+	rows.forEach(row => {
+		const values = [
+			row.id,
+			new Date(row.createdAt).toISOString(),
+			row.seasonId,
+			row.purchaseType,
+			row.variant || "",
+			row.accountId,
+			row.playerId,
+			row.pricePaid,
+			row.coinsBefore,
+			row.coinsAfter,
+			row.starsBefore,
+			row.starsAfter
+		].map(value => {
+			const text = String(value ?? "");
+			if (text.includes(",") || text.includes("\"")) {
+				return `"${text.replace(/"/g, '""')}"`;
+			}
+			return text;
+		});
+		csvLines.push(values.join(","));
+	});
+	const blob = new Blob([csvLines.join("\n")], { type: "text/csv" });
+	triggerDownload(blob, "star-purchase-log.csv");
+}
+
+function triggerDownload(blob, filename) {
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement("a");
+	link.href = url;
+	link.download = filename;
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+	URL.revokeObjectURL(url);
 }
 
 async function loadWhitelistRequests() {

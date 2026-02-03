@@ -521,7 +521,7 @@ func adminWhitelistRequestsHandler(db *sql.DB) http.HandlerFunc {
 					message = "Whitelist request approved. You may create another account from your IP."
 					level = "info"
 				}
-				_ = createNotification(db, "user", accountID, message, level, nil)
+				_ = createNotification(db, "user", accountID, message, level, "#/home", nil)
 			}
 			json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 			return
@@ -568,11 +568,11 @@ func adminNotificationsHandler(db *sql.DB) http.HandlerFunc {
 			}
 			expiresAt = sql.NullTime{Time: t, Valid: true}
 		}
-		_, err := db.Exec(`
-			INSERT INTO notifications (target_role, account_id, message, level, created_at, expires_at)
-			VALUES ($1, $2, $3, $4, NOW(), $5)
-		`, targetRole, strings.TrimSpace(req.AccountID), strings.TrimSpace(req.Message), level, expiresAt)
-		if err != nil {
+		exp := (*time.Time)(nil)
+		if expiresAt.Valid {
+			exp = &expiresAt.Time
+		}
+		if err := createNotification(db, targetRole, req.AccountID, req.Message, level, req.Link, exp); err != nil {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
@@ -805,6 +805,44 @@ func adminStarPurchaseLogHandler(db *sql.DB) http.HandlerFunc {
 		seasonID := strings.TrimSpace(query.Get("seasonId"))
 		purchaseType := strings.TrimSpace(query.Get("purchaseType"))
 		variant := strings.TrimSpace(query.Get("variant"))
+		fromRaw := strings.TrimSpace(query.Get("from"))
+		toRaw := strings.TrimSpace(query.Get("to"))
+
+		parseInt64 := func(key string) (*int64, bool) {
+			raw := strings.TrimSpace(query.Get(key))
+			if raw == "" {
+				return nil, false
+			}
+			value, err := strconv.ParseInt(raw, 10, 64)
+			if err != nil {
+				return nil, false
+			}
+			return &value, true
+		}
+
+		parseTime := func(raw string) (*time.Time, bool) {
+			if raw == "" {
+				return nil, false
+			}
+			parsed, err := time.Parse(time.RFC3339, raw)
+			if err != nil {
+				return nil, false
+			}
+			return &parsed, true
+		}
+
+		fromTime, hasFrom := parseTime(fromRaw)
+		toTime, hasTo := parseTime(toRaw)
+		minPrice, hasMinPrice := parseInt64("minPrice")
+		maxPrice, hasMaxPrice := parseInt64("maxPrice")
+		minCoinsBefore, hasMinCoinsBefore := parseInt64("minCoinsBefore")
+		maxCoinsBefore, hasMaxCoinsBefore := parseInt64("maxCoinsBefore")
+		minCoinsAfter, hasMinCoinsAfter := parseInt64("minCoinsAfter")
+		maxCoinsAfter, hasMaxCoinsAfter := parseInt64("maxCoinsAfter")
+		minStarsBefore, hasMinStarsBefore := parseInt64("minStarsBefore")
+		maxStarsBefore, hasMaxStarsBefore := parseInt64("maxStarsBefore")
+		minStarsAfter, hasMinStarsAfter := parseInt64("minStarsAfter")
+		maxStarsAfter, hasMaxStarsAfter := parseInt64("maxStarsAfter")
 
 		clauses := []string{}
 		args := []interface{}{}
@@ -832,6 +870,66 @@ func adminStarPurchaseLogHandler(db *sql.DB) http.HandlerFunc {
 		if variant != "" {
 			clauses = append(clauses, "variant = $"+strconv.Itoa(argIndex))
 			args = append(args, variant)
+			argIndex++
+		}
+		if hasFrom {
+			clauses = append(clauses, "created_at >= $"+strconv.Itoa(argIndex))
+			args = append(args, *fromTime)
+			argIndex++
+		}
+		if hasTo {
+			clauses = append(clauses, "created_at <= $"+strconv.Itoa(argIndex))
+			args = append(args, *toTime)
+			argIndex++
+		}
+		if hasMinPrice {
+			clauses = append(clauses, "price_paid >= $"+strconv.Itoa(argIndex))
+			args = append(args, *minPrice)
+			argIndex++
+		}
+		if hasMaxPrice {
+			clauses = append(clauses, "price_paid <= $"+strconv.Itoa(argIndex))
+			args = append(args, *maxPrice)
+			argIndex++
+		}
+		if hasMinCoinsBefore {
+			clauses = append(clauses, "coins_before >= $"+strconv.Itoa(argIndex))
+			args = append(args, *minCoinsBefore)
+			argIndex++
+		}
+		if hasMaxCoinsBefore {
+			clauses = append(clauses, "coins_before <= $"+strconv.Itoa(argIndex))
+			args = append(args, *maxCoinsBefore)
+			argIndex++
+		}
+		if hasMinCoinsAfter {
+			clauses = append(clauses, "coins_after >= $"+strconv.Itoa(argIndex))
+			args = append(args, *minCoinsAfter)
+			argIndex++
+		}
+		if hasMaxCoinsAfter {
+			clauses = append(clauses, "coins_after <= $"+strconv.Itoa(argIndex))
+			args = append(args, *maxCoinsAfter)
+			argIndex++
+		}
+		if hasMinStarsBefore {
+			clauses = append(clauses, "stars_before >= $"+strconv.Itoa(argIndex))
+			args = append(args, *minStarsBefore)
+			argIndex++
+		}
+		if hasMaxStarsBefore {
+			clauses = append(clauses, "stars_before <= $"+strconv.Itoa(argIndex))
+			args = append(args, *maxStarsBefore)
+			argIndex++
+		}
+		if hasMinStarsAfter {
+			clauses = append(clauses, "stars_after >= $"+strconv.Itoa(argIndex))
+			args = append(args, *minStarsAfter)
+			argIndex++
+		}
+		if hasMaxStarsAfter {
+			clauses = append(clauses, "stars_after <= $"+strconv.Itoa(argIndex))
+			args = append(args, *maxStarsAfter)
 			argIndex++
 		}
 

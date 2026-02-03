@@ -288,9 +288,18 @@ func ensureSchema(db *sql.DB) error {
 			account_id TEXT,
 			message TEXT NOT NULL,
 			level TEXT NOT NULL DEFAULT 'info',
+			link TEXT,
 			created_at TIMESTAMPTZ NOT NULL,
 			expires_at TIMESTAMPTZ
 		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(`
+		ALTER TABLE notifications
+			ADD COLUMN IF NOT EXISTS link TEXT;
 	`)
 	if err != nil {
 		return err

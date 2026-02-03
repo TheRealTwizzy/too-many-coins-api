@@ -173,6 +173,8 @@ type NotificationItem struct {
 	ID        int64      `json:"id"`
 	Message   string     `json:"message"`
 	Level     string     `json:"level"`
+	Link      string     `json:"link,omitempty"`
+	IsRead    bool       `json:"isRead"`
 	CreatedAt time.Time  `json:"createdAt"`
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 }
@@ -191,6 +193,7 @@ type AdminNotificationCreateRequest struct {
 	TargetRole string `json:"targetRole"`
 	AccountID  string `json:"accountId,omitempty"`
 	Message    string `json:"message"`
+	Link       string `json:"link,omitempty"`
 	Level      string `json:"level,omitempty"`
 	ExpiresAt  string `json:"expiresAt,omitempty"`
 }

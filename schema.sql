@@ -85,9 +85,13 @@ CREATE TABLE IF NOT EXISTS notifications (
     account_id TEXT,
     message TEXT NOT NULL,
     level TEXT NOT NULL DEFAULT 'info',
+    link TEXT,
     created_at TIMESTAMPTZ NOT NULL,
     expires_at TIMESTAMPTZ
 );
+
+ALTER TABLE notifications
+    ADD COLUMN IF NOT EXISTS link TEXT;
 
 CREATE TABLE IF NOT EXISTS notification_reads (
     notification_id BIGINT NOT NULL,

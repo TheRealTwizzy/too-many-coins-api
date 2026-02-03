@@ -753,8 +753,8 @@ func whitelistRequestHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
-		_ = createNotification(db, "admin", "", "Whitelist request pending for IP: "+ip, "warn", nil)
-		_ = createNotification(db, "user", account.AccountID, "Whitelist request submitted. An admin will review it.", "info", nil)
+		_ = createNotification(db, "admin", "", "Whitelist request pending for IP: "+ip, "warn", "#/admin", nil)
+		_ = createNotification(db, "user", account.AccountID, "Whitelist request submitted. An admin will review it.", "info", "#/home", nil)
 		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 	}
 }
@@ -770,12 +770,12 @@ func notificationsHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		rows, err := db.Query(`
-			SELECT n.id, n.message, n.level, n.created_at, n.expires_at
+			SELECT n.id, n.message, n.level, n.link, n.created_at, n.expires_at,
+				(r.notification_id IS NOT NULL) AS is_read
 			FROM notifications n
 			LEFT JOIN notification_reads r
 				ON r.notification_id = n.id AND r.account_id = $1
-			WHERE r.notification_id IS NULL
-				AND (n.expires_at IS NULL OR n.expires_at > NOW())
+			WHERE (n.expires_at IS NULL OR n.expires_at > NOW())
 				AND (n.account_id IS NULL OR n.account_id = $1)
 				AND (
 					n.target_role = 'all'
@@ -783,7 +783,7 @@ func notificationsHandler(db *sql.DB) http.HandlerFunc {
 					OR (n.target_role = 'user' AND $2 = 'user')
 				)
 			ORDER BY n.created_at DESC
-			LIMIT 20
+			LIMIT 60
 		`, account.AccountID, account.Role)
 		if err != nil {
 			json.NewEncoder(w).Encode(NotificationsResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -794,7 +794,7 @@ func notificationsHandler(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var item NotificationItem
 			var expires sql.NullTime
-			if err := rows.Scan(&item.ID, &item.Message, &item.Level, &item.CreatedAt, &expires); err != nil {
+			if err := rows.Scan(&item.ID, &item.Message, &item.Level, &item.Link, &item.CreatedAt, &expires, &item.IsRead); err != nil {
 				continue
 			}
 			if expires.Valid {
