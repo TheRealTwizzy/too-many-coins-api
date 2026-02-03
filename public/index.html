@@ -751,7 +751,8 @@
 				<div class="card-body">
 					<div class="row" style="margin-top:0.5rem;">
 						<input id="ip-whitelist-value" placeholder="IP address" />
-						<input id="ip-whitelist-max" placeholder="Max accounts" />
+						<input id="ip-whitelist-max" type="range" min="1" max="10" step="1" value="2" />
+						<span id="ip-whitelist-max-value" class="label"></span>
 						<button id="ip-whitelist-save" class="primary">Allow</button>
 						<button id="ip-whitelist-remove">Remove</button>
 					</div>
@@ -806,13 +807,33 @@
 				</div>
 				<div class="card-body">
 					<div class="row" style="margin-top:0.5rem;">
-						<input id="gs-active-interval" placeholder="Active drip interval (s)" />
-						<input id="gs-idle-interval" placeholder="Idle drip interval (s)" />
-						<input id="gs-active-amount" placeholder="Active drip amount" />
-						<input id="gs-idle-amount" placeholder="Idle drip amount" />
+						<div class="stack" style="min-width:160px;">
+							<label class="label">Active drip interval (s)</label>
+							<input id="gs-active-interval" type="range" min="15" max="300" step="15" value="60" />
+							<span id="gs-active-interval-value" class="label"></span>
+						</div>
+						<div class="stack" style="min-width:160px;">
+							<label class="label">Idle drip interval (s)</label>
+							<input id="gs-idle-interval" type="range" min="60" max="900" step="30" value="240" />
+							<span id="gs-idle-interval-value" class="label"></span>
+						</div>
+						<div class="stack" style="min-width:160px;">
+							<label class="label">Active drip amount</label>
+							<input id="gs-active-amount" type="range" min="1" max="10" step="1" value="2" />
+							<span id="gs-active-amount-value" class="label"></span>
+						</div>
+						<div class="stack" style="min-width:160px;">
+							<label class="label">Idle drip amount</label>
+							<input id="gs-idle-amount" type="range" min="1" max="5" step="1" value="1" />
+							<span id="gs-idle-amount-value" class="label"></span>
+						</div>
 					</div>
 					<div class="row" style="margin-top:0.5rem;">
-						<input id="gs-activity-window" placeholder="Activity window (s)" />
+						<div class="stack" style="min-width:180px;">
+							<label class="label">Activity window (s)</label>
+							<input id="gs-activity-window" type="range" min="30" max="600" step="30" value="120" />
+							<span id="gs-activity-window-value" class="label"></span>
+						</div>
 						<select id="gs-drip-enabled">
 							<option value="">Drip enabled?</option>
 							<option value="true">Enabled</option>
@@ -837,13 +858,33 @@
 						<button id="pc-load" class="primary">Load</button>
 					</div>
 					<div class="row" style="margin-top:0.5rem;">
-						<input id="pc-set-coins" placeholder="Set coins" />
-						<input id="pc-add-coins" placeholder="Add coins" />
-						<input id="pc-set-stars" placeholder="Set stars" />
-						<input id="pc-add-stars" placeholder="Add stars" />
+						<div class="stack" style="min-width:160px;">
+							<label class="label"><input type="checkbox" id="pc-set-coins-enabled" /> Set coins</label>
+							<input id="pc-set-coins" type="range" min="0" max="10000" step="50" value="0" disabled />
+							<span id="pc-set-coins-value" class="label"></span>
+						</div>
+						<div class="stack" style="min-width:160px;">
+							<label class="label"><input type="checkbox" id="pc-add-coins-enabled" /> Add coins</label>
+							<input id="pc-add-coins" type="range" min="0" max="2000" step="25" value="0" disabled />
+							<span id="pc-add-coins-value" class="label"></span>
+						</div>
+						<div class="stack" style="min-width:160px;">
+							<label class="label"><input type="checkbox" id="pc-set-stars-enabled" /> Set stars</label>
+							<input id="pc-set-stars" type="range" min="0" max="500" step="1" value="0" disabled />
+							<span id="pc-set-stars-value" class="label"></span>
+						</div>
+						<div class="stack" style="min-width:160px;">
+							<label class="label"><input type="checkbox" id="pc-add-stars-enabled" /> Add stars</label>
+							<input id="pc-add-stars" type="range" min="0" max="100" step="1" value="0" disabled />
+							<span id="pc-add-stars-value" class="label"></span>
+						</div>
 					</div>
 					<div class="row" style="margin-top:0.5rem;">
-						<input id="pc-drip-mult" placeholder="Drip multiplier (0.1–10)" />
+						<div class="stack" style="min-width:200px;">
+							<label class="label"><input type="checkbox" id="pc-drip-mult-enabled" /> Drip multiplier</label>
+							<input id="pc-drip-mult" type="range" min="0.1" max="3" step="0.1" value="1" disabled />
+							<span id="pc-drip-mult-value" class="label"></span>
+						</div>
 						<select id="pc-drip-paused">
 							<option value="">Pause?</option>
 							<option value="true">Pause drip</option>
@@ -1260,6 +1301,44 @@ function disconnectLiveStream() {
 		liveEventSource = null;
 	}
 	updateLiveStatus("offline", "Offline");
+}
+
+function bindRangeValue(rangeId, outputId, formatter) {
+	const input = document.getElementById(rangeId);
+	const output = document.getElementById(outputId);
+	if (!input || !output) return;
+	const update = () => {
+		const value = parseFloat(input.value);
+		output.innerText = formatter ? formatter(value) : `${value}`;
+	};
+	input.addEventListener("input", update);
+	update();
+}
+
+function bindRangeToggle(rangeId, outputId, toggleId, formatter) {
+	const input = document.getElementById(rangeId);
+	const output = document.getElementById(outputId);
+	const toggle = document.getElementById(toggleId);
+	if (!input || !output || !toggle) return;
+	const update = () => {
+		const value = parseFloat(input.value);
+		output.innerText = formatter ? formatter(value) : `${value}`;
+	};
+	const updateState = () => {
+		input.disabled = !toggle.checked;
+		output.style.opacity = toggle.checked ? "1" : "0.5";
+	};
+	input.addEventListener("input", update);
+	toggle.addEventListener("change", updateState);
+	update();
+	updateState();
+}
+
+function setRangeValue(rangeId, value) {
+	const input = document.getElementById(rangeId);
+	if (!input || value === undefined || value === null || Number.isNaN(value)) return;
+	input.value = value;
+	input.dispatchEvent(new Event("input"));
 }
 
 async function loadAuth() {
@@ -1853,6 +1932,17 @@ function initReset() {
 
 function initAdmin() {
 	adminInitialized = true;
+	bindRangeValue("ip-whitelist-max", "ip-whitelist-max-value", value => `${value} max`);
+	bindRangeValue("gs-active-interval", "gs-active-interval-value", value => `${value}s`);
+	bindRangeValue("gs-idle-interval", "gs-idle-interval-value", value => `${value}s`);
+	bindRangeValue("gs-active-amount", "gs-active-amount-value", value => `${value} coins`);
+	bindRangeValue("gs-idle-amount", "gs-idle-amount-value", value => `${value} coins`);
+	bindRangeValue("gs-activity-window", "gs-activity-window-value", value => `${value}s`);
+	bindRangeToggle("pc-set-coins", "pc-set-coins-value", "pc-set-coins-enabled", value => `${value} coins`);
+	bindRangeToggle("pc-add-coins", "pc-add-coins-value", "pc-add-coins-enabled", value => `+${value} coins`);
+	bindRangeToggle("pc-set-stars", "pc-set-stars-value", "pc-set-stars-enabled", value => `${value} stars`);
+	bindRangeToggle("pc-add-stars", "pc-add-stars-value", "pc-add-stars-enabled", value => `+${value} stars`);
+	bindRangeToggle("pc-drip-mult", "pc-drip-mult-value", "pc-drip-mult-enabled", value => `${value.toFixed(1)}x`);
 	document.getElementById("refresh").addEventListener("click", () => {
 		loadSummary();
 	});
@@ -1936,11 +2026,11 @@ function initAdmin() {
 			return;
 		}
 		const s = data.settings || {};
-		document.getElementById("gs-active-interval").value = s.activeDripIntervalSeconds !== undefined ? s.activeDripIntervalSeconds : "";
-		document.getElementById("gs-idle-interval").value = s.idleDripIntervalSeconds !== undefined ? s.idleDripIntervalSeconds : "";
-		document.getElementById("gs-active-amount").value = s.activeDripAmount !== undefined ? s.activeDripAmount : "";
-		document.getElementById("gs-idle-amount").value = s.idleDripAmount !== undefined ? s.idleDripAmount : "";
-		document.getElementById("gs-activity-window").value = s.activityWindowSeconds !== undefined ? s.activityWindowSeconds : "";
+		setRangeValue("gs-active-interval", s.activeDripIntervalSeconds);
+		setRangeValue("gs-idle-interval", s.idleDripIntervalSeconds);
+		setRangeValue("gs-active-amount", s.activeDripAmount);
+		setRangeValue("gs-idle-amount", s.idleDripAmount);
+		setRangeValue("gs-activity-window", s.activityWindowSeconds);
 		document.getElementById("gs-drip-enabled").value = s.dripEnabled ? "true" : "false";
 		status.innerText = "Settings loaded.";
 	});
@@ -1983,11 +2073,19 @@ function initAdmin() {
 		}
 		status.innerText = `Loaded ${data.playerId} · coins ${data.coins} · stars ${data.stars} · drip ${data.dripMultiplier} · paused ${data.dripPaused}`;
 		document.getElementById("pc-player-id").value = data.playerId || playerId;
+		setRangeValue("pc-set-coins", data.coins);
+		setRangeValue("pc-set-stars", data.stars);
+		setRangeValue("pc-drip-mult", data.dripMultiplier);
 	});
 
 	document.getElementById("pc-save").addEventListener("click", async () => {
 		const username = document.getElementById("pc-username").value.trim();
 		const playerId = document.getElementById("pc-player-id").value.trim();
+		const setCoinsEnabled = document.getElementById("pc-set-coins-enabled").checked;
+		const addCoinsEnabled = document.getElementById("pc-add-coins-enabled").checked;
+		const setStarsEnabled = document.getElementById("pc-set-stars-enabled").checked;
+		const addStarsEnabled = document.getElementById("pc-add-stars-enabled").checked;
+		const dripMultEnabled = document.getElementById("pc-drip-mult-enabled").checked;
 		const setCoins = parseInt(document.getElementById("pc-set-coins").value, 10);
 		const addCoins = parseInt(document.getElementById("pc-add-coins").value, 10);
 		const setStars = parseInt(document.getElementById("pc-set-stars").value, 10);
@@ -1995,11 +2093,11 @@ function initAdmin() {
 		const dripMultiplier = parseFloat(document.getElementById("pc-drip-mult").value);
 		const dripPausedValue = document.getElementById("pc-drip-paused").value;
 		const payload = { username, playerId };
-		if (!Number.isNaN(setCoins)) payload.setCoins = setCoins;
-		if (!Number.isNaN(addCoins)) payload.addCoins = addCoins;
-		if (!Number.isNaN(setStars)) payload.setStars = setStars;
-		if (!Number.isNaN(addStars)) payload.addStars = addStars;
-		if (!Number.isNaN(dripMultiplier)) payload.dripMultiplier = dripMultiplier;
+		if (setCoinsEnabled && !Number.isNaN(setCoins)) payload.setCoins = setCoins;
+		if (addCoinsEnabled && !Number.isNaN(addCoins)) payload.addCoins = addCoins;
+		if (setStarsEnabled && !Number.isNaN(setStars)) payload.setStars = setStars;
+		if (addStarsEnabled && !Number.isNaN(addStars)) payload.addStars = addStars;
+		if (dripMultEnabled && !Number.isNaN(dripMultiplier)) payload.dripMultiplier = dripMultiplier;
 		if (dripPausedValue === "true") payload.dripPaused = true;
 		if (dripPausedValue === "false") payload.dripPaused = false;
 

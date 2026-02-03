@@ -508,6 +508,48 @@ func (e *EconomyState) EmissionPerMinute() float64 {
 	return float64(e.dailyEmissionTarget) / (24 * 60)
 }
 
+func (e *EconomyState) EffectiveDailyEmissionTarget(secondsRemaining int64, coinsInCirculation int64) int {
+	e.mu.Lock()
+	baseTarget := e.dailyEmissionTarget
+	e.mu.Unlock()
+
+	const seasonSeconds = 28 * 24 * 3600
+	if seasonSeconds <= 0 {
+		return baseTarget
+	}
+
+	progress := 1 - (float64(secondsRemaining) / float64(seasonSeconds))
+	if progress < 0 {
+		progress = 0
+	}
+	if progress > 1 {
+		progress = 1
+	}
+
+	// Time multiplier: tapers down as the season advances.
+	timeMultiplier := 1 - (0.7 * progress)
+	if timeMultiplier < 0.15 {
+		timeMultiplier = 0.15
+	}
+
+	// Circulation multiplier: dampens emission as coins in circulation grow.
+	const circulationScale = 5000.0
+	coinMultiplier := 1 / (1 + (float64(coinsInCirculation) / circulationScale))
+	if coinMultiplier < 0.2 {
+		coinMultiplier = 0.2
+	}
+
+	effective := int(float64(baseTarget)*timeMultiplier*coinMultiplier + 0.5)
+	if effective < 0 {
+		effective = 0
+	}
+	return effective
+}
+
+func (e *EconomyState) EffectiveEmissionPerMinute(secondsRemaining int64, coinsInCirculation int64) float64 {
+	return float64(e.EffectiveDailyEmissionTarget(secondsRemaining, coinsInCirculation)) / (24 * 60)
+}
+
 func (e *EconomyState) DailyEmissionTarget() int {
 	e.mu.Lock()
 	defer e.mu.Unlock()

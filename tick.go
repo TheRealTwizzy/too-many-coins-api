@@ -25,10 +25,13 @@ func startTickLoop(db *sql.DB) {
 				continue
 			}
 
-			// Simple emission: release coins evenly over the day
-			economy.mu.Lock()
+			// Emission: release coins evenly over the day using dynamic season pressure
+			coinsInCirculation := economy.CoinsInCirculation()
+			remaining := seasonSecondsRemaining(now)
+			dailyTarget := economy.EffectiveDailyEmissionTarget(remaining, coinsInCirculation)
 
-			coinsPerTick := float64(economy.dailyEmissionTarget) / (24 * 60)
+			economy.mu.Lock()
+			coinsPerTick := float64(dailyTarget) / (24 * 60)
 			economy.emissionRemainder += coinsPerTick
 
 			emitNow := int(economy.emissionRemainder)

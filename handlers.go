@@ -132,11 +132,12 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 				recommended = s.id
 			}
 
+			emission := economy.EffectiveEmissionPerMinute(seconds, s.coins)
 			response = append(response, SeasonView{
 				SeasonID:              s.id,
 				SecondsRemaining:      seconds,
 				CoinsInCirculation:    s.coins,
-				CoinEmissionPerMinute: economy.EmissionPerMinute(),
+				CoinEmissionPerMinute: emission,
 				CurrentStarPrice:      ComputeStarPrice(s.coins, seconds),
 			})
 		}
