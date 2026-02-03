@@ -7,23 +7,110 @@
 	<style>
 	:root {
 		color-scheme: dark;
+		--bg: #0b0f1d;
+		--panel: #141a2e;
+		--panel-strong: #1a2140;
+		--border: #2a2f55;
+		--text: #eaeaf0;
+		--muted: #9aa3c4;
+		--accent: #3b82f6;
+		--success: #22c55e;
+		--warning: #f59e0b;
+		--danger: #ef4444;
 	}
 	body {
-		font-family: system-ui, sans-serif;
-		background: #0f1220;
-		color: #eaeaf0;
-		padding: 2rem;
-		max-width: 960px;
-		margin: 0 auto;
+		font-family: "Inter", system-ui, sans-serif;
+		background: radial-gradient(circle at top, #151c35 0%, #0b0f1d 45%, #060814 100%);
+		color: var(--text);
+		margin: 0;
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
 	}
 	header {
+		position: sticky;
+		top: 0;
+		z-index: 15;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 1.5rem;
+		gap: 1.5rem;
+		padding: 1.25rem 2rem;
+		background: rgba(8, 12, 26, 0.92);
+		backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--border);
+	}
+	main {
+		padding: 2rem;
+		max-width: 1200px;
+		width: 100%;
+		margin: 0 auto;
+		box-sizing: border-box;
+	}
+	.app-title {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+	.app-mark {
+		width: 42px;
+		height: 42px;
+		border-radius: 14px;
+		background: linear-gradient(135deg, #3b82f6, #6366f1);
+		display: grid;
+		place-items: center;
+		font-weight: 700;
+		color: white;
+		box-shadow: 0 12px 24px rgba(59, 130, 246, 0.35);
+	}
+	.app-actions {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0.65rem;
+	}
+	.nav-links a {
+		color: #c5cae9;
+		text-decoration: none;
+		margin-left: 0.75rem;
+		font-size: 0.85rem;
+	}
+	.live-status {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.75rem;
+		padding: 0.25rem 0.5rem;
+		border-radius: 999px;
+		border: 1px solid rgba(34, 197, 94, 0.5);
+		color: #bbf7d0;
+		background: rgba(34, 197, 94, 0.12);
+	}
+	.live-status::before {
+		content: "";
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: #22c55e;
+		box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+	}
+	.live-status.offline {
+		border-color: rgba(239, 68, 68, 0.5);
+		color: #fecaca;
+		background: rgba(239, 68, 68, 0.12);
+	}
+	.live-status.offline::before {
+		background: #ef4444;
+		box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+	}
+	.live-status.reconnecting {
+		border-color: rgba(245, 158, 11, 0.5);
+		color: #fde68a;
+		background: rgba(245, 158, 11, 0.12);
+	}
+	.live-status.reconnecting::before {
+		background: #f59e0b;
+		box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
 	}
 	.badge {
 		font-size: 0.75rem;
@@ -37,18 +124,81 @@
 		border-color: rgba(59, 130, 246, 0.5);
 		color: #93c5fd;
 	}
-	nav a {
-		color: #c5cae9;
-		text-decoration: none;
-		margin-left: 0.75rem;
-		font-size: 0.85rem;
-	}
 	.card {
-		border: 1px solid #2a2f55;
-		padding: 1rem;
+		border: 1px solid var(--border);
+		padding: 1.25rem;
 		margin-bottom: 1rem;
-		border-radius: 10px;
-		background: #141a2e;
+		border-radius: 16px;
+		background: var(--panel);
+		box-shadow: 0 18px 30px rgba(0, 0, 0, 0.25);
+	}
+	.card-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 1rem;
+	}
+	.hero-card {
+		background: linear-gradient(140deg, rgba(59, 130, 246, 0.2), rgba(20, 26, 46, 0.95));
+		border-color: rgba(59, 130, 246, 0.5);
+	}
+	.hero-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 1.5rem;
+	}
+	.metric-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		gap: 0.9rem;
+	}
+	.metric {
+		padding: 0.75rem 0.9rem;
+		background: rgba(10, 14, 28, 0.6);
+		border-radius: 12px;
+		border: 1px solid rgba(42, 47, 85, 0.8);
+	}
+	.stat-value {
+		font-size: 1.1rem;
+		font-weight: 600;
+	}
+	.dashboard-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+		gap: 1.5rem;
+		align-items: start;
+	}
+	.dashboard-main {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.dashboard-side {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.season-card {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.season-card-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+	.season-card-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: 0.75rem;
+	}
+	.season-actions {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 	.card-toggle {
 		display: flex;
@@ -165,19 +315,26 @@
 	}
 	.view { display: none; }
 	.view.active { display: block; }
-	.footer { margin-top: auto; text-align: center; font-size: 0.8rem; color: #9aa3c4; }
+	.footer { margin-top: auto; text-align: center; font-size: 0.8rem; color: #9aa3c4; padding: 1.5rem 0; }
 	@media (max-width: 720px) {
-		body {
-			padding: 1rem;
+		main {
+			padding: 1.25rem;
 		}
 		header {
 			flex-direction: column;
 			align-items: flex-start;
 			gap: 0.75rem;
+			padding: 1rem 1.25rem;
 		}
-		nav a {
+		.app-actions {
+			align-items: flex-start;
+		}
+		.nav-links a {
 			margin-left: 0;
 			margin-right: 0.75rem;
+		}
+		.dashboard-grid {
+			grid-template-columns: 1fr;
 		}
 		.grid {
 			grid-template-columns: 1fr;
@@ -207,33 +364,27 @@
 			align-items: flex-start;
 		}
 		.footer {
-			position: fixed;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			padding: 0.5rem 1rem;
-			background: rgba(15, 18, 32, 0.95);
-			border-top: 1px solid #2a2f55;
-			z-index: 10;
-		}
-		main {
-			padding-bottom: 3.5rem;
+			position: static;
 		}
 	}
 	</style>
 </head>
 <body>
 	<header>
-		<div>
-			<h1>Too Many Coins</h1>
-			<div class="label">Earn coins, buy stars, climb the season.</div>
+		<div class="app-title">
+			<div class="app-mark">TC</div>
+			<div>
+				<h1>Too Many Coins</h1>
+				<div class="label">Season command center · server-authoritative economy</div>
+			</div>
 		</div>
-		<div class="stack" style="align-items:flex-end;">
+		<div class="app-actions">
 			<div class="row">
 				<span class="badge">ALPHA 1</span>
 				<span id="stat-pill" class="badge accent" style="display:none;"></span>
+				<span id="live-status" class="live-status">Live updates</span>
 			</div>
-			<nav>
+			<nav class="nav-links">
 				<a href="#/home">Home</a>
 				<a href="#/about">About</a>
 				<a href="#/playtest">Playtest</a>
@@ -264,81 +415,137 @@
 
 	<main id="app">
 		<section id="view-home" class="view active">
-			<div class="card" id="auth-card">
-				<div id="auth-status" class="label">Checking session…</div>
-				<div id="auth-forms" class="stack">
-					<div class="row">
-						<input id="username" placeholder="Username" />
-						<input id="password" type="password" placeholder="Password" />
+			<div class="card hero-card">
+				<div class="hero-grid">
+					<div>
+						<div class="label">Season dashboard</div>
+						<h2 style="margin:0.35rem 0 0;">Real-time economy & star pricing</h2>
+						<div class="muted">Live season time, emission, and price updates from the server.</div>
 					</div>
-					<div class="row">
-						<button class="primary" id="login-btn" type="button">Log in</button>
-						<a class="muted" href="#/signup">Create account</a>
+					<div class="metric-grid">
+						<div class="metric">
+							<div class="label">Current season</div>
+							<div id="hero-season-id" class="stat-value">Season 1</div>
+						</div>
+						<div class="metric">
+							<div class="label">Time remaining</div>
+							<div id="hero-season-remaining" class="stat-value">--</div>
+						</div>
+						<div class="metric">
+							<div class="label">Star price</div>
+							<div id="hero-star-price" class="stat-value">--</div>
+						</div>
 					</div>
-					<div class="row">
-						<a class="muted" href="#/reset">Forgot password?</a>
-					</div>
-					<div class="muted">Alpha accounts are local to this test.</div>
 				</div>
-				<button id="logout-btn" style="display:none;">Log out</button>
 			</div>
 
-			<div id="toast" class="toast" style="display:none;"></div>
-
-			<div class="grid" id="player-panels" style="display:none;">
-				<div class="card" id="profile-card">
-					<div class="card-toggle">
-						<div class="label">User panel</div>
-					</div>
-					<div class="card-body">
-						<div class="row">
-							<img id="profile-avatar-img" alt="Avatar" style="width:64px; height:64px; border-radius:12px; object-fit:cover; border:1px solid #2a2f55;" />
+			<div class="dashboard-grid">
+				<div class="dashboard-main">
+					<div id="locked-message" class="label"></div>
+					<div class="card" id="season-snapshot" style="display:none;">
+						<div class="card-header">
 							<div>
-								<div id="profile-name"></div>
-								<div id="profile-role" class="label"></div>
-								<div id="profile-coins" class="label"></div>
-								<div id="profile-stars" class="label"></div>
+								<div class="label">Season snapshot</div>
+								<div id="season-title" class="stat-value">Season 1</div>
+							</div>
+							<span id="season-status" class="badge accent">Active</span>
+						</div>
+						<div class="metric-grid">
+							<div class="metric">
+								<div class="label">Time remaining</div>
+								<div id="season-remaining" class="stat-value">--</div>
+							</div>
+							<div class="metric">
+								<div class="label">Star price</div>
+								<div id="season-star-price" class="stat-value">--</div>
+							</div>
+							<div class="metric">
+								<div class="label">Coins in circulation</div>
+								<div id="season-coins" class="stat-value">--</div>
+							</div>
+							<div class="metric">
+								<div class="label">Emission / min</div>
+								<div id="season-emission" class="stat-value">--</div>
 							</div>
 						</div>
-						<input id="profile-display" placeholder="Display name" />
-						<input id="profile-pronouns" placeholder="Pronouns" />
-						<input id="profile-location" placeholder="Location" />
-						<input id="profile-website" placeholder="Website" />
-						<input id="profile-avatar" placeholder="Avatar URL" />
-						<textarea id="profile-bio" rows="3" placeholder="Bio"></textarea>
-						<input id="profile-email" placeholder="Email (for password reset)" />
-						<button id="profile-save">Save</button>
+					</div>
+					<div id="seasons" class="grid">Loading season…</div>
+				</div>
+
+				<div class="dashboard-side">
+					<div class="card" id="auth-card">
+						<div id="auth-status" class="label">Checking session…</div>
+						<div id="auth-forms" class="stack">
+							<div class="row">
+								<input id="username" placeholder="Username" />
+								<input id="password" type="password" placeholder="Password" />
+							</div>
+							<div class="row">
+								<button class="primary" id="login-btn" type="button">Log in</button>
+								<a class="muted" href="#/signup">Create account</a>
+							</div>
+							<div class="row">
+								<a class="muted" href="#/reset">Forgot password?</a>
+							</div>
+							<div class="muted">Alpha accounts are local to this test.</div>
+						</div>
+						<button id="logout-btn" style="display:none;">Log out</button>
+					</div>
+
+					<div id="toast" class="toast" style="display:none;"></div>
+
+					<div class="grid" id="player-panels" style="display:none;">
+						<div class="card" id="profile-card">
+							<div class="card-toggle">
+								<div class="label">User panel</div>
+							</div>
+							<div class="card-body">
+								<div class="row">
+									<img id="profile-avatar-img" alt="Avatar" style="width:64px; height:64px; border-radius:12px; object-fit:cover; border:1px solid #2a2f55;" />
+									<div>
+										<div id="profile-name"></div>
+										<div id="profile-role" class="label"></div>
+										<div id="profile-coins" class="label"></div>
+										<div id="profile-stars" class="label"></div>
+									</div>
+								</div>
+								<input id="profile-display" placeholder="Display name" />
+								<input id="profile-pronouns" placeholder="Pronouns" />
+								<input id="profile-location" placeholder="Location" />
+								<input id="profile-website" placeholder="Website" />
+								<input id="profile-avatar" placeholder="Avatar URL" />
+								<textarea id="profile-bio" rows="3" placeholder="Bio"></textarea>
+								<input id="profile-email" placeholder="Email (for password reset)" />
+								<button id="profile-save">Save</button>
+							</div>
+						</div>
+					</div>
+
+					<div class="card" id="onboarding" style="display:none;">
+						<div class="label">Quick start</div>
+						<div>Play the current season. Earn coins over time. Spend them on stars.</div>
+						<button id="dismiss-hint">Got it</button>
+					</div>
+
+					<div class="card" id="actions-card" style="display:none;">
+						<div class="label">Quick actions</div>
+						<div class="row">
+							<button id="claim-daily" class="primary">Daily claim</button>
+							<button id="claim-activity">Activity claim</button>
+						</div>
+						<div id="actions-status" class="muted"></div>
+					</div>
+
+					<div class="card" id="whitelist-request-card" style="display:none;">
+						<div class="label">IP whitelist request</div>
+						<div class="row">
+							<input id="whitelist-reason" placeholder="Reason (optional)" />
+							<button id="whitelist-request-btn" class="primary">Request approval</button>
+						</div>
+						<div id="whitelist-request-status" class="muted"></div>
 					</div>
 				</div>
 			</div>
-
-			<div class="card" id="onboarding" style="display:none;">
-				<div class="label">Quick start</div>
-				<div>Play the current season. Earn coins over time. Spend them on stars.</div>
-				<button id="dismiss-hint">Got it</button>
-			</div>
-
-			<div class="card" id="actions-card" style="display:none;">
-				<div class="label">Quick actions</div>
-				<div class="row">
-					<button id="claim-daily" class="primary">Daily claim</button>
-					<button id="claim-activity">Activity claim</button>
-				</div>
-				<div id="actions-status" class="muted"></div>
-			</div>
-
-			<div class="card" id="whitelist-request-card" style="display:none;">
-				<div class="label">IP whitelist request</div>
-				<div class="row">
-					<input id="whitelist-reason" placeholder="Reason (optional)" />
-					<button id="whitelist-request-btn" class="primary">Request approval</button>
-				</div>
-				<div id="whitelist-request-status" class="muted"></div>
-			</div>
-
-			<div id="locked-message" class="label"></div>
-			<div class="card" id="season-snapshot" style="display:none;"></div>
-			<div id="seasons" class="grid">Loading season…</div>
 		</section>
 
 		<section id="view-about" class="view">
@@ -729,6 +936,16 @@ const notificationHideBtn = document.getElementById("notification-hide");
 const signupLink = document.getElementById("signup-link");
 const moderatorLink = document.getElementById("moderator-link");
 const adminLink = document.getElementById("admin-link");
+const liveStatus = document.getElementById("live-status");
+const seasonRemaining = document.getElementById("season-remaining");
+const seasonStarPrice = document.getElementById("season-star-price");
+const seasonCoins = document.getElementById("season-coins");
+const seasonEmission = document.getElementById("season-emission");
+const seasonTitle = document.getElementById("season-title");
+const seasonStatus = document.getElementById("season-status");
+const heroSeasonId = document.getElementById("hero-season-id");
+const heroSeasonRemaining = document.getElementById("hero-season-remaining");
+const heroStarPrice = document.getElementById("hero-star-price");
 
 const views = Array.from(document.querySelectorAll(".view"));
 const viewMap = {
@@ -761,6 +978,7 @@ let seasonRefreshInterval = null;
 let notificationRefreshInterval = null;
 let activityPingInterval = null;
 let starLogRefreshInterval = null;
+let liveEventSource = null;
 const ALPHA_SEASON_ID = "season-1";
 let lastStarLogRows = [];
 
@@ -789,6 +1007,100 @@ async function track(eventType, payload) {
 	} catch (e) {}
 }
 
+function formatRemaining(seconds) {
+	if (seconds <= 0) return "Ended";
+	const days = Math.floor(seconds / 86400);
+	const hours = Math.floor((seconds % 86400) / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	if (days > 0) return `${days}d ${hours}h`;
+	if (hours > 0) return `${hours}h ${minutes}m`;
+	return `${minutes}m`;
+}
+
+function updateLiveStatus(state, message) {
+	if (!liveStatus) return;
+	liveStatus.classList.remove("offline", "reconnecting");
+	if (state === "offline") {
+		liveStatus.classList.add("offline");
+		liveStatus.innerText = message || "Offline";
+		return;
+	}
+	if (state === "reconnecting") {
+		liveStatus.classList.add("reconnecting");
+		liveStatus.innerText = message || "Reconnecting";
+		return;
+	}
+	liveStatus.innerText = message || "Live updates";
+}
+
+function updateSeasonSnapshot(season) {
+	if (!season) return;
+	if (seasonTitle) seasonTitle.innerText = "Season 1";
+	if (seasonRemaining) seasonRemaining.innerText = formatRemaining(season.secondsRemaining || 0);
+	if (seasonStarPrice) seasonStarPrice.innerText = `${season.currentStarPrice} coins`;
+	if (seasonCoins) seasonCoins.innerText = `${season.coinsInCirculation} coins`;
+	if (seasonEmission) seasonEmission.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
+	if (heroSeasonId) heroSeasonId.innerText = "Season 1";
+	if (heroSeasonRemaining) heroSeasonRemaining.innerText = formatRemaining(season.secondsRemaining || 0);
+	if (heroStarPrice) heroStarPrice.innerText = `${season.currentStarPrice} coins`;
+	if (seasonStatus) {
+		seasonStatus.innerText = season.secondsRemaining > 0 ? "Active" : "Ended";
+	}
+}
+
+function updateSeasonCard(season) {
+	if (!season) return;
+	const card = document.querySelector(`[data-season-id="${season.seasonId}"]`);
+	if (!card) return;
+	const remainingEl = card.querySelector("[data-season-remaining]");
+	const priceEl = card.querySelector("[data-season-price]");
+	const coinsEl = card.querySelector("[data-season-coins]");
+	const emissionEl = card.querySelector("[data-season-emission]");
+	if (remainingEl) remainingEl.innerText = formatRemaining(season.secondsRemaining || 0);
+	if (priceEl) priceEl.innerText = `${season.currentStarPrice} coins`;
+	if (coinsEl) coinsEl.innerText = `${season.coinsInCirculation} coins`;
+	if (emissionEl) emissionEl.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
+}
+
+function applyLiveSnapshot(payload) {
+	if (!payload || !payload.season) return;
+	updateSeasonSnapshot(payload.season);
+	updateSeasonCard(payload.season);
+	if (payload.authenticated && typeof payload.playerCoins === "number" && typeof payload.playerStars === "number") {
+		playerCoins = payload.playerCoins;
+		playerStars = payload.playerStars;
+		coinsDiv.innerText = `Coins: ${playerCoins}`;
+		starsDiv.innerText = `Stars: ${playerStars}`;
+		statPill.innerText = `${playerCoins} coins · ${playerStars} stars`;
+	}
+}
+
+function connectLiveStream() {
+	if (liveEventSource) return;
+	try {
+		liveEventSource = new EventSource("/events");
+		liveEventSource.addEventListener("snapshot", (event) => {
+			try {
+				const payload = JSON.parse(event.data);
+				applyLiveSnapshot(payload);
+				updateLiveStatus("live", "Live updates");
+			} catch (e) {}
+		});
+		liveEventSource.onopen = () => updateLiveStatus("live", "Live updates");
+		liveEventSource.onerror = () => updateLiveStatus("reconnecting", "Reconnecting");
+	} catch (e) {
+		updateLiveStatus("offline", "Offline");
+	}
+}
+
+function disconnectLiveStream() {
+	if (liveEventSource) {
+		liveEventSource.close();
+		liveEventSource = null;
+	}
+	updateLiveStatus("offline", "Offline");
+}
+
 async function loadAuth() {
 	const res = await apiFetch("/auth/me");
 	const data = await res.json();
@@ -811,6 +1123,7 @@ async function loadAuth() {
 		notificationCount.style.display = "none";
 		document.getElementById("seasons").style.display = "none";
 		document.getElementById("locked-message").innerText = "Log in to access seasons.";
+		connectLiveStream();
 		return;
 	}
 
@@ -853,6 +1166,7 @@ function startActiveLoops() {
 	loadSeasons();
 	refreshNotifications();
 	pingActivity();
+	connectLiveStream();
 	playerRefreshInterval = setInterval(() => {
 		if (currentUser) refreshPlayer();
 	}, 10000);
@@ -876,6 +1190,7 @@ function stopActiveLoops() {
 	seasonRefreshInterval = null;
 	notificationRefreshInterval = null;
 	activityPingInterval = null;
+	disconnectLiveStream();
 }
 
 function handleVisibility() {
@@ -931,14 +1246,11 @@ async function loadSeasons() {
 		const div = document.createElement("div");
 		const isJoined = joinedSeasonId !== null;
 		const isThisSeasonJoined = season.seasonId === joinedSeasonId;
-		const hoursLeft = Math.floor(season.secondsRemaining / 3600);
 		const starPrice = season.currentStarPrice;
-		seasonSnapshot.innerHTML = `
-			<div class="label">Season snapshot</div>
-			<div>Season 1 · ${hoursLeft}h left · Star price ${starPrice}</div>
-		`;
+		updateSeasonSnapshot(season);
 
-		div.className = "card";
+		div.className = "card season-card";
+		div.dataset.seasonId = season.seasonId;
 		if (isJoined && !isThisSeasonJoined) {
 			div.style.opacity = "0.5";
 		}
@@ -947,16 +1259,35 @@ async function loadSeasons() {
 		}
 
 		div.innerHTML = `
-			<strong>Season 1</strong>
-			<div class="label">Time remaining: ${hoursLeft} hours</div>
-			<div class="label">Star price: ${starPrice} coins</div>
-			${isThisSeasonJoined
-				? `<div class="label">You joined this season</div>
-					<button class="buy-star-btn primary">Buy Star</button>`
-				: isJoined
-					? "<div class='label'>Locked to another season</div>"
-					: "<button class='join-btn primary'>Join this season</button>"
-			}
+			<div class="season-card-header">
+				<div>
+					<div class="label">Season 1</div>
+					<div class="stat-value"><span data-season-remaining>${formatRemaining(season.secondsRemaining)}</span> remaining</div>
+				</div>
+				${season.seasonId === data.recommendedSeasonId ? '<span class="badge accent">Recommended</span>' : ''}
+			</div>
+			<div class="season-card-grid">
+				<div class="metric">
+					<div class="label">Star price</div>
+					<div class="stat-value" data-season-price>${starPrice} coins</div>
+				</div>
+				<div class="metric">
+					<div class="label">Coins in circulation</div>
+					<div class="stat-value" data-season-coins>${season.coinsInCirculation} coins</div>
+				</div>
+				<div class="metric">
+					<div class="label">Emission / min</div>
+					<div class="stat-value" data-season-emission>${(season.coinEmissionPerMinute || 0).toFixed(2)} / min</div>
+				</div>
+			</div>
+			<div class="season-actions">
+				${isThisSeasonJoined
+					? `<button class="buy-star-btn primary">Buy Star</button>`
+					: isJoined
+						? "<div class='label'>Locked to another season</div>"
+						: "<button class='join-btn primary'>Join this season</button>"
+				}
+			</div>
 		`;
 
 		const buyButton = div.querySelector(".buy-star-btn");

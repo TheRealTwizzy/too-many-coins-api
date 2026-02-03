@@ -313,6 +313,7 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/player", playerHandler(db))
 	mux.HandleFunc("/seasons", seasonsHandler(db))
+	mux.HandleFunc("/events", eventsHandler(db))
 	mux.HandleFunc("/buy-star", buyStarHandler(db))
 	mux.HandleFunc("/buy-variant-star", buyVariantStarHandler(db))
 	mux.HandleFunc("/buy-boost", buyBoostHandler(db))
