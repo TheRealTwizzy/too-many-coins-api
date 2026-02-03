@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
@@ -676,6 +677,24 @@ func baseRoleFromRaw(role string) string {
 		return "user"
 	}
 	return normalizeRole(role)
+}
+
+func AdminExists(ctx context.Context, db *sql.DB) bool {
+	if db == nil {
+		return true
+	}
+	var exists bool
+	if err := db.QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM accounts
+			WHERE role = 'admin' OR role = 'frozen:admin'
+			LIMIT 1
+		)
+	`).Scan(&exists); err != nil {
+		return true
+	}
+	return exists
 }
 
 func setAccountRole(db *sql.DB, accountID string, role string) error {

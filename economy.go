@@ -985,6 +985,19 @@ func ensureSchema(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+
+	// 1️⃣2️⃣b admin bootstrap tokens
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS admin_bootstrap_tokens (
+			token_hash TEXT PRIMARY KEY,
+			used_at TIMESTAMPTZ,
+			used_by_account_id TEXT,
+			used_by_ip TEXT
+		);
+	`)
+	if err != nil {
+		return err
+	}
 	_, err = db.Exec(`
 		CREATE INDEX IF NOT EXISTS idx_admin_audit_log_created_at
 		ON admin_audit_log (created_at DESC);

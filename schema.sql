@@ -107,6 +107,13 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     purpose TEXT NOT NULL DEFAULT 'auth'
 );
 
+CREATE TABLE IF NOT EXISTS admin_bootstrap_tokens (
+    token_hash TEXT PRIMARY KEY,
+    used_at TIMESTAMPTZ,
+    used_by_account_id TEXT,
+    used_by_ip TEXT
+);
+
 CREATE TABLE IF NOT EXISTS auth_rate_limits (
     ip TEXT NOT NULL,
     action TEXT NOT NULL,
