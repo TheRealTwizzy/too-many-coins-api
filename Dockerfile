@@ -10,6 +10,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app .
 FROM alpine:latest
 WORKDIR /app
 
+RUN apk add --no-cache bash
 COPY --from=build /app/app .
 COPY --from=build /app/public ./public
 COPY --from=build /app/scripts ./scripts
