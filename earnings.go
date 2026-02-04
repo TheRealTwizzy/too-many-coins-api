@@ -10,6 +10,8 @@ import (
 
 var errDailyCapReached = errors.New("daily cap reached")
 
+const loginSafeguardCooldown = 2 * time.Minute
+
 func seasonProgress(now time.Time) float64 {
 	seasonSeconds := seasonLength().Seconds()
 	if seasonSeconds <= 0 {
@@ -256,6 +258,7 @@ func EnsurePlayableBalanceOnLogin(db *sql.DB, playerID string, accountID *string
 	if isSeasonEnded(now) {
 		return
 	}
+	cooldown := loginSafeguardCooldown
 
 	var lastGrant sql.NullTime
 	if err := db.QueryRow(`
@@ -263,7 +266,7 @@ func EnsurePlayableBalanceOnLogin(db *sql.DB, playerID string, accountID *string
 		FROM coin_earning_log
 		WHERE player_id = $1 AND source_type = $2
 	`, playerID, FaucetLogin).Scan(&lastGrant); err == nil {
-		if lastGrant.Valid && now.Sub(lastGrant.Time) < 2*time.Minute {
+		if lastGrant.Valid && now.Sub(lastGrant.Time) < cooldown {
 			return
 		}
 	}
@@ -296,18 +299,27 @@ func EnsurePlayableBalanceOnLogin(db *sql.DB, playerID string, accountID *string
 	needed := minBalance - int(coins)
 	if !economy.TryDistributeCoins(needed) {
 		emitServerTelemetryWithCooldown(db, accountID, playerID, "login_safeguard_denied_emission", map[string]interface{}{
-			"needed":         needed,
-			"availableCoins": economy.AvailableCoins(),
-			"minBalance":     minBalance,
-			"currentCoins":   coins,
+			"needed":           needed,
+			"availableCoins":   economy.AvailableCoins(),
+			"minBalance":       minBalance,
+			"currentCoins":     coins,
+			"starPrice":        currentPrice,
+			"buffer":           buffer,
+			"p0":               params.P0,
+			"dailyLoginReward": params.DailyLoginReward,
+			"cooldownSeconds":  int(cooldown.Seconds()),
 		}, 5*time.Minute)
 		return
 	}
 	_, _ = GrantCoinsNoCap(db, playerID, needed, now, FaucetLogin, accountID)
 	emitServerTelemetryWithCooldown(db, accountID, playerID, "login_safeguard_triggered", map[string]interface{}{
-		"granted":      needed,
-		"minBalance":   minBalance,
-		"currentCoins": coins,
-		"starPrice":    currentPrice,
+		"granted":          needed,
+		"minBalance":       minBalance,
+		"currentCoins":     coins,
+		"starPrice":        currentPrice,
+		"buffer":           buffer,
+		"p0":               params.P0,
+		"dailyLoginReward": params.DailyLoginReward,
+		"cooldownSeconds":  int(cooldown.Seconds()),
 	}, 5*time.Minute)
 }
