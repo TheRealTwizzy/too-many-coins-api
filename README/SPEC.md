@@ -1,8 +1,10 @@
 Game: Too Many Coins! (MMO web)
 
-Seasons: 28 days
+Seasons (phase‑bound, server‑defined):
 
-Concurrent seasons: max 4, start dates staggered 7 days (post‑alpha; alpha runs a single active season)
+- Alpha: 14 days by default; extension up to 21 days only with explicit telemetry‑gap configuration. Single active season only.
+- Beta: 28 days, total seasons 2–3, staggered/overlapping.
+- Release: 28 days, concurrent seasons up to 4, staggered.
 
 Join rules: players can join any active season anytime
 

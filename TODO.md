@@ -67,6 +67,10 @@ Allowed to be rough or missing in Alpha:
 - [ ] [ALPHA REQUIRED] 2.4 Validate time semantics (season day index, reset boundaries, end‑state gating)
 - [ ] [POST-ALPHA] 2.5 Multi‑season runtime model (seasons table, staggered starts, per‑season tick scheduling)
 
+## Phase Transition Tasks (Explicit)
+- [ ] [ALPHA REQUIRED] Alpha → Beta: introduce phase config (`PHASE`) and verify Beta season length (28 days) with 2–3 staggered/overlapping seasons (runtime model remains post‑alpha until 2.5 is implemented).
+- [ ] [POST-ALPHA] Beta → Release: remove Alpha-only safeguards (single-season lock, alpha extension gates) after multi‑season runtime is stable and verified.
+
 ---
 
 ## Phase 3 — Economy Emission & Pools
