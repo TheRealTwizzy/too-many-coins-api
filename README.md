@@ -42,10 +42,13 @@ Players must have reasons to stay active until the end of a season and return fo
 
 ## Seasons
 
-Each season lasts exactly 28 calendar days.  
-Alpha runs a single active season only.  
-Multi‑season support (staggered starts, season lobby) is post‑alpha.  
-Players may join the active season at any time.  
+Season length is phase‑bound and server‑defined:
+
+- Alpha: 14 days by default. Extension up to 21 days is allowed **only** when explicitly configured for telemetry gaps. Single active season only.
+- Beta: 28 days. Total seasons: 2–3. Seasons may overlap and are staggered.
+- Release: 28 days. Concurrent seasons: up to 4, staggered.
+
+Players may join any active season at any time.  
 Each season has its own independent economy.  
 Coins and Stars reset at the end of each season.  
 Persistent rewards carry over between seasons (post‑alpha).
