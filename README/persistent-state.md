@@ -11,7 +11,7 @@ No currency may ever convert into Coins or Stars, directly or indirectly.
 
 Post‑alpha seasonal instruments (Beta‑only):
 
-Tradable Seasonal Assets (TSAs) may exist as optional, seasonal economic instruments (not currencies). TSAs are system‑minted only, reset at season end, and never convert into Coins or Stars or generate Coins or Stars. TSA trading is brokered and server‑priced when enabled; trading remains disabled in Alpha.
+Tradable Seasonal Assets (TSAs) are seasonal, player‑owned competitive assets (not currencies). TSAs are system‑minted only (including via Star sacrifice), reset at season end, and never convert into Coins or Stars or generate Coins or Stars. TSA trading is player‑negotiated; the system enforces legality, caps, and logging. Trading remains disabled in Alpha.
 
 Persistent entities include:
 
@@ -120,7 +120,10 @@ TSA Mint Log (append-only, post‑alpha/Beta-only):
 tsa_mint_id
 tsa_type
 season_id
+player_id
 minted_quantity
+mint_source (star_sacrifice, system_drop)
+stars_destroyed
 active_players_snapshot
 day_index
 created_at
@@ -132,9 +135,10 @@ tsa_type
 season_id
 seller_player_id
 buyer_player_id
-coin_price
+consideration_summary
 coin_burned
-trade_premium_snapshot
+star_burned
+friction_snapshot
 destroyed
 created_at
 

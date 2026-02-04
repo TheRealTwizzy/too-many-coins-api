@@ -8,11 +8,11 @@ Seasons (phase‑bound, server‑defined):
 
 Join rules: players can join any active season anytime
 
-Core loop: earn coins (faucets) -> buy stars (system store) -> optional brokered trading -> leaderboard rank
+Core loop: earn coins (faucets) -> buy stars (system store) -> optional brokered trading -> leaderboard rank (stars are the only direct ranking unit)
 
 Trading: optional, costly, asymmetric, brokered Coins-for-Stars only; system-priced with premium and coin burn; eligibility gates tighten over time
 
-TSA trading (post‑alpha, Beta‑only): brokered, server‑priced, burn‑heavy, and never free‑trade. TSA trades never create Coins or Stars and always contribute to market pressure when enabled.
+TSA trading (post‑alpha, Beta‑only): player‑negotiated, freely tradable player‑to‑player. The system enforces legality, caps, and logging; it does not set prices. TSA trades never create Coins or Stars and always contribute to market pressure when enabled.
 
 Bulk buy allowed but price scales so hard it’s almost infeasible late-season
 
@@ -30,7 +30,9 @@ Rewards: cosmetics/titles/badges persist between seasons; coins/stars reset per 
 
 Post‑alpha currency model: introduce a persistent meta currency (Beta) for cosmetic/identity use only; it cannot be traded, cannot convert into Coins or Stars, and cannot affect competitive power. An optional influence/reputation metric may exist post‑release; it is non‑spendable, eligibility/visibility‑only, and never convertible.
 
-Post‑alpha seasonal instruments (Beta‑only): Tradable Seasonal Assets (TSAs) may exist as optional, seasonal economic instruments (not currencies). TSAs are system‑minted only, reset at season end, never convert into Coins or Stars, and never generate Coins or Stars.
+Post‑alpha seasonal instruments (Beta‑only): Tradable Seasonal Assets (TSAs) are seasonal, player‑owned competitive assets (not currencies). TSAs are system‑minted only (including via Star sacrifice), reset at season end, never convert into Coins or Stars, and never generate Coins or Stars. TSAs may affect rank indirectly through their utility, but never grant Stars directly.
+
+Hard TSA invariants: TSAs cannot mint Coins or Stars; TSAs cannot be converted into Coins or Stars; Stars sacrificed for TSAs are permanently destroyed; TSA supply is observable and auditable.
 
 Hard prohibition: no currency may ever convert into Coins or Stars, directly or indirectly.
 

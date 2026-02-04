@@ -189,9 +189,10 @@ Allowed to be rough or missing in Alpha:
 - [ ] [POST-ALPHA] (Post‑Release optional) Influence/reputation metric: non‑spendable, eligibility/visibility‑only, never convertible.
 
 ## Post‑Alpha / Beta — Tradable Seasonal Assets (TSAs)
-- [ ] [POST-ALPHA] Define TSA canon constraints in code (Beta‑only, seasonal instrument, system‑minted, no conversion into Coins/Stars, no faucets).
-- [ ] [POST-ALPHA] Implement brokered TSA trading (server‑priced, burn‑heavy, never free‑trade) and ensure it is disabled in Alpha.
-- [ ] [POST-ALPHA] Add append‑only TSA logs (mint, trade, activation) with admin visibility.
+- [ ] [POST-ALPHA] Define TSA canon constraints in code (Beta‑only, seasonal competitive asset, system‑minted only, observable supply, no conversion into Coins/Stars, no minting Coins/Stars).
+- [ ] [POST-ALPHA] Implement player‑to‑player TSA trading (negotiated; server enforces legality, caps, and burn; logging; disabled in Alpha).
+- [ ] [POST-ALPHA] Implement Star sacrifice → TSA minting (Stars destroyed, immediate rank drop, irreversible).
+- [ ] [POST-ALPHA] Add append‑only TSA logs (mint w/ stars_destroyed + source, trade w/ consideration + friction, activation) with admin visibility.
 - [ ] [POST-ALPHA] Add TSA season‑end wipe behavior and snapshot/telemetry integration.
 
 ---

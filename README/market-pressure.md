@@ -14,7 +14,7 @@ Total stars transferred via brokered trades in the last 7 days (post‑alpha)
 
 TSA trading (post‑alpha, Beta‑only):
 
-TSA trades (any quantity metric defined for the TSA) contribute to market pressure when enabled.
+TSA trades (player‑negotiated; any quantity metric defined for the TSA) contribute to market pressure when enabled.
 
 Market pressure calculation:
 

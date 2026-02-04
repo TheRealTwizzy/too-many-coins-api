@@ -9,7 +9,7 @@ TSA note (post‑alpha/Beta‑only):
 
 All TSA holdings and any pending TSA trades are wiped at season end. TSAs never carry over between seasons.
 
-Final star balances determine leaderboard rankings.
+Final star balances determine leaderboard rankings; TSAs only affect rankings indirectly through their utility.
 
 Rankings are snapshotted and stored permanently.
 

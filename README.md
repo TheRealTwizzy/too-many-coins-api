@@ -6,7 +6,7 @@ Too Many Coins! is an online-only massively multiplayer website game built aroun
 
 ## Overview
 
-Players earn Coins and spend them to buy Stars. Stars determine leaderboard rank for a season. As more Coins enter the system and as time passes, Stars become increasingly expensive. Coin supply shrinks as the season progresses, creating scarcity and tension, especially near the end. Coin shortage is possible but rare; the system stays liquid enough for daily action.
+Players earn Coins and spend them to buy Stars. Stars determine leaderboard rank directly for a season; TSAs can influence outcomes indirectly through their utility. As more Coins enter the system and as time passes, Stars become increasingly expensive. Coin supply shrinks as the season progresses, creating scarcity and tension, especially near the end. Coin shortage is possible but rare; the system stays liquid enough for daily action.
 
 The game runs in fixed-length seasons and resets regularly, while preserving long-term player progression through cosmetics, titles, badges, and history.
 
@@ -18,6 +18,7 @@ Alpha is focused on the first playable economy loop:
 
 - Single active season only (no season lobby)
 - Trading is disabled (post‑alpha)
+- TSAs are disabled (post‑alpha)
 - Passive drip is disabled (post‑alpha)
 - Daily tasks and comeback rewards are disabled (post‑alpha)
 - Admin economy controls are read‑only
@@ -92,22 +93,62 @@ Eligibility / visibility modifier only
 Never convertible  
 Not required for Beta
 
+Competitive assets (Post‑Alpha / Beta):
+
+Tradable Seasonal Assets (TSAs)
+
+Seasonal, player‑owned competitive assets (not currencies)
+Freely tradable player‑to‑player
+System‑minted only, supply observable
+Utility‑bearing and strategically risky
+
 Hard prohibition:
 
 > No currency may ever convert into Coins or Stars, directly or indirectly.
 
 ### Tradable Seasonal Assets (TSAs) — Post‑Alpha / Beta‑Only
 
-TSAs are optional, seasonal economic instruments (not currencies) introduced in Beta.
+TSAs are seasonal, player‑owned competitive assets (not currencies) introduced in Beta.
 
 TSA rules:
 
 - Beta‑only; no TSAs exist in Alpha.
-- TSAs are not faucets and never generate Coins or Stars.
-- TSAs never convert into Coins or Stars, directly or indirectly.
-- TSAs are system‑minted only and reset at season end.
-- TSA trading (when enabled) is brokered, server‑priced, and burn‑heavy.
+- TSAs are competitive assets, not currencies.
+- TSAs are system‑minted only; supply is observable and auditable.
+- TSAs are freely tradable player‑to‑player; trades are player‑negotiated.
+- The system enforces legality, caps, and logging; it does not set prices.
+- Trades may include friction (Coin burn, Star burn, caps).
+- TSAs never mint Coins or Stars and never convert into Coins or Stars, directly or indirectly.
+- Stars sacrificed for TSAs are permanently destroyed; leaderboard rank drops immediately.
+- TSAs reset at season end; no carryover between seasons.
 - Trading remains disabled in Alpha.
+
+TSA acquisition paths:
+
+1) Player‑to‑player trade
+	- Open negotiation
+	- System enforces legality and logs the trade
+
+2) Star Sacrifice (System Exchange)
+	- Player permanently destroys Stars
+	- Player receives a TSA
+	- Leaderboard rank drops immediately
+	- TSAs cannot be converted back into Stars
+
+TSA philosophy & risks:
+
+- Irreversible and season‑bound; mistakes are permanent.
+- Scarce, utility‑bearing, and strategically dangerous.
+- Designed to introduce regret, risk, and high‑stakes tradeoffs.
+- Competitive impact is indirect: TSAs change outcomes via utility, not via Stars.
+
+Hard TSA invariants:
+
+- TSAs cannot mint Coins.
+- TSAs cannot mint Stars.
+- TSAs cannot be converted into Coins or Stars.
+- Stars sacrificed for TSAs are permanently destroyed.
+- TSA supply is observable and auditable (no hidden supply).
 
 ---
 
@@ -119,6 +160,7 @@ Daily tasks and comeback rewards are post‑alpha and disabled in the current bu
 Alpha safeguard: on login, the server may top up very low balances to keep the game playable within minutes (draws from the emission pool, short cooldown).  
 Players spend Coins to buy Stars.  
 Players may optionally trade Coins for existing Stars under tight, time-worsening constraints (post‑alpha).  
+Post‑alpha: players may sacrifice Stars to obtain TSAs or trade TSAs player‑to‑player.  
 Star prices increase over time and with demand.  
 Coin supply decreases over time.  
 Inflation pressure increases monotonically; delay is punished and mistakes are permanent.  
@@ -126,13 +168,15 @@ Late-season decisions become harder and more consequential.
 
 ---
 
-## Trading (Conditional, Brokered)
+## Trading (Conditional, Brokered — Coins ↔ Stars)
 
 _Trading is post‑alpha and currently disabled. The following describes the planned system._
 
 Trading is optional, costly, asymmetric, and increasingly restrictive as the season progresses.
 
 Trading rules:
+
+Brokered trading refers to Coins ↔ Stars only; TSA trading is separate and player‑negotiated.
 
 Trades are Coins-for-Stars only (no Coin-for-Coin, no Star-for-Star).  
 Trades are brokered by the system; players do not set prices.  
@@ -144,9 +188,10 @@ Trades always contribute to market pressure, never relieve it.
 
 TSA trading (post‑alpha, Beta‑only):
 
-- Brokered only; system‑priced with premium and burn.
-- Never free‑trade or player‑priced.
+- Player‑to‑player negotiated; the system does not set prices.
+- The system enforces legality, caps, and logging; friction may apply.
 - Never creates Coins or Stars.
+- Never converts into Coins or Stars.
 - Always contributes to market pressure when enabled.
 
 Eligibility gates (must pass all):
