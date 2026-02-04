@@ -11,40 +11,6 @@ import (
 	"time"
 )
 
-func serveIndex(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.ServeFile(w, r, "./public"+r.URL.Path)
-		return
-	}
-
-	data, err := os.ReadFile("./public/index.html")
-	if err != nil {
-		http.Error(w, "Failed to load index.html", 500)
-		return
-	}
-
-	devMode := os.Getenv("DEV_MODE") == "true"
-
-	injection := `<script>window.__DEV_MODE__ = ` +
-		func() string {
-			if devMode {
-				return "true"
-			}
-			return "false"
-		}() +
-		`;</script>`
-
-	html := strings.Replace(
-		string(data),
-		"<head>",
-		"<head>\n"+injection,
-		1,
-	)
-
-	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(html))
-}
-
 func healthHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
