@@ -13,6 +13,11 @@ Season monitoring (single season):
 - Active season status (active vs ended).
 - Season time remaining (via season snapshot).
 
+Alpha rule:
+
+- “Ending” is internal only; admin UI shows only **Active** or **Ended**.
+- When ended, admin economy indicators are read-only and present frozen/final markers (no live emission/inflation rates).
+
 Economy monitoring (per season):
 
 - Current base star price.

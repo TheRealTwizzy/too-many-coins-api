@@ -1521,6 +1521,7 @@ let notificationsCache = [];
 let adminOverviewTimer = null;
 let adminAbuseTimer = null;
 let adminAntiCheatTimer = null;
+let currentSeasonSnapshot = null;
 
 function apiFetch(url, options = {}) {
 	return fetch(url, {
@@ -1591,6 +1592,46 @@ function formatPressure(value) {
 	return `${value.toFixed(2)}x`;
 }
 
+function seasonStatusValue(season) {
+	if (!season) return "active";
+	if (typeof season.season_status === "string" && season.season_status) {
+		return season.season_status;
+	}
+	return season.secondsRemaining > 0 ? "active" : "ended";
+}
+
+function seasonStatusLabel(season) {
+	return seasonStatusValue(season) === "ended" ? "Ended" : "Active";
+}
+
+function formatEmissionValue(value, ended) {
+	if (ended) return "Frozen";
+	if (typeof value !== "number" || !isFinite(value)) return "--";
+	return `${value.toFixed(2)} / min`;
+}
+
+function formatPressureValue(value, ended) {
+	if (ended) return "Frozen";
+	return formatPressure(value);
+}
+
+function formatNextEmissionValue(value, ended) {
+	if (ended) return "Ended";
+	if (typeof value !== "number" || !isFinite(value)) return "--";
+	return `${value}s`;
+}
+
+function formatCoinsInCirculationForSeason(season) {
+	const ended = seasonStatusValue(season) === "ended";
+	const count = typeof season?.coinsInCirculation === "number" && isFinite(season.coinsInCirculation)
+		? season.coinsInCirculation
+		: null;
+	if (ended) {
+		return count === null ? "Final snapshot recorded" : `Final snapshot: ${count} coins`;
+	}
+	return count === null ? "--" : `${count} coins`;
+}
+
 function scarcityMessage(secondsRemaining) {
 	if (typeof secondsRemaining !== "number" || secondsRemaining <= 0) {
 		return "";
@@ -1623,28 +1664,32 @@ function updateLiveStatus(state, message) {
 
 function updateSeasonSnapshot(season) {
 	if (!season) return;
+	currentSeasonSnapshot = season;
+	const ended = seasonStatusValue(season) === "ended";
 	if (seasonTitle) seasonTitle.innerText = "Season 1";
 	if (seasonRemaining) seasonRemaining.innerText = formatRemaining(season.secondsRemaining || 0);
 	if (seasonStarPrice) seasonStarPrice.innerText = `${season.currentStarPrice} coins`;
-	if (seasonCoins) seasonCoins.innerText = `${season.coinsInCirculation} coins`;
-	if (seasonEmission) seasonEmission.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
-	if (seasonPressure) seasonPressure.innerText = formatPressure(season.marketPressure);
-	if (seasonNextEmission) seasonNextEmission.innerText = `${season.nextEmissionInSeconds || 0}s`;
+	if (seasonCoins) seasonCoins.innerText = formatCoinsInCirculationForSeason(season);
+	if (seasonEmission) seasonEmission.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
+	if (seasonPressure) seasonPressure.innerText = formatPressureValue(season.marketPressure, ended);
+	if (seasonNextEmission) seasonNextEmission.innerText = formatNextEmissionValue(season.nextEmissionInSeconds, ended);
 	if (seasonScarcityMessage) seasonScarcityMessage.innerText = scarcityMessage(season.secondsRemaining || 0);
 	if (heroSeasonId) heroSeasonId.innerText = "Season 1";
 	if (heroSeasonRemaining) heroSeasonRemaining.innerText = formatRemaining(season.secondsRemaining || 0);
 	if (heroStarPrice) heroStarPrice.innerText = `${season.currentStarPrice} coins`;
-	if (heroInflation) heroInflation.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
-	if (heroPressure) heroPressure.innerText = formatPressure(season.marketPressure);
+	if (heroInflation) heroInflation.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
+	if (heroPressure) heroPressure.innerText = formatPressureValue(season.marketPressure, ended);
 	if (seasonStatus) {
-		seasonStatus.innerText = season.secondsRemaining > 0 ? "Active" : "Ended";
+		seasonStatus.innerText = seasonStatusLabel(season);
 	}
+	updateSeasonActionsState(season);
 }
 
 function updateSeasonCard(season) {
 	if (!season) return;
 	const card = document.querySelector(`[data-season-id="${season.seasonId}"]`);
 	if (!card) return;
+	const ended = seasonStatusValue(season) === "ended";
 	const remainingEl = card.querySelector("[data-season-remaining]");
 	const priceEl = card.querySelector("[data-season-price]");
 	const coinsEl = card.querySelector("[data-season-coins]");
@@ -1652,9 +1697,33 @@ function updateSeasonCard(season) {
 	const pressureEl = card.querySelector("[data-season-pressure]");
 	if (remainingEl) remainingEl.innerText = formatRemaining(season.secondsRemaining || 0);
 	if (priceEl) priceEl.innerText = `${season.currentStarPrice} coins`;
-	if (coinsEl) coinsEl.innerText = `${season.coinsInCirculation} coins`;
-	if (emissionEl) emissionEl.innerText = `${(season.coinEmissionPerMinute || 0).toFixed(2)} / min`;
-	if (pressureEl) pressureEl.innerText = formatPressure(season.marketPressure);
+	if (coinsEl) coinsEl.innerText = formatCoinsInCirculationForSeason(season);
+	if (emissionEl) emissionEl.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
+	if (pressureEl) pressureEl.innerText = formatPressureValue(season.marketPressure, ended);
+	updateSeasonActionsState(season);
+}
+
+function updateSeasonActionsState(season) {
+	const ended = seasonStatusValue(season) === "ended";
+	const dailyBtn = document.getElementById("claim-daily");
+	const activityBtn = document.getElementById("claim-activity");
+	if (dailyBtn) dailyBtn.disabled = ended;
+	if (activityBtn) activityBtn.disabled = ended;
+	if (actionsStatus) {
+		actionsStatus.innerText = ended ? "Season ended. Read-only." : "";
+	}
+	const card = document.querySelector(`[data-season-id="${season?.seasonId}"]`);
+	if (!card) return;
+	const seasonActions = card.querySelector(".season-actions");
+	if (!seasonActions) return;
+	if (ended) {
+		seasonActions.innerHTML = "<div class='label'>Season ended — read-only.</div>";
+		return;
+	}
+	const buyBtn = seasonActions.querySelector(".buy-star-btn");
+	const qtyInput = seasonActions.querySelector(".bulk-qty");
+	if (buyBtn) buyBtn.disabled = false;
+	if (qtyInput) qtyInput.disabled = false;
 }
 
 function applyLiveSnapshot(payload) {
@@ -1875,6 +1944,7 @@ async function loadSeasons() {
 		const div = document.createElement("div");
 		const isJoined = Boolean(currentUser);
 		const isThisSeasonJoined = isJoined;
+		const ended = seasonStatusValue(season) === "ended";
 		const starPrice = season.currentStarPrice;
 		updateSeasonSnapshot(season);
 
@@ -1899,29 +1969,31 @@ async function loadSeasons() {
 				</div>
 				<div class="metric">
 					<div class="label">Coins in circulation</div>
-					<div class="stat-value" data-season-coins>${season.coinsInCirculation} coins</div>
+					<div class="stat-value" data-season-coins>${formatCoinsInCirculationForSeason(season)}</div>
 				</div>
 				<div class="metric">
 					<div class="label">Inflation pressure</div>
-					<div class="stat-value" data-season-emission>${(season.coinEmissionPerMinute || 0).toFixed(2)} / min</div>
+					<div class="stat-value" data-season-emission>${formatEmissionValue(season.coinEmissionPerMinute, ended)}</div>
 				</div>
 				<div class="metric">
 					<div class="label">Market pressure</div>
-					<div class="stat-value" data-season-pressure>${formatPressure(season.marketPressure)}</div>
+					<div class="stat-value" data-season-pressure>${formatPressureValue(season.marketPressure, ended)}</div>
 				</div>
 			</div>
 			<div class="season-actions">
 				${isThisSeasonJoined
-					? `
-						<div class="row" style="margin-top:0.35rem;">
-							<label class="label">Qty</label>
-							<input class="bulk-qty" type="number" min="1" max="${bulkStarMax}" value="1" />
-							<button class="buy-star-btn primary">Buy Stars</button>
-						</div>
-						<div class="label bulk-quote"></div>
-						<div class="label bulk-warning"></div>
-						<div class="label bulk-breakdown"></div>
-					`
+					? (ended
+						? "<div class='label'>Season ended — read-only.</div>"
+						: `
+							<div class="row" style="margin-top:0.35rem;">
+								<label class="label">Qty</label>
+								<input class="bulk-qty" type="number" min="1" max="${bulkStarMax}" value="1" />
+								<button class="buy-star-btn primary">Buy Stars</button>
+							</div>
+							<div class="label bulk-quote"></div>
+							<div class="label bulk-warning"></div>
+							<div class="label bulk-breakdown"></div>
+						`)
 					: "<div class='label'>Log in to join the season.</div>"
 				}
 			</div>
@@ -1935,6 +2007,10 @@ async function loadSeasons() {
 			const breakdownEl = div.querySelector(".bulk-breakdown");
 			let lastQuote = null;
 			const refreshQuote = async () => {
+				if (seasonStatusValue(currentSeasonSnapshot || season) === "ended") {
+					if (quoteEl) quoteEl.innerText = "Season ended.";
+					return;
+				}
 				if (!qtyInput) return;
 				const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
 				if (quoteEl) quoteEl.innerText = "";
@@ -1975,6 +2051,10 @@ async function loadSeasons() {
 			}
 
 			buyButton.addEventListener("click", async () => {
+				if (seasonStatusValue(currentSeasonSnapshot || season) === "ended") {
+					setToast("Season ended. Purchases are disabled.", "error");
+					return;
+				}
 				const qty = Math.max(1, parseInt(qtyInput?.value, 10) || 1);
 				await refreshQuote();
 				if (qty > 1) {
@@ -2010,6 +2090,7 @@ async function loadSeasons() {
 		}
 
 		container.appendChild(div);
+		updateSeasonActionsState(season);
 	});
 }
 
@@ -2520,10 +2601,8 @@ function formatSeasonDay(secondsRemaining) {
 	return `${day} / 28`;
 }
 
-function seasonStatusLabel(secondsRemaining) {
-	if (secondsRemaining <= 0) return "Ending";
-	if (secondsRemaining <= 86400) return "Ending";
-	return "Active";
+function seasonStatusLabelAdmin(season) {
+	return seasonStatusLabel(season);
 }
 
 function formatToggleStatus(item) {
@@ -2675,8 +2754,13 @@ async function loadAdminSeasons() {
 		}
 		if (adminSeasonEmpty) adminSeasonEmpty.style.display = "none";
 		adminSeasonList.innerHTML = seasons.map((season) => {
-			const status = seasonStatusLabel(season.secondsRemaining || 0);
-			const badgeClass = status === "Ending" ? "badge warn" : "badge accent";
+			const ended = seasonStatusValue(season) === "ended";
+			const status = seasonStatusLabelAdmin(season);
+			const badgeClass = ended ? "badge warn" : "badge accent";
+			const marketPressure = formatPressureValue(economyData.marketPressure, ended);
+			const emissionTarget = ended
+				? "Frozen"
+				: (economyData.dailyEmissionTarget ?? "--");
 			return `
 				<div class="card notice clickable" data-season-id="${season.seasonId}">
 					<div class="row" style="justify-content:space-between; align-items:center;">
@@ -2688,24 +2772,29 @@ async function loadAdminSeasons() {
 					</div>
 					<div class="label" style="margin-top:0.5rem;">Day ${formatSeasonDay(season.secondsRemaining || 0)}</div>
 					<div class="label">Base price ${economyData.baseStarPrice || "--"} · Effective ${season.currentStarPrice || "--"}</div>
-					<div class="label">Market pressure ${typeof economyData.marketPressure === "number" ? economyData.marketPressure.toFixed(2) + "x" : "--"}</div>
-					<div class="label">Emission target ${economyData.dailyEmissionTarget || "--"}</div>
+					<div class="label">Market pressure ${marketPressure}</div>
+					<div class="label">Emission target ${emissionTarget}</div>
 				</div>
 			`;
 		}).join("");
 
 		const first = seasons[0];
 		if (adminSeasonDetail && adminSeasonMetrics && first) {
+			const ended = seasonStatusValue(first) === "ended";
+			const marketPressure = formatPressureValue(economyData.marketPressure, ended);
+			const emissionTarget = ended
+				? "Frozen"
+				: (economyData.dailyEmissionTarget ?? "--");
 			adminSeasonDetail.style.display = "block";
 			adminSeasonMetrics.innerHTML = `
 				<div class="admin-metric"><div class="label">Season ID</div><div class="stat-value">${first.seasonId}</div></div>
 				<div class="admin-metric"><div class="label">Day</div><div class="stat-value">${formatSeasonDay(first.secondsRemaining || 0)}</div></div>
-				<div class="admin-metric"><div class="label">Status</div><div class="stat-value">${seasonStatusLabel(first.secondsRemaining || 0)}</div></div>
-				<div class="admin-metric"><div class="label">Base price</div><div class="stat-value">${economyData.baseStarPrice || "--"}</div></div>
-				<div class="admin-metric"><div class="label">Effective price</div><div class="stat-value">${first.currentStarPrice || "--"}</div></div>
-				<div class="admin-metric"><div class="label">Market pressure</div><div class="stat-value">${typeof economyData.marketPressure === "number" ? economyData.marketPressure.toFixed(2) + "x" : "--"}</div></div>
-				<div class="admin-metric"><div class="label">Emission state</div><div class="stat-value">${economyData.dailyEmissionTarget || "--"}</div></div>
-				<div class="admin-metric"><div class="label">Coins in circulation</div><div class="stat-value">${first.coinsInCirculation || "--"}</div></div>
+				<div class="admin-metric"><div class="label">Status</div><div class="stat-value">${seasonStatusLabelAdmin(first)}</div></div>
+				<div class="admin-metric"><div class="label">Base price</div><div class="stat-value">${economyData.baseStarPrice ?? "--"}</div></div>
+				<div class="admin-metric"><div class="label">Effective price</div><div class="stat-value">${first.currentStarPrice ?? "--"}</div></div>
+				<div class="admin-metric"><div class="label">Market pressure</div><div class="stat-value">${marketPressure}</div></div>
+				<div class="admin-metric"><div class="label">Emission state</div><div class="stat-value">${emissionTarget}</div></div>
+				<div class="admin-metric"><div class="label">Coins in circulation</div><div class="stat-value">${formatCoinsInCirculationForSeason(first)}</div></div>
 			`;
 		}
 	} catch (e) {
@@ -3001,6 +3090,11 @@ function initHome() {
 	});
 
 	document.getElementById("claim-daily").addEventListener("click", async () => {
+		if (seasonStatusValue(currentSeasonSnapshot) === "ended") {
+			actionsStatus.innerText = "Season ended. Read-only.";
+			setToast(actionsStatus.innerText, "error");
+			return;
+		}
 		const res = await apiFetch("/claim-daily", { method: "POST", body: JSON.stringify({}) });
 		const data = await res.json();
 		if (!data.ok) {
@@ -3014,6 +3108,11 @@ function initHome() {
 	});
 
 	document.getElementById("claim-activity").addEventListener("click", async () => {
+		if (seasonStatusValue(currentSeasonSnapshot) === "ended") {
+			actionsStatus.innerText = "Season ended. Read-only.";
+			setToast(actionsStatus.innerText, "error");
+			return;
+		}
 		const res = await apiFetch("/claim-activity", { method: "POST", body: JSON.stringify({}) });
 		const data = await res.json();
 		if (!data.ok) {

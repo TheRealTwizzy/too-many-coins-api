@@ -54,6 +54,12 @@ Each season has its own independent economy.
 Coins and Stars reset at the end of each season.  
 Persistent rewards carry over between seasons (post‑alpha).
 
+At season end (Alpha):
+
+- Economy actions are frozen (no earning, no purchases).
+- Clients display a single terminal state: **Ended** (no “Ending” state exposed).
+- Live economy rates (emission, inflation/pressure cadence) are hidden; UI shows a frozen/final snapshot marker instead.
+
 ---
 
 ## Currencies

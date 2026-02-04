@@ -28,6 +28,15 @@ Shows basic feedback for price changes and throttles.
 
 Shows trading eligibility status and current trade premium/burn (post‑alpha).
 
+Season-ended behavior (Alpha):
+
+- The season snapshot includes `season_status: active | ended`.
+- When `season_status = ended`:
+	- Hide or disable Buy Stars and all earn actions.
+	- Render a read-only Season Ended state.
+	- Do not show live emission/inflation cadence or market pressure as active rates.
+	- Coins in circulation show a frozen/final snapshot marker.
+
 Bulk Purchase Modal:
 
 Allows selecting star quantity.

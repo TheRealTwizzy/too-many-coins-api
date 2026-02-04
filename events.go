@@ -8,13 +8,14 @@ import (
 )
 
 type liveSeasonSnapshot struct {
-	SeasonID              string  `json:"seasonId"`
-	SecondsRemaining      int64   `json:"secondsRemaining"`
-	CoinsInCirculation    int64   `json:"coinsInCirculation"`
-	CoinEmissionPerMinute float64 `json:"coinEmissionPerMinute"`
-	CurrentStarPrice      int     `json:"currentStarPrice"`
-	NextEmissionInSeconds int64   `json:"nextEmissionInSeconds"`
-	MarketPressure        float64 `json:"marketPressure"`
+	SeasonID              string   `json:"seasonId"`
+	SeasonStatus          string   `json:"season_status"`
+	SecondsRemaining      int64    `json:"secondsRemaining"`
+	CoinsInCirculation    int64    `json:"coinsInCirculation"`
+	CoinEmissionPerMinute *float64 `json:"coinEmissionPerMinute,omitempty"`
+	CurrentStarPrice      int      `json:"currentStarPrice"`
+	NextEmissionInSeconds *int64   `json:"nextEmissionInSeconds,omitempty"`
+	MarketPressure        *float64 `json:"marketPressure,omitempty"`
 }
 
 type liveSnapshot struct {
@@ -27,20 +28,37 @@ type liveSnapshot struct {
 
 func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 	now := time.Now().UTC()
+	ended := isSeasonEnded(now)
 	remaining := seasonSecondsRemaining(now)
 	coins := economy.CoinsInCirculation()
 	activeCoins := economy.ActiveCoinsInCirculation()
+	status := "active"
+	if ended {
+		status = "ended"
+	}
+	var emission *float64
+	var marketPressure *float64
+	var nextEmission *int64
+	if !ended {
+		value := economy.EffectiveEmissionPerMinute(remaining, activeCoins)
+		emission = &value
+		pressure := economy.MarketPressure()
+		marketPressure = &pressure
+		next := nextEmissionSeconds(now)
+		nextEmission = &next
+	}
 
 	snapshot := liveSnapshot{
 		ServerTime: now.Format(time.RFC3339),
 		Season: liveSeasonSnapshot{
 			SeasonID:              currentSeasonID(),
+			SeasonStatus:          status,
 			SecondsRemaining:      remaining,
 			CoinsInCirculation:    coins,
-			CoinEmissionPerMinute: economy.EffectiveEmissionPerMinute(remaining, activeCoins),
+			CoinEmissionPerMinute: emission,
 			CurrentStarPrice:      ComputeStarPrice(coins, remaining),
-			NextEmissionInSeconds: nextEmissionSeconds(now),
-			MarketPressure:        economy.MarketPressure(),
+			NextEmissionInSeconds: nextEmission,
+			MarketPressure:        marketPressure,
 		},
 	}
 

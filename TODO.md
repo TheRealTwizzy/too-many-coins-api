@@ -163,6 +163,7 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 10.3 Admin console entry point
 - [x] [DONE] 10.4 Verify UI shows required economy values (price, time, pressure, coins in circulation, next emission)
 - [x] [DONE] 10.5 Label missing systems in UI (trading, multi‑season, cosmetics)
+- [x] [DONE] 10.5a Season end UI consistency (Ended only; no buy/earn; frozen metrics)
 - [ ] [POST-ALPHA] 10.6 Season lobby + trading desk + collections + settings/accessibility
 
 ---
@@ -179,6 +180,7 @@ Allowed to be rough or missing in Alpha:
 
 ## Phase 12 — Season End, Rewards, and Between‑Season Progression
 - [x] [DONE] 12.1 End‑of‑season snapshot and economy freeze
+- [x] [DONE] 12.1a Expose a single terminal season state to clients (Ended only; “Ending” internal)
 - [ ] [POST-ALPHA] 12.2 Reward granting (badges + titles + recognition)
 - [ ] [POST-ALPHA] 12.3 Persistent progression + season history + return incentives
 

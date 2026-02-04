@@ -151,20 +151,36 @@ func playerHandler(db *sql.DB) http.HandlerFunc {
 func seasonsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		type SeasonView struct {
-			SeasonID              string  `json:"seasonId"`
-			SecondsRemaining      int64   `json:"secondsRemaining"`
-			CoinsInCirculation    int64   `json:"coinsInCirculation"`
-			CoinEmissionPerMinute float64 `json:"coinEmissionPerMinute"`
-			CurrentStarPrice      int     `json:"currentStarPrice"`
-			MarketPressure        float64 `json:"marketPressure"`
-			NextEmissionInSeconds int64   `json:"nextEmissionInSeconds"`
+			SeasonID              string   `json:"seasonId"`
+			SeasonStatus          string   `json:"season_status"`
+			SecondsRemaining      int64    `json:"secondsRemaining"`
+			CoinsInCirculation    int64    `json:"coinsInCirculation"`
+			CoinEmissionPerMinute *float64 `json:"coinEmissionPerMinute,omitempty"`
+			CurrentStarPrice      int      `json:"currentStarPrice"`
+			MarketPressure        *float64 `json:"marketPressure,omitempty"`
+			NextEmissionInSeconds *int64   `json:"nextEmissionInSeconds,omitempty"`
 		}
 
 		now := time.Now().UTC()
+		ended := isSeasonEnded(now)
 		remaining := seasonSecondsRemaining(now)
 		coins := economy.CoinsInCirculation()
 		activeCoins := economy.ActiveCoinsInCirculation()
-		emission := economy.EffectiveEmissionPerMinute(remaining, activeCoins)
+		status := "active"
+		if ended {
+			status = "ended"
+		}
+		var emission *float64
+		var marketPressure *float64
+		var nextEmission *int64
+		if !ended {
+			value := economy.EffectiveEmissionPerMinute(remaining, activeCoins)
+			emission = &value
+			pressure := economy.MarketPressure()
+			marketPressure = &pressure
+			next := nextEmissionSeconds(now)
+			nextEmission = &next
+		}
 
 		currentPrice := ComputeStarPrice(coins, remaining)
 		if account, _, err := getSessionAccount(db, r); err == nil && account != nil {
@@ -173,12 +189,13 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 
 		response := []SeasonView{{
 			SeasonID:              currentSeasonID(),
+			SeasonStatus:          status,
 			SecondsRemaining:      remaining,
 			CoinsInCirculation:    coins,
 			CoinEmissionPerMinute: emission,
 			CurrentStarPrice:      currentPrice,
-			MarketPressure:        economy.MarketPressure(),
-			NextEmissionInSeconds: nextEmissionSeconds(now),
+			MarketPressure:        marketPressure,
+			NextEmissionInSeconds: nextEmission,
 		}}
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
