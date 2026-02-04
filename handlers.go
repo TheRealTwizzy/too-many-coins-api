@@ -1507,36 +1507,6 @@ func signupHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func promoteFirstAccountToAdmin(db *sql.DB, accountID string) (bool, error) {
-	if db == nil || strings.TrimSpace(accountID) == "" {
-		return false, nil
-	}
-	result, err := db.Exec(`
-		UPDATE accounts
-		SET role = 'admin'
-		WHERE account_id = $1
-			AND NOT EXISTS (
-				SELECT 1
-				FROM accounts
-				WHERE role IN ('admin', 'frozen:admin')
-			)
-			AND account_id = (
-				SELECT account_id
-				FROM accounts
-				ORDER BY created_at ASC, account_id ASC
-				LIMIT 1
-			);
-	`, accountID)
-	if err != nil {
-		return false, err
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return rows > 0, nil
-}
-
 func loginHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

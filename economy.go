@@ -60,14 +60,6 @@ var economy = &EconomyState{
 	},
 }
 
-func (e *EconomyState) emitCoins(amount int) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	e.globalCoinPool += amount
-	log.Println("Economy: emitted coins,", amount, "pool now", e.globalCoinPool)
-}
-
 func (e *EconomyState) persist(seasonID string, db *sql.DB) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -1054,6 +1046,10 @@ func ensureSchema(db *sql.DB) error {
 	}
 
 	return nil
+}
+
+func EnsureSchema(db *sql.DB) error {
+	return ensureSchema(db)
 }
 
 func (e *EconomyState) CoinsInCirculation() int64 {

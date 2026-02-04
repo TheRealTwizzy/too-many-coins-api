@@ -460,7 +460,7 @@ func main() {
 
 	// HTTP server
 	mux := http.NewServeMux()
-	registerRoutes(mux, db, devMode)
+	registerRoutes(mux, db)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -479,7 +479,7 @@ func main() {
    Routes
    ====================== */
 
-func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
+func registerRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("/", serveIndex)
 	mux.HandleFunc("/health", healthHandler(db))
 	mux.HandleFunc("/player", playerHandler(db))

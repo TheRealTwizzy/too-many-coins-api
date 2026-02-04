@@ -639,19 +639,6 @@ func lookupAccountForReset(db *sql.DB, identifier string) (*Account, error) {
 	return &account, nil
 }
 
-func setAdminKey(db *sql.DB, accountID string, key string) error {
-	hash, err := hashPassword(key)
-	if err != nil {
-		return err
-	}
-	_, err = db.Exec(`
-		UPDATE accounts
-		SET admin_key_hash = $2
-		WHERE account_id = $1
-	`, accountID, hash)
-	return err
-}
-
 func generateAdminKey() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -660,15 +647,9 @@ func generateAdminKey() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func verifyAdminKey(stored string, provided string) bool {
-	return verifyPassword(stored, provided)
-}
-
 func normalizeRole(role string) string {
 	role = strings.ToLower(strings.TrimSpace(role))
-	if strings.HasPrefix(role, "frozen:") {
-		role = strings.TrimPrefix(role, "frozen:")
-	}
+	role = strings.TrimPrefix(role, "frozen:")
 	switch role {
 	case "admin", "moderator":
 		return role
@@ -684,9 +665,7 @@ func isFrozenRole(role string) bool {
 
 func baseRoleFromRaw(role string) string {
 	role = strings.ToLower(strings.TrimSpace(role))
-	if strings.HasPrefix(role, "frozen:") {
-		role = strings.TrimPrefix(role, "frozen:")
-	}
+	role = strings.TrimPrefix(role, "frozen:")
 	if role == "frozen" {
 		return "user"
 	}
@@ -709,16 +688,6 @@ func AdminExists(ctx context.Context, db *sql.DB) bool {
 		return true
 	}
 	return exists
-}
-
-func setAccountRole(db *sql.DB, accountID string, role string) error {
-	role = normalizeRole(role)
-	_, err := db.Exec(`
-		UPDATE accounts
-		SET role = $2
-		WHERE account_id = $1
-	`, accountID, role)
-	return err
 }
 
 func setAccountRoleByUsername(db *sql.DB, username string, role string) error {

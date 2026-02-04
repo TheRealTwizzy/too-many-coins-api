@@ -21,6 +21,14 @@ func currentSeasonID() string {
 	return defaultSeasonID
 }
 
+func DefaultSeasonID() string {
+	return defaultSeasonID
+}
+
+func SeasonStart() time.Time {
+	return seasonStart()
+}
+
 func seasonStart() time.Time {
 	seasonStartOnce.Do(func() {
 		start := os.Getenv("SEASON_START_UTC")

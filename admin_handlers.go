@@ -703,7 +703,7 @@ func adminKeySetHandler(db *sql.DB) http.HandlerFunc {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
-		if err != nil && err != sql.ErrNoRows {
+		if err != sql.ErrNoRows {
 			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
