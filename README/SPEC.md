@@ -12,6 +12,8 @@ Core loop: earn coins (faucets) -> buy stars (system store) -> optional brokered
 
 Trading: optional, costly, asymmetric, brokered Coins-for-Stars only; system-priced with premium and coin burn; eligibility gates tighten over time
 
+TSA trading (post‑alpha, Beta‑only): brokered, server‑priced, burn‑heavy, and never free‑trade. TSA trades never create Coins or Stars and always contribute to market pressure when enabled.
+
 Bulk buy allowed but price scales so hard it’s almost infeasible late-season
 
 Inflation model: server-emitted coin pool, time-sliced, global daily budget decreases over season; trade burn is modeled and balanced to preserve liquidity
@@ -27,6 +29,8 @@ Anti-abuse: 1 active account per IP per season by default; no whitelist, throttl
 Rewards: cosmetics/titles/badges persist between seasons; coins/stars reset per season
 
 Post‑alpha currency model: introduce a persistent meta currency (Beta) for cosmetic/identity use only; it cannot be traded, cannot convert into Coins or Stars, and cannot affect competitive power. An optional influence/reputation metric may exist post‑release; it is non‑spendable, eligibility/visibility‑only, and never convertible.
+
+Post‑alpha seasonal instruments (Beta‑only): Tradable Seasonal Assets (TSAs) may exist as optional, seasonal economic instruments (not currencies). TSAs are system‑minted only, reset at season end, never convert into Coins or Stars, and never generate Coins or Stars.
 
 Hard prohibition: no currency may ever convert into Coins or Stars, directly or indirectly.
 

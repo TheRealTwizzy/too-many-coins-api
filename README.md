@@ -96,6 +96,19 @@ Hard prohibition:
 
 > No currency may ever convert into Coins or Stars, directly or indirectly.
 
+### Tradable Seasonal Assets (TSAs) — Post‑Alpha / Beta‑Only
+
+TSAs are optional, seasonal economic instruments (not currencies) introduced in Beta.
+
+TSA rules:
+
+- Beta‑only; no TSAs exist in Alpha.
+- TSAs are not faucets and never generate Coins or Stars.
+- TSAs never convert into Coins or Stars, directly or indirectly.
+- TSAs are system‑minted only and reset at season end.
+- TSA trading (when enabled) is brokered, server‑priced, and burn‑heavy.
+- Trading remains disabled in Alpha.
+
 ---
 
 ## Core Gameplay Loop
@@ -128,6 +141,13 @@ Trades never create Coins or Stars and never bypass scarcity.
 Trades are asymmetric: the buyer pays more than the seller receives due to burn and fees.  
 Trades are priced at or above the current system star price, plus a time-based premium.  
 Trades always contribute to market pressure, never relieve it.  
+
+TSA trading (post‑alpha, Beta‑only):
+
+- Brokered only; system‑priced with premium and burn.
+- Never free‑trade or player‑priced.
+- Never creates Coins or Stars.
+- Always contributes to market pressure when enabled.
 
 Eligibility gates (must pass all):
 

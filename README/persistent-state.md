@@ -9,6 +9,10 @@ Post‑alpha introduces a persistent meta currency for cosmetic / identity use o
 An optional influence / reputation metric may exist post‑release; it is non‑spendable, eligibility/visibility‑only, and never convertible.
 No currency may ever convert into Coins or Stars, directly or indirectly.
 
+Post‑alpha seasonal instruments (Beta‑only):
+
+Tradable Seasonal Assets (TSAs) may exist as optional, seasonal economic instruments (not currencies). TSAs are system‑minted only, reset at season end, and never convert into Coins or Stars or generate Coins or Stars. TSA trading is brokered and server‑priced when enabled; trading remains disabled in Alpha.
+
 Persistent entities include:
 
 Players:
@@ -109,6 +113,38 @@ trade_premium_snapshot
 
 eligibility_snapshot
 
+created_at
+
+TSA Mint Log (append-only, post‑alpha/Beta-only):
+
+tsa_mint_id
+tsa_type
+season_id
+minted_quantity
+active_players_snapshot
+day_index
+created_at
+
+TSA Trade Log (append-only, post‑alpha/Beta-only):
+
+tsa_trade_id
+tsa_type
+season_id
+seller_player_id
+buyer_player_id
+coin_price
+coin_burned
+trade_premium_snapshot
+destroyed
+created_at
+
+TSA Activation Log (append-only, post‑alpha/Beta-only):
+
+tsa_activation_id
+tsa_type
+season_id
+player_id
+activation_effect
 created_at
 
 CoinEarnings (append-only log):

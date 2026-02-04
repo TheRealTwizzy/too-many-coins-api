@@ -5,6 +5,10 @@ End-of-season resolution:
 Star purchases and coin earning are disabled once the season ends.
 Brokered trading is disabled once the season ends; any pending offers are canceled safely.
 
+TSA note (post‑alpha/Beta‑only):
+
+All TSA holdings and any pending TSA trades are wiped at season end. TSAs never carry over between seasons.
+
 Final star balances determine leaderboard rankings.
 
 Rankings are snapshotted and stored permanently.

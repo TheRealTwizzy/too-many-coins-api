@@ -12,6 +12,10 @@ Total stars transferred via brokered trades in the last 24 hours (post‑alpha)
 
 Total stars transferred via brokered trades in the last 7 days (post‑alpha)
 
+TSA trading (post‑alpha, Beta‑only):
+
+TSA trades (any quantity metric defined for the TSA) contribute to market pressure when enabled.
+
 Market pressure calculation:
 
 Pressure increases when short-term demand exceeds long-term average demand.

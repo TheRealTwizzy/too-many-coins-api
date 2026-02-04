@@ -188,6 +188,12 @@ Allowed to be rough or missing in Alpha:
 - [ ] [POST-ALPHA] Enforce and document: no conversion paths into Coins or Stars, direct or indirect.
 - [ ] [POST-ALPHA] (Post‑Release optional) Influence/reputation metric: non‑spendable, eligibility/visibility‑only, never convertible.
 
+## Post‑Alpha / Beta — Tradable Seasonal Assets (TSAs)
+- [ ] [POST-ALPHA] Define TSA canon constraints in code (Beta‑only, seasonal instrument, system‑minted, no conversion into Coins/Stars, no faucets).
+- [ ] [POST-ALPHA] Implement brokered TSA trading (server‑priced, burn‑heavy, never free‑trade) and ensure it is disabled in Alpha.
+- [ ] [POST-ALPHA] Add append‑only TSA logs (mint, trade, activation) with admin visibility.
+- [ ] [POST-ALPHA] Add TSA season‑end wipe behavior and snapshot/telemetry integration.
+
 ---
 
 ## Phase 13 — Testing & Validation
