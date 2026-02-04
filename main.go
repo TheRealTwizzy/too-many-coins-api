@@ -697,10 +697,10 @@ func runPassiveDrip(db *sql.DB) {
 			continue
 		}
 		emitServerTelemetry(db, nil, playerID, "faucet_claim", map[string]interface{}{
-			"faucet":        FaucetPassive,
-			"granted":       adjusted,
-			"attempted":     adjusted,
-			"remainingCap":  remainingCap,
+			"faucet":         FaucetPassive,
+			"granted":        adjusted,
+			"attempted":      adjusted,
+			"remainingCap":   remainingCap,
 			"availableCoins": economy.AvailableCoins(),
 		})
 	}

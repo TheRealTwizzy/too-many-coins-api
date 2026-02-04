@@ -1880,11 +1880,11 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 		}
 		player.Coins += int64(granted)
 		emitServerTelemetry(db, &account.AccountID, playerID, "faucet_claim", map[string]interface{}{
-			"faucet":        FaucetDaily,
-			"granted":       granted,
-			"attempted":     reward,
-			"playerCoins":   player.Coins,
-			"remainingCap":  remainingCap,
+			"faucet":         FaucetDaily,
+			"granted":        granted,
+			"attempted":      reward,
+			"playerCoins":    player.Coins,
+			"remainingCap":   remainingCap,
 			"availableCoins": economy.AvailableCoins(),
 		})
 
@@ -2032,11 +2032,11 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 		}
 		player.Coins += int64(granted)
 		emitServerTelemetry(db, &account.AccountID, playerID, "faucet_claim", map[string]interface{}{
-			"faucet":        FaucetActivity,
-			"granted":       granted,
-			"attempted":     reward,
-			"playerCoins":   player.Coins,
-			"remainingCap":  remainingCap,
+			"faucet":         FaucetActivity,
+			"granted":        granted,
+			"attempted":      reward,
+			"playerCoins":    player.Coins,
+			"remainingCap":   remainingCap,
 			"availableCoins": economy.AvailableCoins(),
 		})
 
