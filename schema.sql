@@ -403,3 +403,78 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_log_created_at
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_action
     ON admin_audit_log (action_type);
 
+-- POST-ALPHA / BETA-ONLY: TSA-01 Cinder Sigil (schema only)
+-- NOTE: No Alpha code paths should reference these tables.
+
+CREATE TABLE IF NOT EXISTS tsa_cinder_sigils (
+    sigil_id TEXT PRIMARY KEY,
+    season_id TEXT NOT NULL,
+    minted_at TIMESTAMPTZ NOT NULL,
+    minted_day INT NOT NULL,
+    owner_player_id TEXT,
+    owner_account_id TEXT,
+    status TEXT NOT NULL,
+    trade_count INT NOT NULL DEFAULT 0,
+    last_trade_at TIMESTAMPTZ,
+    last_status_at TIMESTAMPTZ NOT NULL,
+    activation_choice TEXT,
+    activated_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_tsa_cinder_sigils_season
+    ON tsa_cinder_sigils (season_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_tsa_cinder_sigils_owner
+    ON tsa_cinder_sigils (owner_player_id, status);
+
+-- Append-only TSA logs (Cinder Sigil only; no other TSA types exist).
+CREATE TABLE IF NOT EXISTS tsa_mint_log (
+    id BIGSERIAL PRIMARY KEY,
+    sigil_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
+    minted_day INT NOT NULL,
+    buyer_player_id TEXT NOT NULL,
+    buyer_account_id TEXT,
+    price_paid BIGINT NOT NULL,
+    coins_before BIGINT NOT NULL,
+    coins_after BIGINT NOT NULL,
+    active_players INT NOT NULL,
+    daily_mint_cap INT NOT NULL,
+    season_mint_cap INT NOT NULL,
+    minted_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_tsa_mint_log_created_at
+    ON tsa_mint_log (minted_at DESC);
+
+CREATE TABLE IF NOT EXISTS tsa_trade_log (
+    id BIGSERIAL PRIMARY KEY,
+    sigil_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
+    seller_player_id TEXT NOT NULL,
+    seller_account_id TEXT,
+    buyer_player_id TEXT NOT NULL,
+    buyer_account_id TEXT,
+    price_paid BIGINT NOT NULL,
+    burn_amount BIGINT NOT NULL,
+    destroyed BOOLEAN NOT NULL,
+    trade_status TEXT NOT NULL,
+    executed_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_tsa_trade_log_executed_at
+    ON tsa_trade_log (executed_at DESC);
+
+CREATE TABLE IF NOT EXISTS tsa_activation_log (
+    id BIGSERIAL PRIMARY KEY,
+    sigil_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
+    player_id TEXT NOT NULL,
+    account_id TEXT,
+    activation_choice TEXT NOT NULL,
+    activated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_tsa_activation_log_activated_at
+    ON tsa_activation_log (activated_at DESC);
+
