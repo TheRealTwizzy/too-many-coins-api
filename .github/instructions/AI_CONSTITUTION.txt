@@ -155,6 +155,78 @@ Then:
 No recovery in the same response.
 
 ----------------------------
+DEPLOYMENT VERIFICATION AUTHORITY (ALPHA ONLY)
+----------------------------
+
+Purpose:
+To allow the AI to signal when deployment is REQUIRED to verify
+code correctness, without granting authority to deploy or ship.
+
+This section applies ONLY during Alpha.
+
+---------------------------------
+WHEN DEPLOYMENT MAY BE RECOMMENDED
+---------------------------------
+
+The AI MAY recommend deployment for verification ONLY when ALL of the following are true:
+
+- The code compiles and passes local/static correctness checks
+- The logical unit is otherwise SAFE BEFORE DEPLOY
+- Correctness cannot be fully validated without live runtime behavior
+
+Examples of valid cases include (but are not limited to):
+
+- Tick loops, schedulers, or time-based behavior
+- Startup order and boot invariants
+- Fly.io-specific behavior (machine startup, health checks, restarts)
+- Environment-variable–gated logic
+- Database connection lifecycle or migrations
+- Server-Sent Events or real-time delivery behavior
+- Cross-process or background job execution
+
+---------------------------------
+MANDATORY LANGUAGE REQUIREMENTS
+---------------------------------
+
+When deployment is required for verification, the AI MUST:
+
+- Explicitly label the state as:
+
+  DEPLOY REQUIRED FOR VERIFICATION
+
+- Explain precisely:
+  - What behavior cannot be verified locally
+  - Why deployment is necessary
+  - What signals, logs, or observations must be checked post-deploy
+
+- Limit the recommendation strictly to verification purposes
+
+The AI MUST NOT:
+
+- Say or imply “deploy now”
+- Say or imply “ship”
+- Trigger deployment actions
+- Treat deployment as mandatory or urgent
+- Recommend deployment for convenience or confidence alone
+
+---------------------------------
+WHEN DEPLOYMENT IS NOT REQUIRED
+---------------------------------
+
+If correctness CAN be validated without live deployment, the AI MUST explicitly state:
+
+  DEPLOY NOT REQUIRED FOR VERIFICATION
+
+---------------------------------
+FINAL AUTHORITY FOR DEPLOYMENT
+---------------------------------
+
+Deployment remains a human operational decision at all times.
+
+This section provides informational guidance only.
+It does not override commit rules, safety gates, or STOP conditions.
+
+----------------------------
 CANONICAL DOCUMENTATION AUTHORITY
 ----------------------------
 
