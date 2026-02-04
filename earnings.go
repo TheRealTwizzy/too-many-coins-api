@@ -92,11 +92,18 @@ func RemainingDailyCap(db *sql.DB, playerID string, now time.Time) (int, error) 
 }
 
 func seasonDayIndex(t time.Time) int {
-	start := seasonStart()
+	start := seasonStart().UTC()
 	if t.Before(start) {
 		return 0
 	}
-	return int(t.Sub(start).Hours() / 24)
+	startDay := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, time.UTC)
+	current := t.UTC()
+	currentDay := time.Date(current.Year(), current.Month(), current.Day(), 0, 0, 0, 0, time.UTC)
+	index := int(currentDay.Sub(startDay).Hours() / 24)
+	if index < 0 {
+		return 0
+	}
+	return index
 }
 
 func GrantCoinsWithCap(db *sql.DB, playerID string, amount int, now time.Time, sourceType string, accountID *string) (int, int, error) {

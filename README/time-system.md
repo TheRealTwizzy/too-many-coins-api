@@ -32,7 +32,7 @@ Each season has a fixed start_time and end_time, with length defined by server p
 - Beta: 28 days.
 - Release: 28 days.
 
-Season day index is derived from (current_time - start_time).
+Season day index is derived from the UTC date difference between the season start day and the current day.
 
 Pricing curves, coin budgets, and caps are based on the derived season day.
 Trade eligibility bands, premiums, and burn rates are also based on the derived season day.
