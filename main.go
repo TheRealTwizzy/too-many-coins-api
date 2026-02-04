@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"embed"
 	"encoding/json"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,16 @@ import (
 
 //go:embed public/*
 var content embed.FS
+
+var publicFS = mustSubFS(content, "public")
+
+func mustSubFS(fsys fs.FS, dir string) fs.FS {
+	sub, err := fs.Sub(fsys, dir)
+	if err != nil {
+		panic(err)
+	}
+	return sub
+}
 
 /* ======================
    Request / Response Types
@@ -484,7 +495,7 @@ func main() {
    ====================== */
 
 func registerRoutes(mux *http.ServeMux, db *sql.DB) {
-	mux.Handle("/", http.FileServer(http.FS(content)))
+	mux.HandleFunc("/", serveIndex)
 	mux.HandleFunc("/health", healthHandler(db))
 	mux.HandleFunc("/player", playerHandler(db))
 	mux.HandleFunc("/seasons", seasonsHandler(db))
