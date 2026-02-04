@@ -89,7 +89,7 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 4.4 Append‑only coin earning log (source_type + amount)
 - [x] [DONE] 4.5 Login playability safeguard (alpha‑only, emission‑pool backed, short cooldown)
 - [ ] [ALPHA REQUIRED] 4.6 Verify login safeguard behavior (min balance target, cooldown, no daily‑cap dead‑locks)
-- [ ] [ALPHA REQUIRED] 4.7 Confirm faucet priorities and pool gating match canon (no player‑created coins)
+- [x] [DONE] 4.7 Confirm faucet priorities and pool gating match canon (no player‑created coins)
 - [x] [DONE] 4.8 Resolve passive drip status (enabled vs disabled for Alpha)
 - [ ] [POST-ALPHA] 4.9 Daily tasks faucet
 - [ ] [POST-ALPHA] 4.10 Comeback reward faucet

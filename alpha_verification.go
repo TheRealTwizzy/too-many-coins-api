@@ -164,7 +164,8 @@ func verifyDailyPlayability(db *sql.DB, playerID string, accountID *string) {
 		if dailyReward > 0 {
 			if canClaim, _, err := CanClaimFaucet(db, playerID, FaucetDaily, dailyCooldown); err == nil && canClaim {
 				available := economy.AvailableCoins()
-				if CanAccessFaucetByPriority(FaucetDaily, available) && available >= dailyReward {
+				adjusted := ThrottleFaucetReward(FaucetDaily, dailyReward, available)
+				if adjusted > 0 && CanAccessFaucetByPriority(FaucetDaily, available) {
 					canClaimDaily = true
 				}
 			}
@@ -188,7 +189,8 @@ func verifyDailyPlayability(db *sql.DB, playerID string, accountID *string) {
 		if activityReward > 0 && isActive {
 			if canClaim, _, err := CanClaimFaucet(db, playerID, FaucetActivity, activityCooldown); err == nil && canClaim {
 				available := economy.AvailableCoins()
-				if CanAccessFaucetByPriority(FaucetActivity, available) && available >= activityReward {
+				adjusted := ThrottleFaucetReward(FaucetActivity, activityReward, available)
+				if adjusted > 0 && CanAccessFaucetByPriority(FaucetActivity, available) {
 					canClaimActivity = true
 				}
 			}

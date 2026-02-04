@@ -1845,7 +1845,8 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 			reward = remainingCap
 		}
 
-		if !TryDistributeCoinsWithPriority(FaucetDaily, reward) {
+		adjustedReward, ok := TryDistributeCoinsWithPriority(FaucetDaily, reward)
+		if !ok {
 			logFaucetDenied(db, &account.AccountID, playerID, FaucetDaily, "EMISSION_EXHAUSTED", map[string]interface{}{
 				"attempted":      reward,
 				"availableCoins": economy.AvailableCoins(),
@@ -1866,6 +1867,7 @@ func dailyClaimHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "EMISSION_EXHAUSTED"})
 			return
 		}
+		reward = adjustedReward
 
 		granted, _, err := GrantCoinsWithCap(db, player.PlayerID, reward, time.Now().UTC(), FaucetDaily, &account.AccountID)
 		if err != nil {
@@ -1987,7 +1989,8 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 		if reward > remainingCap {
 			reward = remainingCap
 		}
-		if !TryDistributeCoinsWithPriority(FaucetActivity, reward) {
+		adjustedReward, ok := TryDistributeCoinsWithPriority(FaucetActivity, reward)
+		if !ok {
 			logFaucetDenied(db, &account.AccountID, playerID, FaucetActivity, "EMISSION_EXHAUSTED", map[string]interface{}{
 				"attempted":      reward,
 				"availableCoins": economy.AvailableCoins(),
@@ -2008,6 +2011,7 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "EMISSION_EXHAUSTED"})
 			return
 		}
+		reward = adjustedReward
 
 		granted, _, err := GrantCoinsWithCap(db, player.PlayerID, reward, time.Now().UTC(), FaucetActivity, &account.AccountID)
 		if err != nil {

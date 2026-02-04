@@ -13,25 +13,32 @@ const (
 )
 
 func CanAccessFaucetByPriority(faucetType string, available int) bool {
-	switch faucetType {
-	case FaucetPassive:
-		return true
-	case FaucetDaily:
-		return available >= 10
-	case FaucetActivity:
-		return available >= 50
-	default:
-		return false
-	}
+	return available > 0
 }
 
-func TryDistributeCoinsWithPriority(faucetType string, amount int) bool {
+func ThrottleFaucetReward(faucetType string, amount int, available int) int {
+	if amount <= 0 || available <= 0 {
+		return 0
+	}
+	if amount > available {
+		return available
+	}
+	return amount
+}
+
+func TryDistributeCoinsWithPriority(faucetType string, amount int) (int, bool) {
 	available := economy.AvailableCoins()
 	if !CanAccessFaucetByPriority(faucetType, available) {
-		return false
+		return 0, false
 	}
-
-	return economy.TryDistributeCoins(amount)
+	adjusted := ThrottleFaucetReward(faucetType, amount, available)
+	if adjusted <= 0 {
+		return 0, false
+	}
+	if !economy.TryDistributeCoins(adjusted) {
+		return 0, false
+	}
+	return adjusted, true
 }
 
 func CanClaimFaucet(
