@@ -26,7 +26,11 @@ Daily reset logic must be guarded so it runs exactly once per season-day.
 
 Season Time:
 
-Each season has a fixed start_time and end_time.
+Each season has a fixed start_time and end_time, with length defined by server phase:
+
+- Alpha: 14 days by default, extendable up to 21 days only with explicit telemetry-gap configuration.
+- Beta: 28 days.
+- Release: 28 days.
 
 Season day index is derived from (current_time - start_time).
 
