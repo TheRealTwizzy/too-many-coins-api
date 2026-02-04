@@ -61,7 +61,7 @@ type SimPlayer struct {
 }
 
 func RunSeasonSimulation(params CalibrationParams) (SimulationReport, error) {
-	seasonMinutes := int(seasonLength.Minutes())
+	seasonMinutes := int(seasonLength().Minutes())
 	rng := rand.New(rand.NewSource(params.Seed))
 
 	players := buildSimPlayers(rng)

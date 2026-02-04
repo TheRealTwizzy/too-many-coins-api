@@ -11,7 +11,7 @@ import (
 var errDailyCapReached = errors.New("daily cap reached")
 
 func seasonProgress(now time.Time) float64 {
-	seasonSeconds := seasonLength.Seconds()
+	seasonSeconds := seasonLength().Seconds()
 	if seasonSeconds <= 0 {
 		return 0
 	}
