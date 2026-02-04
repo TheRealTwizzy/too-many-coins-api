@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -14,23 +14,31 @@ const (
 	PhaseRelease Phase = "release"
 )
 
-// PhaseFromEnv returns the server-defined phase. It only reads server env vars
-// (PHASE with APP_ENV fallback) and rejects unknown values.
-func PhaseFromEnv() (Phase, error) {
-	value := strings.ToLower(strings.TrimSpace(os.Getenv("PHASE")))
-	if value == "" {
-		value = strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
+// CurrentPhase is server-authoritative and must never be client-defined.
+// It is sourced from PHASE, with APP_ENV as a fallback.
+func CurrentPhase() Phase {
+	if phase, ok := parsePhaseFromEnv("PHASE"); ok {
+		return phase
 	}
+	if phase, ok := parsePhaseFromEnv("APP_ENV"); ok {
+		return phase
+	}
+	return PhaseAlpha
+}
+
+func parsePhaseFromEnv(key string) (Phase, bool) {
+	value := strings.ToLower(strings.TrimSpace(os.Getenv(key)))
 	switch value {
-	case string(PhaseAlpha):
-		return PhaseAlpha, nil
-	case string(PhaseBeta):
-		return PhaseBeta, nil
-	case string(PhaseRelease):
-		return PhaseRelease, nil
+	case "alpha":
+		return PhaseAlpha, true
+	case "beta":
+		return PhaseBeta, true
+	case "release":
+		return PhaseRelease, true
 	case "":
-		return "", fmt.Errorf("phase is required (set PHASE or APP_ENV to alpha, beta, or release)")
+		return "", false
 	default:
-		return "", fmt.Errorf("unsupported phase: %s", value)
+		log.Println("invalid phase value for", key, "=", value, "; defaulting to alpha")
+		return PhaseAlpha, true
 	}
 }
