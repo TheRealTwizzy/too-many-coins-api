@@ -45,7 +45,7 @@ Abuse/Access:
 ## Telemetry Events (Current Build)
 
 - buy_star
-- join_season
+- login
 
 Alpha note: additional faucet, emission, and pressure events are planned but not yet emitted.
 

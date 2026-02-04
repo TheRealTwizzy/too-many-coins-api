@@ -44,8 +44,8 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 0.5 Resolve persistent‑state doc vs schema (seasons/player‑season tables not present)
   - [x] [DONE] persistent‑state.md already marks schema expansion as post‑alpha unless implemented
 - [x] [DONE] 0.6 Document login playability safeguard in canon docs
-- [ ] [ALPHA REQUIRED] 0.7 Resolve telemetry event naming mismatch (alpha‑execution says join_season; client emits login)
-  - [ ] [ALPHA REQUIRED] Decide canonical event names for Alpha and update telemetry contract + TODO list
+- [x] [DONE] 0.7 Resolve telemetry event naming mismatch (alpha‑execution says join_season; client emits login)
+  - [x] [DONE] Decide canonical event names for Alpha and update telemetry contract + TODO list
 
 ---
 
@@ -127,7 +127,7 @@ Allowed to be rough or missing in Alpha:
   - [ ] [ALPHA REQUIRED] Market pressure value per tick
 - [ ] [ALPHA REQUIRED] 7.5 Validate append‑only economic logs are complete and queryable
 - [ ] [ALPHA REQUIRED] 7.6 Establish calibration workflow using telemetry history (no blind tuning)
-- [ ] [ALPHA REQUIRED] 7.7 Reconcile telemetry taxonomy with alpha‑execution.md (current client emits login + buy_star; join_season is not emitted)
+- [x] [DONE] 7.7 Reconcile telemetry taxonomy with alpha‑execution.md (current client emits login + buy_star; join_season is not emitted)
 
 ---
 
