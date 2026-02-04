@@ -3,7 +3,8 @@ app = "too-many-coins-app"
 primary_region = "ord"
 
 [build]
-  builder = "paketobuildpacks/builder:base"
+  dockerfile = "Dockerfile"
+
 
 [env]
   PORT = "8080"
