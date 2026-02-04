@@ -152,7 +152,12 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		type SeasonView struct {
 			SeasonID              string   `json:"seasonId"`
+			Status                string   `json:"status"`
 			SeasonStatus          string   `json:"season_status"`
+			SeasonStartTime       string   `json:"seasonStartTime"`
+			SeasonEndTime         string   `json:"seasonEndTime"`
+			DayIndex              int      `json:"dayIndex"`
+			TotalDays             int      `json:"totalDays"`
 			SecondsRemaining      int64    `json:"secondsRemaining"`
 			CoinsInCirculation    int64    `json:"coinsInCirculation"`
 			CoinEmissionPerMinute *float64 `json:"coinEmissionPerMinute,omitempty"`
@@ -169,6 +174,19 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 		status := "active"
 		if ended {
 			status = "ended"
+		}
+		startTime := seasonStart().UTC()
+		endTime := seasonEnd().UTC()
+		totalDays := int(seasonLength().Hours() / 24)
+		if totalDays < 1 {
+			totalDays = 1
+		}
+		dayIndex := seasonDayIndex(now) + 1
+		if dayIndex < 1 {
+			dayIndex = 1
+		}
+		if dayIndex > totalDays {
+			dayIndex = totalDays
 		}
 		var emission *float64
 		var marketPressure *float64
@@ -189,7 +207,12 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 
 		response := []SeasonView{{
 			SeasonID:              currentSeasonID(),
+			Status:                status,
 			SeasonStatus:          status,
+			SeasonStartTime:       startTime.Format(time.RFC3339),
+			SeasonEndTime:         endTime.Format(time.RFC3339),
+			DayIndex:              dayIndex,
+			TotalDays:             totalDays,
 			SecondsRemaining:      remaining,
 			CoinsInCirculation:    coins,
 			CoinEmissionPerMinute: emission,
@@ -199,6 +222,7 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 		}}
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
+			"serverTime":          now.Format(time.RFC3339),
 			"recommendedSeasonId": currentSeasonID(),
 			"seasons":             response,
 		})

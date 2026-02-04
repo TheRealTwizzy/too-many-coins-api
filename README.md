@@ -54,6 +54,8 @@ Each season has its own independent economy.
 Coins and Stars reset at the end of each season.  
 Persistent rewards carry over between seasons (post‑alpha).
 
+Season day index and total days are server-authoritative; clients must render the provided values and never hardcode 28-day assumptions.
+
 At season end (Alpha):
 
 - Economy actions are frozen (no earning, no purchases).

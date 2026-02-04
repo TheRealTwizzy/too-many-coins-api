@@ -34,6 +34,16 @@ Each season has a fixed start_time and end_time, with length defined by server p
 
 Season day index is derived from the UTC date difference between the season start day and the current day.
 
+Server-authoritative time fields must be provided to clients, including:
+
+- season start time
+- season end time
+- day index (1-based)
+- total days (phase-bound)
+- remaining seconds (0 when ended)
+
+Clients must render these values directly and must not infer total days or day index locally.
+
 Pricing curves, coin budgets, and caps are based on the derived season day.
 Trade eligibility bands, premiums, and burn rates are also based on the derived season day.
 

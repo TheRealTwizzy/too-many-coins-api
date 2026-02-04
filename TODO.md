@@ -65,6 +65,7 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 2.2 60s tick loop for emission + pressure
 - [x] [DONE] 2.3 Season end snapshot on tick
 - [x] [DONE] 2.4 Validate time semantics (season day index, reset boundaries, end‑state gating)
+- [x] [DONE] 2.4a Expose server day index + total days to UI (no client hardcoding)
 - [ ] [POST-ALPHA] 2.5 Multi‑season runtime model (seasons table, staggered starts, per‑season tick scheduling)
 
 ## Phase Transition Tasks (Explicit)

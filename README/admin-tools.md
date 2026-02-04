@@ -17,6 +17,7 @@ Alpha rule:
 
 - “Ending” is internal only; admin UI shows only **Active** or **Ended**.
 - When ended, admin economy indicators are read-only and present frozen/final markers (no live emission/inflation rates).
+- Admin control strips (pause/freeze/emission controls) are hidden in Alpha.
 
 Economy monitoring (per season):
 

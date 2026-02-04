@@ -755,11 +755,11 @@
 							<div id="hero-season-id" class="stat-value">Season 1</div>
 						</div>
 						<div class="metric">
-							<div class="label">Time remaining</div>
+							<div id="hero-time-label" class="label">Time remaining</div>
 							<div id="hero-season-remaining" class="stat-value">--</div>
 						</div>
 						<div class="metric">
-							<div class="label">Star price</div>
+							<div id="hero-star-label" class="label">Star price</div>
 							<div id="hero-star-price" class="stat-value">--</div>
 						</div>
 						<div class="metric">
@@ -795,11 +795,11 @@
 						</div>
 						<div class="metric-grid">
 							<div class="metric">
-								<div class="label">Time remaining</div>
+								<div id="season-time-label" class="label">Time remaining</div>
 								<div id="season-remaining" class="stat-value">--</div>
 							</div>
 							<div class="metric">
-								<div class="label">Star price</div>
+								<div id="season-star-label" class="label">Star price</div>
 								<div id="season-star-price" class="stat-value">--</div>
 							</div>
 							<div class="metric">
@@ -1164,7 +1164,7 @@
 								</div>
 								<div class="card-body">
 									<div id="admin-season-metrics" class="admin-grid"></div>
-									<div class="admin-control-strip">
+									<div class="admin-control-strip" data-admin-controls style="display:none;">
 										<div class="label">Control strip (guarded)</div>
 										<div class="muted">Actions explain impact. All changes are server-enforced and audited.</div>
 										<div class="row" style="margin-top:0.75rem;">
@@ -1262,7 +1262,7 @@
 							<div class="card">
 								<div class="label">Acknowledgement required</div>
 								<div class="muted">“I understand this affects all players.”</div>
-								<div class="admin-control-strip" style="margin-top:0.75rem;">
+								<div class="admin-control-strip" style="margin-top:0.75rem; display:none;" data-admin-controls>
 									<div class="row">
 										<button type="button" class="danger" disabled>Pause all purchases</button>
 										<div class="muted">Stops all star and boost purchases across seasons.</div>
@@ -1578,7 +1578,7 @@ async function track(eventType, payload) {
 }
 
 function formatRemaining(seconds) {
-	if (seconds <= 0) return "Ended";
+	if (seconds <= 0) return "Season ended";
 	const days = Math.floor(seconds / 86400);
 	const hours = Math.floor((seconds % 86400) / 3600);
 	const minutes = Math.floor((seconds % 3600) / 60);
@@ -1594,6 +1594,9 @@ function formatPressure(value) {
 
 function seasonStatusValue(season) {
 	if (!season) return "active";
+	if (typeof season.status === "string" && season.status) {
+		return season.status;
+	}
 	if (typeof season.season_status === "string" && season.season_status) {
 		return season.season_status;
 	}
@@ -1667,7 +1670,7 @@ function updateSeasonSnapshot(season) {
 	currentSeasonSnapshot = season;
 	const ended = seasonStatusValue(season) === "ended";
 	if (seasonTitle) seasonTitle.innerText = "Season 1";
-	if (seasonRemaining) seasonRemaining.innerText = formatRemaining(season.secondsRemaining || 0);
+	if (seasonRemaining) seasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
 	if (seasonStarPrice) seasonStarPrice.innerText = `${season.currentStarPrice} coins`;
 	if (seasonCoins) seasonCoins.innerText = formatCoinsInCirculationForSeason(season);
 	if (seasonEmission) seasonEmission.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
@@ -1675,14 +1678,23 @@ function updateSeasonSnapshot(season) {
 	if (seasonNextEmission) seasonNextEmission.innerText = formatNextEmissionValue(season.nextEmissionInSeconds, ended);
 	if (seasonScarcityMessage) seasonScarcityMessage.innerText = scarcityMessage(season.secondsRemaining || 0);
 	if (heroSeasonId) heroSeasonId.innerText = "Season 1";
-	if (heroSeasonRemaining) heroSeasonRemaining.innerText = formatRemaining(season.secondsRemaining || 0);
+	if (heroSeasonRemaining) heroSeasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
 	if (heroStarPrice) heroStarPrice.innerText = `${season.currentStarPrice} coins`;
 	if (heroInflation) heroInflation.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
 	if (heroPressure) heroPressure.innerText = formatPressureValue(season.marketPressure, ended);
 	if (seasonStatus) {
 		seasonStatus.innerText = seasonStatusLabel(season);
 	}
+	const heroTimeLabel = document.getElementById("hero-time-label");
+	const heroStarLabel = document.getElementById("hero-star-label");
+	const seasonTimeLabel = document.getElementById("season-time-label");
+	const seasonStarLabel = document.getElementById("season-star-label");
+	if (heroTimeLabel) heroTimeLabel.innerText = ended ? "Season status" : "Time remaining";
+	if (seasonTimeLabel) seasonTimeLabel.innerText = ended ? "Season status" : "Time remaining";
+	if (heroStarLabel) heroStarLabel.innerText = ended ? "Final star price snapshot" : "Star price";
+	if (seasonStarLabel) seasonStarLabel.innerText = ended ? "Final star price snapshot" : "Star price";
 	updateSeasonActionsState(season);
+	updateAdminControlVisibility(season);
 }
 
 function updateSeasonCard(season) {
@@ -1692,11 +1704,17 @@ function updateSeasonCard(season) {
 	const ended = seasonStatusValue(season) === "ended";
 	const remainingEl = card.querySelector("[data-season-remaining]");
 	const priceEl = card.querySelector("[data-season-price]");
+	const priceLabelEl = card.querySelector("[data-season-price-label]");
 	const coinsEl = card.querySelector("[data-season-coins]");
 	const emissionEl = card.querySelector("[data-season-emission]");
 	const pressureEl = card.querySelector("[data-season-pressure]");
-	if (remainingEl) remainingEl.innerText = formatRemaining(season.secondsRemaining || 0);
+	if (remainingEl) {
+		remainingEl.innerText = ended
+			? "Season ended — read-only."
+			: `${formatRemaining(season.secondsRemaining || 0)} remaining`;
+	}
 	if (priceEl) priceEl.innerText = `${season.currentStarPrice} coins`;
+	if (priceLabelEl) priceLabelEl.innerText = ended ? "Final star price snapshot" : "Star price";
 	if (coinsEl) coinsEl.innerText = formatCoinsInCirculationForSeason(season);
 	if (emissionEl) emissionEl.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
 	if (pressureEl) pressureEl.innerText = formatPressureValue(season.marketPressure, ended);
@@ -1710,7 +1728,7 @@ function updateSeasonActionsState(season) {
 	if (dailyBtn) dailyBtn.disabled = ended;
 	if (activityBtn) activityBtn.disabled = ended;
 	if (actionsStatus) {
-		actionsStatus.innerText = ended ? "Season ended. Read-only." : "";
+		actionsStatus.innerText = ended ? "Season ended — read-only." : "";
 	}
 	const card = document.querySelector(`[data-season-id="${season?.seasonId}"]`);
 	if (!card) return;
@@ -1946,6 +1964,10 @@ async function loadSeasons() {
 		const isThisSeasonJoined = isJoined;
 		const ended = seasonStatusValue(season) === "ended";
 		const starPrice = season.currentStarPrice;
+		const remainingLabel = ended
+			? "Season ended — read-only."
+			: `${formatRemaining(season.secondsRemaining)} remaining`;
+		const starPriceLabel = ended ? "Final star price snapshot" : "Star price";
 		updateSeasonSnapshot(season);
 
 		div.className = "card season-card";
@@ -1958,13 +1980,13 @@ async function loadSeasons() {
 			<div class="season-card-header">
 				<div>
 					<div class="label">Season 1</div>
-					<div class="stat-value"><span data-season-remaining>${formatRemaining(season.secondsRemaining)}</span> remaining</div>
+					<div class="stat-value" data-season-remaining>${remainingLabel}</div>
 				</div>
 				${season.seasonId === data.recommendedSeasonId ? '<span class="badge accent">Recommended</span>' : ''}
 			</div>
 			<div class="season-card-grid">
 				<div class="metric">
-					<div class="label">Star price</div>
+					<div class="label" data-season-price-label>${starPriceLabel}</div>
 					<div class="stat-value" data-season-price>${starPrice} coins</div>
 				</div>
 				<div class="metric">
@@ -2593,16 +2615,28 @@ function economyState(pressure) {
 	return { label: "Stable", level: "ok" };
 }
 
-function formatSeasonDay(secondsRemaining) {
-	const totalSeconds = 28 * 86400;
-	const remaining = Math.max(0, Math.min(totalSeconds, secondsRemaining || 0));
-	const elapsed = totalSeconds - remaining;
-	const day = Math.min(28, Math.max(1, Math.floor(elapsed / 86400) + 1));
-	return `${day} / 28`;
+function formatSeasonDay(season) {
+	const totalDays = typeof season?.totalDays === "number" && isFinite(season.totalDays) ? season.totalDays : null;
+	const dayIndex = typeof season?.dayIndex === "number" && isFinite(season.dayIndex) ? season.dayIndex : null;
+	if (totalDays && dayIndex) {
+		const clampedDay = Math.min(totalDays, Math.max(1, dayIndex));
+		return `${clampedDay} / ${totalDays}`;
+	}
+	return "--";
 }
 
 function seasonStatusLabelAdmin(season) {
 	return seasonStatusLabel(season);
+}
+
+function updateAdminControlVisibility(season) {
+	const ended = seasonStatusValue(season) === "ended";
+	const totalDays = typeof season?.totalDays === "number" && isFinite(season.totalDays) ? season.totalDays : null;
+	const isAlpha = totalDays !== null && totalDays <= 21;
+	const controls = Array.from(document.querySelectorAll("[data-admin-controls]"));
+	controls.forEach((el) => {
+		el.style.display = (ended || isAlpha) ? "none" : "block";
+	});
 }
 
 function formatToggleStatus(item) {
@@ -2770,7 +2804,7 @@ async function loadAdminSeasons() {
 						</div>
 						<span class="${badgeClass}">${status}</span>
 					</div>
-					<div class="label" style="margin-top:0.5rem;">Day ${formatSeasonDay(season.secondsRemaining || 0)}</div>
+					<div class="label" style="margin-top:0.5rem;">Day ${formatSeasonDay(season)}</div>
 					<div class="label">Base price ${economyData.baseStarPrice || "--"} · Effective ${season.currentStarPrice || "--"}</div>
 					<div class="label">Market pressure ${marketPressure}</div>
 					<div class="label">Emission target ${emissionTarget}</div>
@@ -2788,7 +2822,7 @@ async function loadAdminSeasons() {
 			adminSeasonDetail.style.display = "block";
 			adminSeasonMetrics.innerHTML = `
 				<div class="admin-metric"><div class="label">Season ID</div><div class="stat-value">${first.seasonId}</div></div>
-				<div class="admin-metric"><div class="label">Day</div><div class="stat-value">${formatSeasonDay(first.secondsRemaining || 0)}</div></div>
+				<div class="admin-metric"><div class="label">Day</div><div class="stat-value">${formatSeasonDay(first)}</div></div>
 				<div class="admin-metric"><div class="label">Status</div><div class="stat-value">${seasonStatusLabelAdmin(first)}</div></div>
 				<div class="admin-metric"><div class="label">Base price</div><div class="stat-value">${economyData.baseStarPrice ?? "--"}</div></div>
 				<div class="admin-metric"><div class="label">Effective price</div><div class="stat-value">${first.currentStarPrice ?? "--"}</div></div>
@@ -2796,6 +2830,7 @@ async function loadAdminSeasons() {
 				<div class="admin-metric"><div class="label">Emission state</div><div class="stat-value">${emissionTarget}</div></div>
 				<div class="admin-metric"><div class="label">Coins in circulation</div><div class="stat-value">${formatCoinsInCirculationForSeason(first)}</div></div>
 			`;
+			updateAdminControlVisibility(first);
 		}
 	} catch (e) {
 		if (adminSeasonList) adminSeasonList.innerHTML = "";
