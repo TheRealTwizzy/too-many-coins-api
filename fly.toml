@@ -1,35 +1,26 @@
-# fly.toml app configuration file generated for too-many-coins-2e--pw on 2026-02-03T22:28:43Z
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
+app = "too-many-coins-app"
 
-app = 'too-many-coins-app'
-primary_region = 'iad'
+primary_region = "ord"
 
 [build]
+  builder = "paketobuildpacks/builder:base"
 
 [env]
-  APP_ENV = "alpha"
+  PORT = "8080"
 
-[http_service]
+[[services]]
   internal_port = 8080
-  force_https = true
-  auto_stop_machines = false
-  auto_start_machines = true
-  min_machines_running = 1
-  processes = ['app']
+  protocol = "tcp"
 
-  [http_service.concurrency]
-    type = "connections"
-    soft_limit = 20
-    hard_limit = 25
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
 
-[[mounts]]
-  source = "pg_data"
-  destination = "/data"
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
 
-[[vm]]
-  memory = '1gb'
-  cpu_kind = 'shared'
-  cpus = 1
-  memory_mb = 1024
+  [services.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
