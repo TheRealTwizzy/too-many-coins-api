@@ -56,7 +56,9 @@ func refreshCoinsInWallets(db *sql.DB) {
 
 func startTickLoop(db *sql.DB) {
 	ticker := time.NewTicker(emissionTickInterval)
-	setNextEmissionTick(time.Now().UTC().Add(emissionTickInterval))
+	startTime := time.Now().UTC()
+	setNextEmissionTick(startTime.Add(emissionTickInterval))
+	updateTickHeartbeat(db, startTime)
 	refreshCoinsInWallets(db)
 
 	go func() {
@@ -64,6 +66,9 @@ func startTickLoop(db *sql.DB) {
 		for t := range ticker.C {
 			now := t.UTC()
 			setNextEmissionTick(now.Add(emissionTickInterval))
+			if !claimTick(db, now) {
+				continue
+			}
 			log.Println("Tick:", now)
 
 			if isSeasonEnded(now) {

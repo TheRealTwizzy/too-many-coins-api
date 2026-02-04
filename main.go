@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -403,7 +404,28 @@ func main() {
 		log.Fatal("Failed to ensure schema:", err)
 	}
 
-	// Economy
+	ctx := context.Background()
+	lockConn, acquired, err := acquireStartupLock(ctx, db)
+	if err != nil {
+		log.Fatal("Failed to acquire startup lock:", err)
+	}
+	if acquired {
+		startupLockConn = lockConn
+		log.Println("Startup lock acquired; running Alpha initialization")
+		if err := ensureAlphaAdmin(ctx, db); err != nil {
+			log.Fatal("Alpha admin bootstrap failed:", err)
+		}
+		if err := ensureActiveSeason(ctx, db); err != nil {
+			log.Fatal("Failed to ensure active season:", err)
+		}
+	} else {
+		log.Println("Startup lock held by another instance; skipping leader-only initialization")
+	}
+	if !acquired && lockConn != nil {
+		_ = lockConn.Close()
+	}
+
+	// Economy (safe for all instances; writes are idempotent)
 	if err := economy.load(currentSeasonID(), db); err != nil {
 		log.Fatal("Failed to load economy state:", err)
 	}
@@ -414,18 +436,20 @@ func main() {
 		log.Println("Failed to load global settings:", err)
 	}
 
-	startTickLoop(db)
-	startNotificationPruner(db)
+	if acquired {
+		startTickLoop(db)
+		startNotificationPruner(db)
 
-	// Passive drip
-	go func() {
-		ticker := time.NewTicker(time.Minute)
-		defer ticker.Stop()
+		// Passive drip
+		go func() {
+			ticker := time.NewTicker(time.Minute)
+			defer ticker.Stop()
 
-		for range ticker.C {
-			runPassiveDrip(db)
-		}
-	}()
+			for range ticker.C {
+				runPassiveDrip(db)
+			}
+		}()
+	}
 
 	// HTTP server
 	mux := http.NewServeMux()
@@ -450,7 +474,7 @@ func main() {
 
 func registerRoutes(mux *http.ServeMux, db *sql.DB, devMode bool) {
 	mux.HandleFunc("/", serveIndex)
-	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/health", healthHandler(db))
 	mux.HandleFunc("/player", playerHandler(db))
 	mux.HandleFunc("/seasons", seasonsHandler(db))
 	mux.HandleFunc("/events", eventsHandler(db))

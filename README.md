@@ -285,6 +285,25 @@ See the admin governance sections below. Admin creation is not a runtime feature
 - Bootstrap cannot be repeated without a database reset.
 - This is intentional and a security invariant.
 
+### Alpha Auto-Admin (Optional, server-only)
+
+For Alpha deployments that must bootstrap without manual ops steps, the server can create the first admin on startup.
+
+Set the following environment variables:
+
+- ALPHA_AUTO_ADMIN=true
+- ALPHA_ADMIN_USERNAME
+- ALPHA_ADMIN_PASSWORD
+- ALPHA_ADMIN_DISPLAY_NAME (optional)
+- ALPHA_ADMIN_EMAIL (optional)
+- ALPHA_ADMIN_KEY (optional; if omitted, a key is generated but not printed)
+
+Notes:
+
+- This runs only if no admin exists.
+- This is server-side only and never exposed to clients.
+- Once an admin exists, auto-bootstrap is skipped.
+
 ## Admin Management During Alpha
 
 - Additional admins are assigned via direct database updates only.
@@ -324,6 +343,24 @@ The server auto-creates schema on startup. For Fly.io:
 - Health check: /health
 
 Set DATABASE_URL and any required secrets (SMTP_* if enabling email). For manual migrations, use schema.sql.
+
+Health checks verify:
+
+- Database connectivity
+- Active season presence
+- Tick loop liveness
+
+---
+
+## Alpha Reset (ALPHA-ONLY)
+
+Use the guarded reset script to wipe the database during Alpha testing:
+
+1) Set APP_ENV=alpha
+2) Set ALPHA_RESET_CONFIRM=I_UNDERSTAND
+3) Run scripts/alpha-reset.sh
+
+The script drops the public schema, re-applies schema.sql, and is intentionally gated to prevent accidental use in production.
 
 ---
 

@@ -45,9 +45,52 @@ func serveIndex(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(html))
 }
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ok"))
+func healthHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		if err := db.PingContext(ctx); err != nil {
+			http.Error(w, "db_unreachable", http.StatusServiceUnavailable)
+			return
+		}
+
+		var seasonExists bool
+		if err := db.QueryRowContext(ctx, `
+			SELECT EXISTS (
+				SELECT 1
+				FROM season_economy
+				WHERE season_id = $1
+			)
+		`, currentSeasonID()).Scan(&seasonExists); err != nil || !seasonExists {
+			http.Error(w, "season_missing", http.StatusServiceUnavailable)
+			return
+		}
+
+		var calibrationExists bool
+		if err := db.QueryRowContext(ctx, `
+			SELECT EXISTS (
+				SELECT 1
+				FROM season_calibration
+				WHERE season_id = $1
+			)
+		`, currentSeasonID()).Scan(&calibrationExists); err != nil || !calibrationExists {
+			http.Error(w, "season_calibration_missing", http.StatusServiceUnavailable)
+			return
+		}
+
+		heartbeat, err := readTickHeartbeat(ctx, db)
+		if err != nil {
+			http.Error(w, "tick_missing", http.StatusServiceUnavailable)
+			return
+		}
+		maxAge := emissionTickInterval*2 + 10*time.Second
+		if time.Since(heartbeat) > maxAge {
+			http.Error(w, "tick_stale", http.StatusServiceUnavailable)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	}
 }
 
 func requireSession(db *sql.DB, w http.ResponseWriter, r *http.Request) (*Account, bool) {
