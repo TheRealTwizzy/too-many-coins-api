@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -11,6 +12,9 @@ import (
 
 	_ "github.com/lib/pq"
 )
+
+//go:embed public/*
+var content embed.FS
 
 /* ======================
    Request / Response Types
@@ -480,7 +484,7 @@ func main() {
    ====================== */
 
 func registerRoutes(mux *http.ServeMux, db *sql.DB) {
-	mux.Handle("/", http.FileServer(http.Dir("public")))
+	mux.Handle("/", http.FileServer(http.FS(content)))
 	mux.HandleFunc("/health", healthHandler(db))
 	mux.HandleFunc("/player", playerHandler(db))
 	mux.HandleFunc("/seasons", seasonsHandler(db))
