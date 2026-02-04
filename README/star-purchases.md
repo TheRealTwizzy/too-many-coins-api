@@ -37,6 +37,11 @@ Warn players when purchases are highly inefficient
 
 Require explicit confirmation
 
+Alpha verification:
+
+- Server recomputes the bulk quote at purchase time; price and balance are re‑checked before commit.
+- Bulk warnings are derived from the max bulk multiplier (medium/high/severe thresholds).
+
 Star purchases:
 
 Must be atomic

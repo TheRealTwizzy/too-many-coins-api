@@ -20,7 +20,7 @@ Season Dashboard:
 
 Primary gameplay page.
 
-Displays coin balance, star balance, and current star price.
+Displays coin balance, star balance, current star price, time remaining, coins in circulation, market pressure, and next emission cadence.
 
 Provides actions to earn coins and buy stars.
 

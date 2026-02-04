@@ -42,12 +42,47 @@ Abuse/Access:
 - Rate‑limited signup/login counts
 - Account cooldown rejections
 
+## Calibration Workflow (Alpha)
+
+1) Collect at least 48–72 hours of telemetry under normal play.
+2) Review emission_tick and faucet_claim rates for smooth throttling (no abrupt stalls).
+3) Compare star_purchase_attempt vs star_purchase_success rates; flag sustained affordability failures.
+4) Check market_pressure_tick trends for stability and bounded change per hour.
+5) Adjust calibration inputs only with telemetry evidence; no blind tuning.
+6) Re-run a short validation window after any change and compare deltas.
+
+## Append‑Only Economic Logs (Alpha)
+
+The following logs are append‑only in the database:
+
+- coin_earning_log
+- star_purchase_log
+- abuse_events
+- admin_audit_log
+
+Queryability (Alpha):
+
+- Admin UI exposes the star purchase log and admin audit log.
+- Abuse events are visible in admin/moderator views.
+- Coin earning history is stored in DB but not exposed in the admin UI (post‑alpha view).
+
 ## Telemetry Events (Current Build)
 
 - buy_star
 - login
 
 Alpha note: emission pool levels/per‑tick emissions, market pressure per‑tick events, faucet claim events, and star purchase attempt/success events are now emitted.
+
+## Telemetry Sufficiency (Alpha)
+
+Required calibration inputs and current sources:
+
+- Emission pacing: `emission_tick` (emitted, pool levels + per‑tick emissions).
+- Faucet pacing and caps: `faucet_claim` (emitted, includes remaining cap context).
+- Pricing curves: `star_purchase_attempt` + `star_purchase_success` (emitted, includes price snapshots and quantities).
+- Market pressure: `market_pressure_tick` (emitted, includes current/target pressure and rate limit).
+
+Conclusion: telemetry is sufficient to calibrate emission, caps, price curves, and pressure without client trust.
 
 ## Test Window
 

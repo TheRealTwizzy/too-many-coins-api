@@ -38,5 +38,7 @@ Market pressure is applied multiplicatively to star prices.
 Brokered trading always contributes to market pressure, never relieves it.
 
 Alpha note: trading is disabled; market pressure is derived from star purchases only.
+Alpha verification: no trade inputs are wired in Alpha; only star_purchase_log is used.
+Alpha verification: market pressure is included in SSE snapshots and the UI binds to it; per-tick rate limiting enforces stability under bursts.
 
 Market pressure must be resistant to day-one coordinated activity and bot-driven bursts.

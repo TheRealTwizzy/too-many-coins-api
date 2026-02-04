@@ -156,6 +156,8 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 			CoinsInCirculation    int64   `json:"coinsInCirculation"`
 			CoinEmissionPerMinute float64 `json:"coinEmissionPerMinute"`
 			CurrentStarPrice      int     `json:"currentStarPrice"`
+			MarketPressure        float64 `json:"marketPressure"`
+			NextEmissionInSeconds int64   `json:"nextEmissionInSeconds"`
 		}
 
 		now := time.Now().UTC()
@@ -175,6 +177,8 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 			CoinsInCirculation:    coins,
 			CoinEmissionPerMinute: emission,
 			CurrentStarPrice:      currentPrice,
+			MarketPressure:        economy.MarketPressure(),
+			NextEmissionInSeconds: nextEmissionSeconds(now),
 		}}
 
 		json.NewEncoder(w).Encode(map[string]interface{}{

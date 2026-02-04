@@ -24,6 +24,9 @@ Economy monitoring (per season):
 Telemetry (current build):
 
 - Event counts per hour by type (from player telemetry stream).
+- Notification emit events are logged for observability.
+- Emitted event types include: emission_tick, market_pressure_tick, faucet_claim, star_purchase_attempt, star_purchase_success, notification_emitted.
+- Admin UI remains read‑only and currently exposes counts, not full raw payloads.
 
 Player inspection (read‑only):
 

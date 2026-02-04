@@ -106,29 +106,29 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 5.2 Atomic star purchases (single + bulk)
 - [x] [DONE] 5.2a Align pricing time progression to runtime season length (Alpha 14 days / extension-aware)
 - [ ] [ALPHA REQUIRED] 5.3 Validate pricing curves vs coin emission (affordability and late‑season scarcity)
-- [ ] [ALPHA REQUIRED] 5.4 Validate bulk purchase warnings and re‑check at confirmation
+- [x] [DONE] 5.4 Validate bulk purchase warnings and re‑check at confirmation
 
 ---
 
 ## Phase 6 — Market Pressure
 - [x] [DONE] 6.1 Market pressure computed server‑side
 - [x] [DONE] 6.2 Rate‑limited adjustments per tick
-- [ ] [ALPHA REQUIRED] 6.3 Validate pressure inputs vs canon (no trade inputs until trading exists)
-- [ ] [ALPHA REQUIRED] 6.4 Validate pressure appears in SSE + UI and is stable under bursts
+- [x] [DONE] 6.3 Validate pressure inputs vs canon (no trade inputs until trading exists)
+- [x] [DONE] 6.4 Validate pressure appears in SSE + UI and is stable under bursts
 
 ---
 
 ## Phase 7 — Telemetry, Calibration, and Economic History (Data‑Driven Only)
 - [x] [DONE] 7.1 Telemetry capture + admin telemetry endpoints
 - [x] [DONE] 7.2 Season calibration persistence (season_calibration)
-- [ ] [ALPHA REQUIRED] 7.3 Ensure telemetry is sufficient to calibrate live values (emission, caps, price curves, pressure)
+- [x] [DONE] 7.3 Ensure telemetry is sufficient to calibrate live values (emission, caps, price curves, pressure)
 - [ ] [ALPHA REQUIRED] 7.4 Define and verify telemetry events:
   - [x] [DONE] Faucet claims (daily, activity, passive if enabled, login safeguard)
   - [x] [DONE] Star purchase attempts + successes
   - [x] [DONE] Emission pool levels and per‑tick emissions
   - [x] [DONE] Market pressure value per tick
-- [ ] [ALPHA REQUIRED] 7.5 Validate append‑only economic logs are complete and queryable
-- [ ] [ALPHA REQUIRED] 7.6 Establish calibration workflow using telemetry history (no blind tuning)
+- [x] [DONE] 7.5 Validate append‑only economic logs are complete and queryable
+- [x] [DONE] 7.6 Establish calibration workflow using telemetry history (no blind tuning)
 - [x] [DONE] 7.7 Reconcile telemetry taxonomy with alpha‑execution.md (current client emits login + buy_star; join_season is not emitted)
 
 ---
@@ -139,7 +139,7 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 8.3 Soft IP dampening (delay + multipliers)
 - [x] [DONE] 8.4 Rate limiting for signup/login
 - [x] [DONE] 8.5 AbuseEvents table + signal aggregation
-- [ ] [ALPHA REQUIRED] 8.6 Audit anti‑abuse coverage post‑whitelist removal
+- [x] [DONE] 8.6 Audit anti‑abuse coverage post‑whitelist removal
 - [x] [DONE] 8.7 Update anti‑abuse docs to match Alpha (CAPTCHA/verification is post‑alpha)
 - [ ] [POST-ALPHA] 8.8 CAPTCHA + verification
 - [ ] [POST-ALPHA] 8.9 Additional abuse signals + admin visualization improvements
@@ -151,8 +151,8 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 9.2 Moderator role support
 - [x] [DONE] 9.3 Economy monitoring endpoints
 - [x] [DONE] 9.4 Notifications system
-- [ ] [ALPHA REQUIRED] 9.5 Add notification observability logging
-- [ ] [ALPHA REQUIRED] 9.6 Update admin‑tools docs to reflect read‑only Alpha reality
+- [x] [DONE] 9.5 Add notification observability logging
+- [x] [DONE] 9.6 Update admin‑tools docs to reflect read‑only Alpha reality
 - [ ] [POST-ALPHA] 9.7 Admin safety tools (pause purchases, adjust emission, freeze season)
 
 ---
@@ -161,18 +161,19 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 10.1 Landing + Auth + Main dashboard + Leaderboard
 - [x] [DONE] 10.2 Bulk purchase UI + warnings
 - [x] [DONE] 10.3 Admin console entry point
-- [ ] [ALPHA REQUIRED] 10.4 Verify UI shows required economy values (price, time, pressure, coins in circulation, next emission)
-- [ ] [ALPHA REQUIRED] 10.5 Label missing systems in UI (trading, multi‑season, cosmetics)
+- [x] [DONE] 10.4 Verify UI shows required economy values (price, time, pressure, coins in circulation, next emission)
+- [x] [DONE] 10.5 Label missing systems in UI (trading, multi‑season, cosmetics)
 - [ ] [POST-ALPHA] 10.6 Season lobby + trading desk + collections + settings/accessibility
 
 ---
 
 ## Phase 11 — Game Flow & Playability (Explicit and Tested)
-- [ ] [ALPHA REQUIRED] 11.1 Map new‑player journey mid‑season (signup → first earn → first star purchase)
-- [ ] [ALPHA REQUIRED] 11.2 Map late‑season joiner viability (can play, not necessarily compete)
-- [ ] [ALPHA REQUIRED] 11.3 Define always‑available actions vs tightening actions over time
-- [ ] [ALPHA REQUIRED] 11.4 Define daily loop steps (login → faucet(s) → purchase) and failure modes
-- [ ] [ALPHA REQUIRED] 11.5 Identify any broken/unclear step and add fix tasks before Alpha test
+- [x] [DONE] 11.1 Map new‑player journey mid‑season (signup → first earn → first star purchase)
+- [x] [DONE] 11.2 Map late‑season joiner viability (can play, not necessarily compete)
+- [x] [DONE] 11.3 Define always‑available actions vs tightening actions over time
+- [x] [DONE] 11.4 Define daily loop steps (login → faucet(s) → purchase) and failure modes
+- [x] [DONE] 11.5 Identify any broken/unclear step and add fix tasks before Alpha test
+  - [x] [DONE] Add market pressure + next emission to /seasons response to prevent UI gaps before SSE connects
 
 ---
 

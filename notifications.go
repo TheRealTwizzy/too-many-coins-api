@@ -287,7 +287,30 @@ func insertNotification(db *sql.DB, input NotificationInput) error {
 		ackRequired,
 		nullableString(strings.TrimSpace(input.DedupKey)),
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if featureFlags.Telemetry {
+		accountID := strings.TrimSpace(input.RecipientAccountID)
+		var accountPtr *string
+		if accountID != "" {
+			accountPtr = &accountID
+		}
+		emitServerTelemetry(db, accountPtr, "", "notification_emitted", map[string]interface{}{
+			"seasonId":         strings.TrimSpace(input.SeasonID),
+			"category":         category,
+			"type":             strings.TrimSpace(input.Type),
+			"priority":         priority,
+			"recipientRole":    role,
+			"targetRole":       legacyRole,
+			"ackRequired":      ackRequired,
+			"hasPayload":       len(payload) > 0,
+			"dedupeKeyPresent": strings.TrimSpace(input.DedupKey) != "",
+		})
+	}
+
+	return nil
 }
 
 func fetchNotifications(db *sql.DB, accountID string, accountRole string, afterID int64, limit int, ascending bool) ([]NotificationItem, error) {

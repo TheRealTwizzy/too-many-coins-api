@@ -50,3 +50,25 @@ Throttles are gradual and reversible.
 The goal is to make abuse economically ineffective, not to punish publicly.
 
 All abuse decisions and throttles are enforced server-side.
+
+---
+
+## Alpha Audit — Post‑Whitelist Removal
+
+Implemented (confirmed in code):
+
+- Whitelisting removed; alpha relies on throttles only.
+- Auth rate limits for signup/login (IP‑based windows).
+- New‑account cooldown before sensitive actions (account age gate).
+- IP association tracking and dampening (delay + reward/price multipliers when multiple accounts share an IP).
+- Abuse scoring with throttles (earn multiplier, price multiplier, bulk max, cooldown jitter) driven by detected signals.
+- Abuse signals include purchase bursts, regular purchase cadence, activity cadence, tick‑reaction patterns, and IP clustering.
+- Abuse events are logged and emit moderator/admin notifications.
+- Bot star‑purchase rate limit enforced via minimum interval.
+
+Gaps / Alpha‑known limitations:
+
+- No explicit hard per‑IP star purchase limit beyond IP dampening and abuse scoring.
+- No explicit per‑player star purchase rate limit beyond abuse scoring and bot interval limits.
+- CAPTCHA and verification remain post‑alpha.
+- Trade‑specific abuse detection is inactive while trading is disabled.
