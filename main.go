@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -433,6 +434,14 @@ func main() {
 	// Schema (all environments)
 	if err := ensureSchema(db); err != nil {
 		log.Fatal("Failed to ensure schema:", err)
+	}
+	if strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV"))) == "alpha" {
+		if phase, ok := parsePhaseFromEnv("PHASE"); ok && phase != PhaseAlpha {
+			log.Fatal("PHASE conflicts with APP_ENV=alpha; refusing to start")
+		}
+		if seasonLength() > time.Duration(alphaSeasonMaxDays)*24*time.Hour {
+			log.Fatal("Alpha season length exceeds max days; refusing to start")
+		}
 	}
 
 	ctx := context.Background()

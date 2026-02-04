@@ -3,24 +3,28 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 )
 
 type liveSeasonSnapshot struct {
-	SeasonID              string   `json:"seasonId"`
-	Status                string   `json:"status"`
-	SeasonStatus          string   `json:"season_status"`
-	SeasonStartTime       string   `json:"seasonStartTime"`
-	SeasonEndTime         string   `json:"seasonEndTime"`
-	DayIndex              int      `json:"dayIndex"`
-	TotalDays             int      `json:"totalDays"`
-	SecondsRemaining      int64    `json:"secondsRemaining"`
-	CoinsInCirculation    int64    `json:"coinsInCirculation"`
-	CoinEmissionPerMinute *float64 `json:"coinEmissionPerMinute,omitempty"`
-	CurrentStarPrice      int      `json:"currentStarPrice"`
-	NextEmissionInSeconds *int64   `json:"nextEmissionInSeconds,omitempty"`
-	MarketPressure        *float64 `json:"marketPressure,omitempty"`
+	SeasonID                string   `json:"seasonId"`
+	Status                  string   `json:"status"`
+	SeasonStatus            string   `json:"season_status"`
+	SeasonStartTime         string   `json:"seasonStartTime"`
+	SeasonEndTime           string   `json:"seasonEndTime"`
+	DayIndex                int      `json:"dayIndex"`
+	TotalDays               int      `json:"totalDays"`
+	SecondsRemaining        int64    `json:"secondsRemaining"`
+	CoinsInCirculation      *int64   `json:"coinsInCirculation,omitempty"`
+	CoinEmissionPerMinute   *float64 `json:"coinEmissionPerMinute,omitempty"`
+	CurrentStarPrice        *int     `json:"currentStarPrice,omitempty"`
+	NextEmissionInSeconds   *int64   `json:"nextEmissionInSeconds,omitempty"`
+	MarketPressure          *float64 `json:"marketPressure,omitempty"`
+	FinalStarPrice          *int     `json:"finalStarPrice,omitempty"`
+	FinalCoinsInCirculation *int64   `json:"finalCoinsInCirculation,omitempty"`
+	EndedAt                 *string  `json:"endedAt,omitempty"`
 }
 
 type liveSnapshot struct {
@@ -54,9 +58,18 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 	if dayIndex > totalDays {
 		dayIndex = totalDays
 	}
+	if ended {
+		remaining = 0
+		dayIndex = totalDays
+	}
 	var emission *float64
 	var marketPressure *float64
 	var nextEmission *int64
+	var currentPrice *int
+	var liveCoins *int64
+	var finalPrice *int
+	var finalCoins *int64
+	var endedAt *string
 	if !ended {
 		value := economy.EffectiveEmissionPerMinute(remaining, activeCoins)
 		emission = &value
@@ -64,30 +77,66 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 		marketPressure = &pressure
 		next := nextEmissionSeconds(now)
 		nextEmission = &next
+		price := ComputeStarPrice(coins, remaining)
+		currentPrice = &price
+		liveCoins = &coins
+	} else {
+		var snapshotEnded time.Time
+		var snapshotCoins int64
+		var snapshotStars int64
+		var snapshotDistributed int64
+		err := db.QueryRow(`
+			SELECT ended_at, coins_in_circulation, stars_purchased, coins_distributed
+			FROM season_end_snapshots
+			WHERE season_id = $1
+		`, currentSeasonID()).Scan(&snapshotEnded, &snapshotCoins, &snapshotStars, &snapshotDistributed)
+		if err == sql.ErrNoRows {
+			liveCoinsValue, liveStarsValue, _ := economy.Snapshot()
+			snapshotEnded = now
+			snapshotCoins = liveCoinsValue
+			snapshotStars = int64(liveStarsValue)
+		} else if err != nil {
+			log.Println("season snapshot query failed:", err)
+		} else {
+			_ = snapshotDistributed
+		}
+		params := economy.Calibration()
+		pressure := economy.MarketPressure()
+		final := ComputeStarPriceRawWithActive(params, int(snapshotStars), snapshotCoins, activeCoins, economy.ActivePlayers(), 0, pressure)
+		finalPrice = &final
+		finalCoins = &snapshotCoins
+		endedValue := snapshotEnded.UTC().Format(time.RFC3339)
+		endedAt = &endedValue
 	}
 
 	snapshot := liveSnapshot{
 		ServerTime: now.Format(time.RFC3339),
 		Season: liveSeasonSnapshot{
-			SeasonID:              currentSeasonID(),
-			Status:                status,
-			SeasonStatus:          status,
-			SeasonStartTime:       startTime.Format(time.RFC3339),
-			SeasonEndTime:         endTime.Format(time.RFC3339),
-			DayIndex:              dayIndex,
-			TotalDays:             totalDays,
-			SecondsRemaining:      remaining,
-			CoinsInCirculation:    coins,
-			CoinEmissionPerMinute: emission,
-			CurrentStarPrice:      ComputeStarPrice(coins, remaining),
-			NextEmissionInSeconds: nextEmission,
-			MarketPressure:        marketPressure,
+			SeasonID:                currentSeasonID(),
+			Status:                  status,
+			SeasonStatus:            status,
+			SeasonStartTime:         startTime.Format(time.RFC3339),
+			SeasonEndTime:           endTime.Format(time.RFC3339),
+			DayIndex:                dayIndex,
+			TotalDays:               totalDays,
+			SecondsRemaining:        remaining,
+			CoinsInCirculation:      liveCoins,
+			CoinEmissionPerMinute:   emission,
+			CurrentStarPrice:        currentPrice,
+			NextEmissionInSeconds:   nextEmission,
+			MarketPressure:          marketPressure,
+			FinalStarPrice:          finalPrice,
+			FinalCoinsInCirculation: finalCoins,
+			EndedAt:                 endedAt,
 		},
 	}
 
 	if account, _, err := getSessionAccount(db, r); err == nil && account != nil {
 		snapshot.Authenticated = true
-		snapshot.Season.CurrentStarPrice = computePlayerStarPrice(db, account.PlayerID, coins, remaining)
+		if snapshot.Season.CurrentStarPrice != nil {
+			price := computePlayerStarPrice(db, account.PlayerID, coins, remaining)
+			snapshot.Season.CurrentStarPrice = &price
+		}
 		if player, err := LoadPlayer(db, account.PlayerID); err == nil && player != nil {
 			snapshot.PlayerCoins = player.Coins
 			snapshot.PlayerStars = player.Stars

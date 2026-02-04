@@ -61,6 +61,7 @@ At season end (Alpha):
 - Economy actions are frozen (no earning, no purchases).
 - Clients display a single terminal state: **Ended** (no “Ending” state exposed).
 - Live economy rates (emission, inflation/pressure cadence) are hidden; UI shows a frozen/final snapshot marker instead.
+- Ended seasons expose final snapshot fields only (final star price, final coins in circulation, ended at).
 
 ---
 

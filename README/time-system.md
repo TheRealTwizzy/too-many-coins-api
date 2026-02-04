@@ -42,6 +42,12 @@ Server-authoritative time fields must be provided to clients, including:
 - total days (phase-bound)
 - remaining seconds (0 when ended)
 
+Ended invariants (mandatory):
+
+- `status = ended` implies `remaining_seconds = 0`.
+- `day_index = total_days`.
+- Live economy fields are omitted; only final snapshot fields are provided.
+
 Clients must render these values directly and must not infer total days or day index locally.
 
 Pricing curves, coin budgets, and caps are based on the derived season day.

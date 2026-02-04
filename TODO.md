@@ -182,6 +182,7 @@ Allowed to be rough or missing in Alpha:
 ## Phase 12 — Season End, Rewards, and Between‑Season Progression
 - [x] [DONE] 12.1 End‑of‑season snapshot and economy freeze
 - [x] [DONE] 12.1a Expose a single terminal season state to clients (Ended only; “Ending” internal)
+- [x] [DONE] 12.1b Season lifecycle integrity: Alpha length guardrails + ended invariants + final snapshot fields
 - [ ] [POST-ALPHA] 12.2 Reward granting (badges + titles + recognition)
 - [ ] [POST-ALPHA] 12.3 Persistent progression + season history + return incentives
 

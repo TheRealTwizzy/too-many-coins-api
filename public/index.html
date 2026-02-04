@@ -1626,8 +1626,11 @@ function formatNextEmissionValue(value, ended) {
 
 function formatCoinsInCirculationForSeason(season) {
 	const ended = seasonStatusValue(season) === "ended";
-	const count = typeof season?.coinsInCirculation === "number" && isFinite(season.coinsInCirculation)
-		? season.coinsInCirculation
+	const rawCoins = ended && typeof season?.finalCoinsInCirculation === "number"
+		? season.finalCoinsInCirculation
+		: season?.coinsInCirculation;
+	const count = typeof rawCoins === "number" && isFinite(rawCoins)
+		? rawCoins
 		: null;
 	if (ended) {
 		return count === null ? "Final snapshot recorded" : `Final snapshot: ${count} coins`;
@@ -1669,17 +1672,23 @@ function updateSeasonSnapshot(season) {
 	if (!season) return;
 	currentSeasonSnapshot = season;
 	const ended = seasonStatusValue(season) === "ended";
+	const starPriceValue = ended && typeof season.finalStarPrice === "number"
+		? season.finalStarPrice
+		: season.currentStarPrice;
+	const coinsValue = ended && typeof season.finalCoinsInCirculation === "number"
+		? season.finalCoinsInCirculation
+		: season.coinsInCirculation;
 	if (seasonTitle) seasonTitle.innerText = "Season 1";
 	if (seasonRemaining) seasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
-	if (seasonStarPrice) seasonStarPrice.innerText = `${season.currentStarPrice} coins`;
-	if (seasonCoins) seasonCoins.innerText = formatCoinsInCirculationForSeason(season);
+	if (seasonStarPrice) seasonStarPrice.innerText = typeof starPriceValue === "number" ? `${starPriceValue} coins` : "--";
+	if (seasonCoins) seasonCoins.innerText = formatCoinsInCirculationForSeason({ ...season, coinsInCirculation: coinsValue });
 	if (seasonEmission) seasonEmission.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
 	if (seasonPressure) seasonPressure.innerText = formatPressureValue(season.marketPressure, ended);
 	if (seasonNextEmission) seasonNextEmission.innerText = formatNextEmissionValue(season.nextEmissionInSeconds, ended);
 	if (seasonScarcityMessage) seasonScarcityMessage.innerText = scarcityMessage(season.secondsRemaining || 0);
 	if (heroSeasonId) heroSeasonId.innerText = "Season 1";
 	if (heroSeasonRemaining) heroSeasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
-	if (heroStarPrice) heroStarPrice.innerText = `${season.currentStarPrice} coins`;
+	if (heroStarPrice) heroStarPrice.innerText = typeof starPriceValue === "number" ? `${starPriceValue} coins` : "--";
 	if (heroInflation) heroInflation.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
 	if (heroPressure) heroPressure.innerText = formatPressureValue(season.marketPressure, ended);
 	if (seasonStatus) {
@@ -1702,6 +1711,12 @@ function updateSeasonCard(season) {
 	const card = document.querySelector(`[data-season-id="${season.seasonId}"]`);
 	if (!card) return;
 	const ended = seasonStatusValue(season) === "ended";
+	const starPriceValue = ended && typeof season.finalStarPrice === "number"
+		? season.finalStarPrice
+		: season.currentStarPrice;
+	const coinsValue = ended && typeof season.finalCoinsInCirculation === "number"
+		? season.finalCoinsInCirculation
+		: season.coinsInCirculation;
 	const remainingEl = card.querySelector("[data-season-remaining]");
 	const priceEl = card.querySelector("[data-season-price]");
 	const priceLabelEl = card.querySelector("[data-season-price-label]");
@@ -1713,9 +1728,9 @@ function updateSeasonCard(season) {
 			? "Season ended — read-only."
 			: `${formatRemaining(season.secondsRemaining || 0)} remaining`;
 	}
-	if (priceEl) priceEl.innerText = `${season.currentStarPrice} coins`;
+	if (priceEl) priceEl.innerText = typeof starPriceValue === "number" ? `${starPriceValue} coins` : "--";
 	if (priceLabelEl) priceLabelEl.innerText = ended ? "Final star price snapshot" : "Star price";
-	if (coinsEl) coinsEl.innerText = formatCoinsInCirculationForSeason(season);
+	if (coinsEl) coinsEl.innerText = formatCoinsInCirculationForSeason({ ...season, coinsInCirculation: coinsValue });
 	if (emissionEl) emissionEl.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
 	if (pressureEl) pressureEl.innerText = formatPressureValue(season.marketPressure, ended);
 	updateSeasonActionsState(season);
@@ -1963,7 +1978,9 @@ async function loadSeasons() {
 		const isJoined = Boolean(currentUser);
 		const isThisSeasonJoined = isJoined;
 		const ended = seasonStatusValue(season) === "ended";
-		const starPrice = season.currentStarPrice;
+		const starPrice = ended && typeof season.finalStarPrice === "number"
+			? season.finalStarPrice
+			: season.currentStarPrice;
 		const remainingLabel = ended
 			? "Season ended — read-only."
 			: `${formatRemaining(season.secondsRemaining)} remaining`;
