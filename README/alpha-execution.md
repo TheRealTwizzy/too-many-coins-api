@@ -47,7 +47,7 @@ Abuse/Access:
 - buy_star
 - login
 
-Alpha note: emission pool levels/per‑tick emissions, market pressure per‑tick events, and faucet claim events are now emitted.
+Alpha note: emission pool levels/per‑tick emissions, market pressure per‑tick events, faucet claim events, and star purchase attempt/success events are now emitted.
 
 ## Test Window
 

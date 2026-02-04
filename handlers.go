@@ -293,6 +293,19 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		purchaseType := "base"
+		if quantity > 1 {
+			purchaseType = "bulk"
+		}
+		emitServerTelemetry(db, &account.AccountID, playerID, "star_purchase_attempt", map[string]interface{}{
+			"seasonId":        currentSeasonID(),
+			"quantity":        quantity,
+			"purchaseType":    purchaseType,
+			"totalCoinsSpent": quote.TotalCoinsSpent,
+			"finalStarPrice":  quote.FinalStarPrice,
+			"maxQty":          maxQty,
+		})
+
 		tx, err := db.BeginTx(r.Context(), nil)
 		if err != nil {
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -348,7 +361,7 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		purchaseType := "base"
+		purchaseType = "base"
 		if quantity > 1 {
 			purchaseType = "bulk"
 		}
@@ -382,6 +395,17 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
+		emitServerTelemetry(db, &account.AccountID, playerID, "star_purchase_success", map[string]interface{}{
+			"seasonId":        currentSeasonID(),
+			"quantity":        quantity,
+			"purchaseType":    purchaseType,
+			"totalCoinsSpent": quote.TotalCoinsSpent,
+			"finalStarPrice":  quote.FinalStarPrice,
+			"coinsBefore":     coinsBefore,
+			"coinsAfter":      coinsAfter,
+			"starsBefore":     starsBefore,
+			"starsAfter":      starsAfter,
+		})
 		for i := 0; i < quantity; i++ {
 			economy.IncrementStars()
 		}
