@@ -36,9 +36,9 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 0.2 Resolve passive drip contradiction (code runs drip; canon says post‑alpha)
   - [x] [DONE] Decide Alpha stance: disable drip via global_settings.drip_enabled default false OR update canon to allow drip
   - [x] [DONE] Document operational default for alpha (global_settings + runtime log confirms drip disabled/enabled)
-- [ ] [ALPHA REQUIRED] 0.3 Resolve admin‑tools overreach (docs list views not present in admin endpoints/UI)
-  - [ ] [ALPHA REQUIRED] Audit Alpha admin UI/endpoints vs docs (coin budget remaining, coin earning history, trust/throttle status, IP clustering detail)
-  - [ ] [ALPHA REQUIRED] Mark missing views as post‑alpha or add explicit implementation tasks
+- [x] [DONE] 0.3 Resolve admin‑tools overreach (docs list views not present in admin endpoints/UI)
+  - [x] [DONE] Audit Alpha admin UI/endpoints vs docs (coin budget remaining, coin earning history, trust/throttle status, IP clustering detail)
+  - [x] [DONE] Mark missing views as post‑alpha or add explicit implementation tasks
 - [x] [DONE] 0.4 Resolve anti‑abuse doc vs code (CAPTCHA/verification claimed but not implemented)
   - [x] [DONE] Docs already label CAPTCHA/verification as post‑alpha
 - [x] [DONE] 0.5 Resolve persistent‑state doc vs schema (seasons/player‑season tables not present)

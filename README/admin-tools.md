@@ -6,53 +6,49 @@ Required admin capabilities are split by phase. Alpha is read‑only.
 
 Alpha (read‑only, current build):
 
-Season monitoring:
+Implemented (Alpha):
 
-View the active season and its current day.
+Season monitoring (single season):
 
-View season status (active, ending, ended).
+- Active season status (active vs ended).
+- Season time remaining (via season snapshot).
 
 Economy monitoring (per season):
 
-Current base star price.
+- Current base star price.
+- Current effective star price.
+- Current market pressure.
+- Daily emission target.
+- Daily cap early/late.
 
-Current market pressure.
+Telemetry (current build):
 
-Current effective star price.
-
-Global coin budget remaining for the day.
-
-Coin emission rate and throttling state.
-
-Flow metrics (if available in telemetry):
-
-Coins emitted per hour.
-
-Coins earned per hour.
-
-Stars purchased per hour.
-
-Average star price over time.
+- Event counts per hour by type (from player telemetry stream).
 
 Player inspection (read‑only):
 
-View individual player season state.
-
-View coin and star balances.
-
-View purchase history.
-
-View coin earning history.
-
-View trust and throttle status.
+- Player search by username/account/player ID.
+- Trust status and flag count.
 
 Abuse monitoring (read‑only):
 
-View recent abuse events.
+- Recent abuse events list.
+- Anti‑cheat toggle status (visibility only; not configurable).
 
-View IP-based clustering signals.
+Auditability (read‑only):
 
-View throttles currently applied.
+- Star purchase log.
+- Admin audit log.
+
+Not yet in Alpha (post‑alpha or pending implementation):
+
+- Global coin budget remaining for the day.
+- Coin emission rate and throttling state details.
+- Coins emitted per hour, coins earned per hour, and average star price over time (beyond event counts).
+- Per‑player coin earning history view.
+- Per‑player coin and star balance detail view (beyond search results).
+- Throttle status per player.
+- IP clustering detail views beyond aggregate signals.
 
 Post‑Alpha (planned):
 
