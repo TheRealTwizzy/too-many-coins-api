@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -25,28 +26,21 @@ type BotConfig struct {
 
 type BotState struct {
 	Config        BotConfig
-	AccessToken   string
-	RefreshToken  string
-	AccessExpiry  time.Time
 	ActionsTaken  int
 	ActionsToday  int
 	LastActionDay int
 }
 
 type AuthResponse struct {
-	OK           bool   `json:"ok"`
-	Error        string `json:"error,omitempty"`
-	AccessToken  string `json:"accessToken,omitempty"`
-	RefreshToken string `json:"refreshToken,omitempty"`
-	ExpiresIn    int64  `json:"expiresIn,omitempty"`
-}
-
-type RefreshResponse struct {
-	OK           bool   `json:"ok"`
-	Error        string `json:"error,omitempty"`
-	AccessToken  string `json:"accessToken,omitempty"`
-	RefreshToken string `json:"refreshToken,omitempty"`
-	ExpiresIn    int64  `json:"expiresIn,omitempty"`
+	OK                 bool   `json:"ok"`
+	Error              string `json:"error,omitempty"`
+	Username           string `json:"username,omitempty"`
+	DisplayName        string `json:"displayName,omitempty"`
+	PlayerID           string `json:"playerId,omitempty"`
+	IsAdmin            bool   `json:"isAdmin,omitempty"`
+	IsModerator        bool   `json:"isModerator,omitempty"`
+	Role               string `json:"role,omitempty"`
+	MustChangePassword bool   `json:"mustChangePassword,omitempty"`
 }
 
 type SeasonsResponse struct {
@@ -107,8 +101,6 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	shuffle(states)
 
-	client := &http.Client{Timeout: 15 * time.Second}
-
 	for _, bot := range states {
 		if bot.ActionsTaken >= maxActions {
 			continue
@@ -120,6 +112,12 @@ func main() {
 			continue
 		}
 
+		jar, err := cookiejar.New(nil)
+		if err != nil {
+			logError(fmt.Sprintf("cookie jar init failed for %s: %v", bot.Config.Username, err))
+			continue
+		}
+		client := &http.Client{Timeout: 15 * time.Second, Jar: jar}
 		if err := ensureAuth(client, baseURL, bot); err != nil {
 			logError(fmt.Sprintf("auth failed for %s: %v", bot.Config.Username, err))
 			continue
@@ -186,14 +184,6 @@ func loadBots() ([]BotConfig, error) {
 }
 
 func ensureAuth(client *http.Client, baseURL string, bot *BotState) error {
-	if bot.AccessToken != "" && time.Until(bot.AccessExpiry) > 2*time.Minute {
-		return nil
-	}
-	if bot.RefreshToken != "" {
-		if err := refreshAccessToken(client, baseURL, bot); err == nil {
-			return nil
-		}
-	}
 	return login(client, baseURL, bot)
 }
 
@@ -216,38 +206,7 @@ func login(client *http.Client, baseURL string, bot *BotState) error {
 	if !response.OK {
 		return errors.New(response.Error)
 	}
-
-	applyTokens(bot, response.AccessToken, response.RefreshToken, response.ExpiresIn)
 	return nil
-}
-
-func refreshAccessToken(client *http.Client, baseURL string, bot *BotState) error {
-	payload := map[string]string{"refreshToken": bot.RefreshToken}
-	body, _ := json.Marshal(payload)
-	res, err := client.Post(baseURL+"/auth/refresh", "application/json", bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-
-	var response RefreshResponse
-	if err := decodeJSON(res.Body, &response); err != nil {
-		return err
-	}
-	if !response.OK {
-		return errors.New(response.Error)
-	}
-	applyTokens(bot, response.AccessToken, response.RefreshToken, response.ExpiresIn)
-	return nil
-}
-
-func applyTokens(bot *BotState, accessToken string, refreshToken string, expiresIn int64) {
-	bot.AccessToken = accessToken
-	bot.RefreshToken = refreshToken
-	if expiresIn <= 0 {
-		expiresIn = int64((30 * time.Minute).Seconds())
-	}
-	bot.AccessExpiry = time.Now().UTC().Add(time.Duration(expiresIn) * time.Second)
 }
 
 func fetchSeasonState(client *http.Client, baseURL string) (*SeasonsResponse, error) {
@@ -266,7 +225,6 @@ func fetchSeasonState(client *http.Client, baseURL string) (*SeasonsResponse, er
 
 func fetchPlayerState(client *http.Client, baseURL string, bot *BotState) (int64, int64, error) {
 	req, _ := http.NewRequest(http.MethodGet, baseURL+"/player", nil)
-	req.Header.Set("Authorization", "Bearer "+bot.AccessToken)
 	res, err := client.Do(req)
 	if err != nil {
 		return 0, 0, err
@@ -284,7 +242,6 @@ func buyStar(client *http.Client, baseURL string, bot *BotState) error {
 	payload := map[string]string{"seasonId": "season-1"}
 	body, _ := json.Marshal(payload)
 	req, _ := http.NewRequest(http.MethodPost, baseURL+"/buy-star", bytes.NewReader(body))
-	req.Header.Set("Authorization", "Bearer "+bot.AccessToken)
 	req.Header.Set("Content-Type", "application/json")
 	res, err := client.Do(req)
 	if err != nil {

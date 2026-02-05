@@ -1642,11 +1642,6 @@ func adminBotDeleteHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		if accountID.Valid {
-			if _, err := tx.Exec(`DELETE FROM refresh_tokens WHERE account_id = $1`, accountID.String); err != nil {
-				tx.Rollback()
-				json.NewEncoder(w).Encode(AdminBotDeleteResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
 			if _, err := tx.Exec(`DELETE FROM sessions WHERE account_id = $1`, accountID.String); err != nil {
 				tx.Rollback()
 				json.NewEncoder(w).Encode(AdminBotDeleteResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -1751,7 +1746,6 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 				return
 			}
 			_, _ = db.Exec(`DELETE FROM sessions WHERE account_id = $1`, accountID)
-			_, _ = db.Exec(`DELETE FROM refresh_tokens WHERE account_id = $1`, accountID)
 			emitNotification(db, NotificationInput{
 				RecipientRole: NotificationRoleAdmin,
 				Category:      NotificationCategoryAdmin,
@@ -1801,11 +1795,6 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 		case "delete":
 			tx, err := db.Begin()
 			if err != nil {
-				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-			if _, err := tx.Exec(`DELETE FROM refresh_tokens WHERE account_id = $1`, accountID); err != nil {
-				tx.Rollback()
 				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
 				return
 			}

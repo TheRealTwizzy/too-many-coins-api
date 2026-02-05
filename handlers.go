@@ -1590,19 +1590,6 @@ func signupHandler(db *sql.DB) http.HandlerFunc {
 		}
 		writeSessionCookie(w, sessionID, expiresAt)
 
-		accessToken, accessExpires, err := issueAccessToken(account.AccountID, accessTokenTTL)
-		if err != nil {
-			log.Println("signup: issueAccessToken error:", err)
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		refreshToken, _, err := createRefreshToken(db, account.AccountID, "auth", r.UserAgent(), getClientIP(r))
-		if err != nil {
-			log.Println("signup: createRefreshToken error:", err)
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-
 		json.NewEncoder(w).Encode(AuthResponse{
 			OK:                 true,
 			Username:           account.Username,
@@ -1610,9 +1597,6 @@ func signupHandler(db *sql.DB) http.HandlerFunc {
 			PlayerID:           account.PlayerID,
 			Role:               account.Role,
 			MustChangePassword: account.MustChangePassword,
-			AccessToken:        accessToken,
-			RefreshToken:       refreshToken,
-			ExpiresIn:          int64(time.Until(accessExpires).Seconds()),
 		})
 	}
 }
@@ -1669,17 +1653,6 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		writeSessionCookie(w, sessionID, expiresAt)
-
-		accessToken, accessExpires, err := issueAccessToken(account.AccountID, accessTokenTTL)
-		if err != nil {
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		refreshToken, _, err := createRefreshToken(db, account.AccountID, "auth", r.UserAgent(), getClientIP(r))
-		if err != nil {
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
 		json.NewEncoder(w).Encode(AuthResponse{
 			OK:                 true,
 			Username:           account.Username,
@@ -1689,9 +1662,6 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 			IsModerator:        account.Role == "moderator",
 			Role:               account.Role,
 			MustChangePassword: account.MustChangePassword,
-			AccessToken:        accessToken,
-			RefreshToken:       refreshToken,
-			ExpiresIn:          int64(time.Until(accessExpires).Seconds()),
 		})
 	}
 }
@@ -1730,42 +1700,6 @@ func meHandler(db *sql.DB) http.HandlerFunc {
 			IsModerator:        account.Role == "moderator",
 			Role:               account.Role,
 			MustChangePassword: account.MustChangePassword,
-		})
-	}
-}
-
-func refreshTokenHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		var token string
-		if auth := r.Header.Get("Authorization"); strings.HasPrefix(strings.ToLower(auth), "bearer ") {
-			token = strings.TrimSpace(auth[len("bearer "):])
-		}
-		if token == "" {
-			var req RefreshTokenRequest
-			_ = json.NewDecoder(r.Body).Decode(&req)
-			token = strings.TrimSpace(req.RefreshToken)
-		}
-		if token == "" {
-			json.NewEncoder(w).Encode(RefreshTokenResponse{OK: false, Error: "MISSING_REFRESH_TOKEN"})
-			return
-		}
-
-		accessToken, accessExpires, refreshToken, _, err := rotateRefreshToken(db, token, r.UserAgent(), getClientIP(r))
-		if err != nil {
-			json.NewEncoder(w).Encode(RefreshTokenResponse{OK: false, Error: err.Error()})
-			return
-		}
-
-		json.NewEncoder(w).Encode(RefreshTokenResponse{
-			OK:           true,
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-			ExpiresIn:    int64(time.Until(accessExpires).Seconds()),
 		})
 	}
 }

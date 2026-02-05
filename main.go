@@ -145,21 +145,6 @@ type AuthResponse struct {
 	IsModerator        bool   `json:"isModerator,omitempty"`
 	Role               string `json:"role,omitempty"`
 	MustChangePassword bool   `json:"mustChangePassword,omitempty"`
-	AccessToken        string `json:"accessToken,omitempty"`
-	RefreshToken       string `json:"refreshToken,omitempty"`
-	ExpiresIn          int64  `json:"expiresIn,omitempty"`
-}
-
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refreshToken"`
-}
-
-type RefreshTokenResponse struct {
-	OK           bool   `json:"ok"`
-	Error        string `json:"error,omitempty"`
-	AccessToken  string `json:"accessToken,omitempty"`
-	RefreshToken string `json:"refreshToken,omitempty"`
-	ExpiresIn    int64  `json:"expiresIn,omitempty"`
 }
 
 type LeaderboardResponse struct {
@@ -542,7 +527,6 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("/auth/login", loginHandler(db))
 	mux.HandleFunc("/auth/logout", logoutHandler(db))
 	mux.HandleFunc("/auth/me", meHandler(db))
-	mux.HandleFunc("/auth/refresh", refreshTokenHandler(db))
 	mux.HandleFunc("/auth/request-reset", requestPasswordResetHandler(db))
 	mux.HandleFunc("/auth/reset-password", resetPasswordHandler(db))
 	mux.HandleFunc("/auth/bootstrap-password", bootstrapPasswordHandler(db))

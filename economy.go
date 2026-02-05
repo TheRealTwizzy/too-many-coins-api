@@ -445,23 +445,6 @@ func ensureSchema(db *sql.DB) error {
 	}
 
 	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS refresh_tokens (
-			id BIGSERIAL PRIMARY KEY,
-			account_id TEXT NOT NULL,
-			token_hash TEXT NOT NULL UNIQUE,
-			issued_at TIMESTAMPTZ NOT NULL,
-			expires_at TIMESTAMPTZ NOT NULL,
-			revoked_at TIMESTAMPTZ,
-			user_agent TEXT,
-			ip TEXT,
-			purpose TEXT NOT NULL DEFAULT 'auth'
-		);
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS auth_rate_limits (
 			ip TEXT NOT NULL,
 			action TEXT NOT NULL,
@@ -470,106 +453,6 @@ func ensureSchema(db *sql.DB) error {
 			updated_at TIMESTAMPTZ NOT NULL,
 			PRIMARY KEY (ip, action)
 		);
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		ALTER TABLE refresh_tokens
-			ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMPTZ;
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		ALTER TABLE refresh_tokens
-			ADD COLUMN IF NOT EXISTS account_id TEXT;
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		DO $$
-		BEGIN
-			IF EXISTS (
-				SELECT 1
-				FROM information_schema.columns
-				WHERE table_name = 'refresh_tokens'
-				  AND column_name = 'account_id'
-				  AND data_type = 'uuid'
-			) THEN
-				ALTER TABLE refresh_tokens
-					ALTER COLUMN account_id TYPE TEXT
-					USING account_id::text;
-			END IF;
-		END $$;
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		ALTER TABLE refresh_tokens
-			ADD COLUMN IF NOT EXISTS token_hash TEXT;
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		ALTER TABLE refresh_tokens
-			ADD COLUMN IF NOT EXISTS issued_at TIMESTAMPTZ;
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		ALTER TABLE refresh_tokens
-			ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		ALTER TABLE refresh_tokens
-			ADD COLUMN IF NOT EXISTS user_agent TEXT;
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		ALTER TABLE refresh_tokens
-			ADD COLUMN IF NOT EXISTS ip TEXT;
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		ALTER TABLE refresh_tokens
-			ADD COLUMN IF NOT EXISTS purpose TEXT NOT NULL DEFAULT 'auth';
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash
-		ON refresh_tokens (token_hash);
-	`)
-	if err != nil {
-		return err
-	}
-
-	_, err = db.Exec(`
-		CREATE INDEX IF NOT EXISTS idx_refresh_tokens_account_id
-		ON refresh_tokens (account_id, revoked_at);
 	`)
 	if err != nil {
 		return err
