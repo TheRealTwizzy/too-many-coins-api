@@ -190,6 +190,8 @@ CREATE TABLE IF NOT EXISTS admin_bootstrap_tokens (
     used_by_ip TEXT
 );
 
+-- DEPRECATED (Alpha): bootstrap no longer uses gate keys.
+-- Safe to remove post‑alpha or in next cleanup pass once code paths are removed.
 CREATE TABLE IF NOT EXISTS admin_password_gates (
     gate_id BIGSERIAL PRIMARY KEY,
     account_id TEXT NOT NULL,
@@ -199,6 +201,7 @@ CREATE TABLE IF NOT EXISTS admin_password_gates (
     used_by_ip TEXT
 );
 
+-- DEPRECATED (Alpha): bootstrap no longer uses gate keys.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_admin_password_gates_active
     ON admin_password_gates (account_id)
     WHERE used_at IS NULL;

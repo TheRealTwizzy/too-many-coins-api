@@ -392,37 +392,17 @@ See the admin governance sections below. Admin creation is not a gameplay featur
 ## Admin Bootstrap (Alpha)
 
 - On first startup after a fresh DB reset, the server auto‑creates exactly one admin account (username `alpha-admin`).
+- The initial admin password is provided via the environment variable `ADMIN_BOOTSTRAP_PASSWORD`.
+- The admin account is created with `must_change_password = true`.
+- All admin endpoints are blocked until the password is changed.
 - Bootstrap is sealed in the database and cannot repeat unless the DB is wiped.
-- If bootstrap was sealed but no admin exists, the server refuses to start (safety invariant).
+- If bootstrap is sealed but no admin exists, the server refuses to start (safety invariant).
 
-### Bootstrap Password Gate (DB‑only, Alpha)
+Notes:
 
-- The bootstrap admin is created with a random password and `must_change_password = true`.
-- All admin endpoints are blocked until this password is changed.
-- The initial password change is gated by a DB‑only key stored in `admin_password_gates`.
-- The gate key is single‑use and invalidated after success.
-
-**Ops workflow (psql / Fly console):**
-
-1) Read the gate key from the database:
-
-SELECT gate_key
-FROM admin_password_gates
-WHERE used_at IS NULL
-LIMIT 1;
-
-2) Set the initial admin password via API (no login required):
-
-POST /auth/bootstrap-password
-{
-	"username": "alpha-admin",
-	"newPassword": "NEW_STRONG_PASSWORD",
-	"gateKey": "GATE_KEY_FROM_DB"
-}
-
-### Legacy Manual Bootstrap (Alpha‑only fallback)
-
-`/admin/set-key` is a one‑time bootstrap endpoint intended for manual ops. It is permanently disabled once any admin exists and cannot repeat without a DB reset. This path is not used when auto‑bootstrap succeeds.
+- The ENV password is read once on first bootstrap only.
+- The plaintext password is never persisted or logged.
+- The ENV password is ignored after bootstrap.
 
 ## Admin Management During Alpha
 

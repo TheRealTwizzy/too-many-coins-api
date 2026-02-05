@@ -197,12 +197,6 @@ type PasswordResetConfirmRequest struct {
 	NewPassword string `json:"newPassword"`
 }
 
-type BootstrapPasswordRequest struct {
-	Username    string `json:"username"`
-	NewPassword string `json:"newPassword"`
-	GateKey     string `json:"gateKey"`
-}
-
 type SimpleResponse struct {
 	OK    bool   `json:"ok"`
 	Error string `json:"error,omitempty"`
@@ -529,7 +523,6 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("/auth/me", meHandler(db))
 	mux.HandleFunc("/auth/request-reset", requestPasswordResetHandler(db))
 	mux.HandleFunc("/auth/reset-password", resetPasswordHandler(db))
-	mux.HandleFunc("/auth/bootstrap-password", bootstrapPasswordHandler(db))
 
 	mux.HandleFunc("/notifications", notificationsHandler(db))
 	mux.HandleFunc("/notifications/ack", notificationsAckHandler(db))
@@ -546,7 +539,6 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("/admin/economy", adminEconomyHandler(db))
 	mux.HandleFunc("/admin/player-search", adminPlayerSearchHandler(db))
 	mux.HandleFunc("/admin/audit-log", adminAuditLogHandler(db))
-	mux.HandleFunc("/admin/set-key", adminKeySetHandler(db))
 	mux.HandleFunc("/admin/role", adminRoleHandler(db))
 
 	mux.HandleFunc("/admin/notifications", adminNotificationsHandler(db))

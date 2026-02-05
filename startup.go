@@ -104,15 +104,19 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
+	bootstrapPassword := strings.TrimSpace(os.Getenv("ADMIN_BOOTSTRAP_PASSWORD"))
+	if bootstrapPassword == "" {
+		return errors.New("ADMIN_BOOTSTRAP_PASSWORD required for alpha bootstrap")
+	}
+	if len(bootstrapPassword) < 8 || len(bootstrapPassword) > 128 {
+		return errors.New("ADMIN_BOOTSTRAP_PASSWORD must be 8-128 characters")
+	}
+
 	accountID, err := randomToken(16)
 	if err != nil {
 		return err
 	}
 	playerID, err := randomToken(16)
-	if err != nil {
-		return err
-	}
-	bootstrapPassword, err := randomToken(24)
 	if err != nil {
 		return err
 	}
@@ -143,17 +147,6 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, 'admin', TRUE, NOW(), NOW())
 	`, accountID, username, passwordHash, displayName, playerID, email); err != nil {
-		return err
-	}
-
-	gateKey, err := randomToken(32)
-	if err != nil {
-		return err
-	}
-	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO admin_password_gates (account_id, gate_key, created_at)
-		VALUES ($1, $2, NOW())
-	`, accountID, gateKey); err != nil {
 		return err
 	}
 

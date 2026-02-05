@@ -30,7 +30,4 @@ CREATE TABLE player_state (
     state JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
-CREATE TABLE admin_bootstrap_gate (
-    gate_key TEXT PRIMARY KEY CHECK (gate_key = 'bootstrap'),
-    used_at TIMESTAMPTZ
-);
+-- Alpha bootstrap uses ENV-seeded password; no gate key table.
