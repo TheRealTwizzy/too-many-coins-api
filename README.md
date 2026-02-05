@@ -474,8 +474,6 @@ Alpha-only season extension (telemetry gaps):
 Health checks verify:
 
 - Database connectivity
-- Active season presence
-- Tick loop liveness
 
 ---
 
