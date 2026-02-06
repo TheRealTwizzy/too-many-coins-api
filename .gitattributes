@@ -1,1 +1,7 @@
+<<<<<<< HEAD
 * text=auto eol=lf
+=======
+cat > .gitattributes <<'EOF'
+* text=auto eol=lf
+EOF
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)

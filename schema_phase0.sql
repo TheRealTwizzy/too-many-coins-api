@@ -12,8 +12,11 @@ CREATE TABLE accounts (
     created_at TIMESTAMPTZ NOT NULL
 );
 
+<<<<<<< HEAD
 -- Admin accounts are not players; do not create player rows for admin roles.
 
+=======
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 CREATE TABLE sessions (
     session_id TEXT PRIMARY KEY,
     account_id TEXT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
@@ -32,6 +35,7 @@ CREATE TABLE player_state (
     state JSONB NOT NULL DEFAULT '{}'::jsonb
 );
 
+<<<<<<< HEAD
 -- =========================
 -- Season admin controls (key-value store)
 -- Required by tick.go and admin_handlers.go for runtime control queries
@@ -46,4 +50,6 @@ CREATE TABLE IF NOT EXISTS season_controls (
     PRIMARY KEY (season_id, control_name)
 );
 
+=======
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 -- Alpha bootstrap uses ENV-seeded password; no gate key table.

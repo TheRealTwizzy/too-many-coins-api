@@ -62,6 +62,7 @@ ALTER TABLE accounts ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS trust_status TEXT NOT NULL DEFAULT 'normal';
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+<<<<<<< HEAD
 
 -- Admin accounts are not players; admin roles must not carry player state.
 ALTER TABLE accounts ALTER COLUMN player_id DROP NOT NULL;
@@ -129,6 +130,8 @@ ALTER TABLE accounts ADD CONSTRAINT accounts_admin_player_check
         (role IN ('admin', 'frozen:admin') AND player_id IS NULL)
         OR (role NOT IN ('admin', 'frozen:admin') AND player_id IS NOT NULL)
     );
+=======
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 
 -- =========================
 -- PHASE 0 REQUIRED
@@ -159,6 +162,7 @@ ALTER TABLE players ADD COLUMN IF NOT EXISTS drip_multiplier DOUBLE PRECISION NO
 ALTER TABLE players ADD COLUMN IF NOT EXISTS drip_paused BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- =========================
+<<<<<<< HEAD
 -- Activity Warmup System
 -- Dynamic drip based on sustained activity
 -- =========================
@@ -167,6 +171,8 @@ ALTER TABLE players ADD COLUMN IF NOT EXISTS activity_warmup_updated_at TIMESTAM
 ALTER TABLE players ADD COLUMN IF NOT EXISTS recent_activity_seconds BIGINT NOT NULL DEFAULT 0;
 
 -- =========================
+=======
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 -- PHASE 0 REQUIRED
 -- Burn tracking, bots, provenance
 -- =========================
@@ -427,6 +433,7 @@ CREATE TABLE IF NOT EXISTS tsa_activation_log (
     activation_choice TEXT NOT NULL,
     activated_at TIMESTAMPTZ NOT NULL
 );
+<<<<<<< HEAD
 
 -- =========================
 -- POST-ALPHA / TELEMETRY
@@ -500,3 +507,5 @@ ADD COLUMN IF NOT EXISTS current_star_price NUMERIC(12,3);
 -- To display: current_star_price_micro / 1000 (3 decimal places in UI)
 ALTER TABLE season_economy
 ADD COLUMN IF NOT EXISTS current_star_price_micro BIGINT NOT NULL DEFAULT 0;
+=======
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)

@@ -541,8 +541,11 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("/auth/me", meHandler(db))
 	mux.HandleFunc("/auth/request-reset", requestPasswordResetHandler(db))
 	mux.HandleFunc("/auth/reset-password", resetPasswordHandler(db))
+<<<<<<< HEAD
 	mux.HandleFunc("/admin/bootstrap/status", adminBootstrapStatusHandler(db))
 	mux.HandleFunc("/admin/bootstrap/claim", adminBootstrapClaimHandler(db))
+=======
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 
 	mux.HandleFunc("/notifications", notificationsHandler(db))
 	mux.HandleFunc("/notifications/ack", notificationsAckHandler(db))

@@ -110,11 +110,15 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		if err := tx.Commit(); err != nil {
 			return err
 		}
+<<<<<<< HEAD
 		if adminMustChange {
 			log.Printf("Alpha admin bootstrap: admin %s locked, awaiting claim", adminUsername)
 		} else {
 			log.Printf("Alpha admin bootstrap: admin %s already active", adminUsername)
 		}
+=======
+		log.Println("Alpha admin bootstrap: admin already exists, skipping")
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 		return nil
 	}
 	if bootstrapComplete {
@@ -134,11 +138,23 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
+	bootstrapPassword := strings.TrimSpace(os.Getenv("ADMIN_BOOTSTRAP_PASSWORD"))
+	if bootstrapPassword == "" {
+		return errors.New("ADMIN_BOOTSTRAP_PASSWORD required for alpha bootstrap")
+	}
+	if len(bootstrapPassword) < 8 || len(bootstrapPassword) > 128 {
+		return errors.New("ADMIN_BOOTSTRAP_PASSWORD must be 8-128 characters")
+	}
+
 	accountID, err := randomToken(16)
 	if err != nil {
 		return err
 	}
+<<<<<<< HEAD
 	bootstrapPassword, err := randomToken(32)
+=======
+	playerID, err := randomToken(16)
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 	if err != nil {
 		return err
 	}
@@ -159,8 +175,13 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 			created_at,
 			last_login_at
 		)
+<<<<<<< HEAD
 		VALUES ($1, $2, $3, $4, $5, 'admin', TRUE, NOW(), NOW())
 	`, accountID, username, passwordHash, displayName, email); err != nil {
+=======
+		VALUES ($1, $2, $3, $4, $5, $6, 'admin', TRUE, NOW(), NOW())
+	`, accountID, username, passwordHash, displayName, playerID, email); err != nil {
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 		return err
 	}
 
@@ -191,7 +212,11 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
+<<<<<<< HEAD
 	log.Println("Alpha admin bootstrap: created alpha-admin (locked)")
+=======
+	log.Println("Alpha admin bootstrap: created alpha-admin")
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 	return nil
 }
 

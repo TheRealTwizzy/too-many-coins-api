@@ -1,5 +1,6 @@
 # Bot Runner
 
+<<<<<<< HEAD
 ## Scope
 - **Type:** System contract
 - **Status:** Canonical (Game Bible)
@@ -71,6 +72,9 @@ Bots **may be bad actors at realistic rates**:
 - Bots should reflect realistic abuse patterns
 
 ---
+=======
+The bot runner is a separate process that uses the same HTTP APIs as real players. It authenticates via HTTP-only session cookies, and only acts when `BOTS_ENABLED=true`.
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 
 ## Environment Variables
 

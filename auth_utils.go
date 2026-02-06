@@ -84,7 +84,10 @@ func lookupAccountForReset(db *sql.DB, identifier string) (*Account, error) {
 
 	var account Account
 	var email sql.NullString
+<<<<<<< HEAD
 	var playerID sql.NullString
+=======
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 
 	err := db.QueryRow(`
 		SELECT account_id, username, display_name, player_id, email
@@ -95,7 +98,11 @@ func lookupAccountForReset(db *sql.DB, identifier string) (*Account, error) {
 		&account.AccountID,
 		&account.Username,
 		&account.DisplayName,
+<<<<<<< HEAD
 		&playerID,
+=======
+		&account.PlayerID,
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 		&email,
 	)
 	if err != nil {
@@ -105,9 +112,12 @@ func lookupAccountForReset(db *sql.DB, identifier string) (*Account, error) {
 	if email.Valid {
 		account.Email = email.String
 	}
+<<<<<<< HEAD
 	if playerID.Valid {
 		account.PlayerID = playerID.String
 	}
+=======
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 
 	return &account, nil
 }

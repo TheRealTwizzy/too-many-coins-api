@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Phase0 Contract
 
 ## Scope
@@ -12,6 +13,8 @@
 
 ---
 
+=======
+>>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 # Phase 0 Contract — Infrastructure Alignment
 
 This phase prioritizes infrastructure correctness over gameplay completeness.
