@@ -119,6 +119,10 @@ func isSeasonEndedRaw(now time.Time) bool {
 
 func seasonSecondsRemaining(now time.Time) int64 {
 	maybeAutoAdvanceAlphaSeason(now)
+	return seasonSecondsRemainingRaw(now)
+}
+
+func seasonSecondsRemainingRaw(now time.Time) int64 {
 	remaining := seasonEnd().Sub(now)
 	if remaining < 0 {
 		return 0

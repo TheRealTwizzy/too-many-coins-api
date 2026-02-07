@@ -120,6 +120,10 @@ func playerHandler(db *sql.DB) http.HandlerFunc {
 
 func seasonsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Hard timeout - handler must respond within 3 seconds
+		ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+		defer cancel()
+
 		type SeasonView struct {
 			SeasonID                string   `json:"seasonId"`
 			Status                  string   `json:"status"`
@@ -139,9 +143,29 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 			EndedAt                 *string  `json:"endedAt,omitempty"`
 		}
 
+		// Check for timeout before doing any work
+		select {
+		case <-ctx.Done():
+			log.Println("/seasons handler: timeout before processing")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(map[string]string{"status": "initializing"})
+			return
+		default:
+		}
+
+		// Check if season state is initialized
+		_, seasonLoaded := ActiveSeasonState()
+		if !seasonLoaded {
+			log.Println("/seasons handler: season state not yet initialized")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(map[string]string{"status": "initializing"})
+			return
+		}
+
 		now := time.Now().UTC()
-		ended := isSeasonEnded(now)
-		remaining := seasonSecondsRemaining(now)
+		// Use non-blocking versions - never trigger auto-advance in request path
+		ended := isSeasonEndedRaw(now)
+		remaining := seasonSecondsRemainingRaw(now)
 		coins := economy.CoinsInCirculation()
 		activeCoins := economy.ActiveCoinsInCirculation()
 		status := "active"
@@ -191,7 +215,7 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 			var snapshotCoins int64
 			var snapshotStars int64
 			var snapshotDistributed int64
-			err := db.QueryRow(`
+			err := db.QueryRowContext(ctx, `
 				SELECT ended_at, coins_in_circulation, stars_purchased, coins_distributed
 				FROM season_end_snapshots
 				WHERE season_id = $1
