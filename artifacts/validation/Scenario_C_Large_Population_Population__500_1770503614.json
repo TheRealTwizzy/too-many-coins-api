@@ -1,0 +1,5369 @@
+{
+  "ScenarioName": "Scenario C: Large Population (Population = 500)",
+  "Population": 500,
+  "Duration": 604800000000000,
+  "UBIPerTick": 1,
+  "StartTime": "2026-02-07T22:33:34.6163239Z",
+  "EndTime": "2026-02-07T22:33:34.621072Z",
+  "EconomySnapshots": [
+    {
+      "Timestamp": "2026-02-07T22:33:34.6163239Z",
+      "GlobalCoinPool": 50000011,
+      "CoinsDistributed": 500,
+      "CoinsInWallets": 500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1,
+      "AvgCoinsActive": 1
+    },
+    {
+      "Timestamp": "2026-02-07T23:33:34.6163239Z",
+      "GlobalCoinPool": 50000706,
+      "CoinsDistributed": 30500,
+      "CoinsInWallets": 30500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 61,
+      "AvgCoinsActive": 61
+    },
+    {
+      "Timestamp": "2026-02-08T00:33:34.6163239Z",
+      "GlobalCoinPool": 50001400,
+      "CoinsDistributed": 60500,
+      "CoinsInWallets": 60500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 121,
+      "AvgCoinsActive": 121
+    },
+    {
+      "Timestamp": "2026-02-08T01:33:34.6163239Z",
+      "GlobalCoinPool": 50002094,
+      "CoinsDistributed": 90500,
+      "CoinsInWallets": 90500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 181,
+      "AvgCoinsActive": 181
+    },
+    {
+      "Timestamp": "2026-02-08T02:33:34.6163239Z",
+      "GlobalCoinPool": 50002789,
+      "CoinsDistributed": 120500,
+      "CoinsInWallets": 120500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 241,
+      "AvgCoinsActive": 241
+    },
+    {
+      "Timestamp": "2026-02-08T03:33:34.6163239Z",
+      "GlobalCoinPool": 50003483,
+      "CoinsDistributed": 150500,
+      "CoinsInWallets": 150500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 301,
+      "AvgCoinsActive": 301
+    },
+    {
+      "Timestamp": "2026-02-08T04:33:34.6163239Z",
+      "GlobalCoinPool": 50004178,
+      "CoinsDistributed": 180500,
+      "CoinsInWallets": 180500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 361,
+      "AvgCoinsActive": 361
+    },
+    {
+      "Timestamp": "2026-02-08T05:33:34.6163239Z",
+      "GlobalCoinPool": 50004872,
+      "CoinsDistributed": 210500,
+      "CoinsInWallets": 210500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 421,
+      "AvgCoinsActive": 421
+    },
+    {
+      "Timestamp": "2026-02-08T06:33:34.6163239Z",
+      "GlobalCoinPool": 50005567,
+      "CoinsDistributed": 240500,
+      "CoinsInWallets": 240500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 481,
+      "AvgCoinsActive": 481
+    },
+    {
+      "Timestamp": "2026-02-08T07:33:34.6163239Z",
+      "GlobalCoinPool": 50006261,
+      "CoinsDistributed": 270500,
+      "CoinsInWallets": 270500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 541,
+      "AvgCoinsActive": 541
+    },
+    {
+      "Timestamp": "2026-02-08T08:33:34.6163239Z",
+      "GlobalCoinPool": 50006956,
+      "CoinsDistributed": 300500,
+      "CoinsInWallets": 300500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 601,
+      "AvgCoinsActive": 601
+    },
+    {
+      "Timestamp": "2026-02-08T09:33:34.6163239Z",
+      "GlobalCoinPool": 50007650,
+      "CoinsDistributed": 330500,
+      "CoinsInWallets": 330500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 661,
+      "AvgCoinsActive": 661
+    },
+    {
+      "Timestamp": "2026-02-08T10:33:34.6163239Z",
+      "GlobalCoinPool": 50008344,
+      "CoinsDistributed": 360500,
+      "CoinsInWallets": 360500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 721,
+      "AvgCoinsActive": 721
+    },
+    {
+      "Timestamp": "2026-02-08T11:33:34.6163239Z",
+      "GlobalCoinPool": 50009039,
+      "CoinsDistributed": 390500,
+      "CoinsInWallets": 390500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 781,
+      "AvgCoinsActive": 781
+    },
+    {
+      "Timestamp": "2026-02-08T12:33:34.6163239Z",
+      "GlobalCoinPool": 50009733,
+      "CoinsDistributed": 420500,
+      "CoinsInWallets": 420500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 841,
+      "AvgCoinsActive": 841
+    },
+    {
+      "Timestamp": "2026-02-08T13:33:34.6163239Z",
+      "GlobalCoinPool": 50010428,
+      "CoinsDistributed": 450500,
+      "CoinsInWallets": 450500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 901,
+      "AvgCoinsActive": 901
+    },
+    {
+      "Timestamp": "2026-02-08T14:33:34.6163239Z",
+      "GlobalCoinPool": 50011122,
+      "CoinsDistributed": 480500,
+      "CoinsInWallets": 480500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 961,
+      "AvgCoinsActive": 961
+    },
+    {
+      "Timestamp": "2026-02-08T15:33:34.6163239Z",
+      "GlobalCoinPool": 50011817,
+      "CoinsDistributed": 510500,
+      "CoinsInWallets": 510500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1021,
+      "AvgCoinsActive": 1021
+    },
+    {
+      "Timestamp": "2026-02-08T16:33:34.6163239Z",
+      "GlobalCoinPool": 50012511,
+      "CoinsDistributed": 540500,
+      "CoinsInWallets": 540500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1081,
+      "AvgCoinsActive": 1081
+    },
+    {
+      "Timestamp": "2026-02-08T17:33:34.6163239Z",
+      "GlobalCoinPool": 50013206,
+      "CoinsDistributed": 570500,
+      "CoinsInWallets": 570500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1141,
+      "AvgCoinsActive": 1141
+    },
+    {
+      "Timestamp": "2026-02-08T18:33:34.6163239Z",
+      "GlobalCoinPool": 50013900,
+      "CoinsDistributed": 600500,
+      "CoinsInWallets": 600500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1201,
+      "AvgCoinsActive": 1201
+    },
+    {
+      "Timestamp": "2026-02-08T19:33:34.6163239Z",
+      "GlobalCoinPool": 50014594,
+      "CoinsDistributed": 630500,
+      "CoinsInWallets": 630500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1261,
+      "AvgCoinsActive": 1261
+    },
+    {
+      "Timestamp": "2026-02-08T20:33:34.6163239Z",
+      "GlobalCoinPool": 50015289,
+      "CoinsDistributed": 660500,
+      "CoinsInWallets": 660500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1321,
+      "AvgCoinsActive": 1321
+    },
+    {
+      "Timestamp": "2026-02-08T21:33:34.6163239Z",
+      "GlobalCoinPool": 50015983,
+      "CoinsDistributed": 690500,
+      "CoinsInWallets": 690500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1381,
+      "AvgCoinsActive": 1381
+    },
+    {
+      "Timestamp": "2026-02-08T22:33:34.6163239Z",
+      "GlobalCoinPool": 50016678,
+      "CoinsDistributed": 720500,
+      "CoinsInWallets": 720500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1441,
+      "AvgCoinsActive": 1441
+    },
+    {
+      "Timestamp": "2026-02-08T23:33:34.6163239Z",
+      "GlobalCoinPool": 50017372,
+      "CoinsDistributed": 750500,
+      "CoinsInWallets": 750500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1501,
+      "AvgCoinsActive": 1501
+    },
+    {
+      "Timestamp": "2026-02-09T00:33:34.6163239Z",
+      "GlobalCoinPool": 50018067,
+      "CoinsDistributed": 780500,
+      "CoinsInWallets": 780500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1561,
+      "AvgCoinsActive": 1561
+    },
+    {
+      "Timestamp": "2026-02-09T01:33:34.6163239Z",
+      "GlobalCoinPool": 50018761,
+      "CoinsDistributed": 810500,
+      "CoinsInWallets": 810500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1621,
+      "AvgCoinsActive": 1621
+    },
+    {
+      "Timestamp": "2026-02-09T02:33:34.6163239Z",
+      "GlobalCoinPool": 50019456,
+      "CoinsDistributed": 840500,
+      "CoinsInWallets": 840500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1681,
+      "AvgCoinsActive": 1681
+    },
+    {
+      "Timestamp": "2026-02-09T03:33:34.6163239Z",
+      "GlobalCoinPool": 50020150,
+      "CoinsDistributed": 870500,
+      "CoinsInWallets": 870500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1741,
+      "AvgCoinsActive": 1741
+    },
+    {
+      "Timestamp": "2026-02-09T04:33:34.6163239Z",
+      "GlobalCoinPool": 50020844,
+      "CoinsDistributed": 900500,
+      "CoinsInWallets": 900500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1801,
+      "AvgCoinsActive": 1801
+    },
+    {
+      "Timestamp": "2026-02-09T05:33:34.6163239Z",
+      "GlobalCoinPool": 50021539,
+      "CoinsDistributed": 930500,
+      "CoinsInWallets": 930500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1861,
+      "AvgCoinsActive": 1861
+    },
+    {
+      "Timestamp": "2026-02-09T06:33:34.6163239Z",
+      "GlobalCoinPool": 50022233,
+      "CoinsDistributed": 960500,
+      "CoinsInWallets": 960500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1921,
+      "AvgCoinsActive": 1921
+    },
+    {
+      "Timestamp": "2026-02-09T07:33:34.6163239Z",
+      "GlobalCoinPool": 50022928,
+      "CoinsDistributed": 990500,
+      "CoinsInWallets": 990500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1981,
+      "AvgCoinsActive": 1981
+    },
+    {
+      "Timestamp": "2026-02-09T08:33:34.6163239Z",
+      "GlobalCoinPool": 50023622,
+      "CoinsDistributed": 1020500,
+      "CoinsInWallets": 1020500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2041,
+      "AvgCoinsActive": 2041
+    },
+    {
+      "Timestamp": "2026-02-09T09:33:34.6163239Z",
+      "GlobalCoinPool": 50024317,
+      "CoinsDistributed": 1050500,
+      "CoinsInWallets": 1050500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2101,
+      "AvgCoinsActive": 2101
+    },
+    {
+      "Timestamp": "2026-02-09T10:33:34.6163239Z",
+      "GlobalCoinPool": 50025011,
+      "CoinsDistributed": 1080500,
+      "CoinsInWallets": 1080500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2161,
+      "AvgCoinsActive": 2161
+    },
+    {
+      "Timestamp": "2026-02-09T11:33:34.6163239Z",
+      "GlobalCoinPool": 50025706,
+      "CoinsDistributed": 1110500,
+      "CoinsInWallets": 1110500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2221,
+      "AvgCoinsActive": 2221
+    },
+    {
+      "Timestamp": "2026-02-09T12:33:34.6163239Z",
+      "GlobalCoinPool": 50026400,
+      "CoinsDistributed": 1140500,
+      "CoinsInWallets": 1140500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2281,
+      "AvgCoinsActive": 2281
+    },
+    {
+      "Timestamp": "2026-02-09T13:33:34.6163239Z",
+      "GlobalCoinPool": 50027094,
+      "CoinsDistributed": 1170500,
+      "CoinsInWallets": 1170500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2341,
+      "AvgCoinsActive": 2341
+    },
+    {
+      "Timestamp": "2026-02-09T14:33:34.6163239Z",
+      "GlobalCoinPool": 50027789,
+      "CoinsDistributed": 1200500,
+      "CoinsInWallets": 1200500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2401,
+      "AvgCoinsActive": 2401
+    },
+    {
+      "Timestamp": "2026-02-09T15:33:34.6163239Z",
+      "GlobalCoinPool": 50028483,
+      "CoinsDistributed": 1230500,
+      "CoinsInWallets": 1230500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2461,
+      "AvgCoinsActive": 2461
+    },
+    {
+      "Timestamp": "2026-02-09T16:33:34.6163239Z",
+      "GlobalCoinPool": 50029178,
+      "CoinsDistributed": 1260500,
+      "CoinsInWallets": 1260500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2521,
+      "AvgCoinsActive": 2521
+    },
+    {
+      "Timestamp": "2026-02-09T17:33:34.6163239Z",
+      "GlobalCoinPool": 50029872,
+      "CoinsDistributed": 1290500,
+      "CoinsInWallets": 1290500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2581,
+      "AvgCoinsActive": 2581
+    },
+    {
+      "Timestamp": "2026-02-09T18:33:34.6163239Z",
+      "GlobalCoinPool": 50030567,
+      "CoinsDistributed": 1320500,
+      "CoinsInWallets": 1320500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2641,
+      "AvgCoinsActive": 2641
+    },
+    {
+      "Timestamp": "2026-02-09T19:33:34.6163239Z",
+      "GlobalCoinPool": 50031261,
+      "CoinsDistributed": 1350500,
+      "CoinsInWallets": 1350500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2701,
+      "AvgCoinsActive": 2701
+    },
+    {
+      "Timestamp": "2026-02-09T20:33:34.6163239Z",
+      "GlobalCoinPool": 50031956,
+      "CoinsDistributed": 1380500,
+      "CoinsInWallets": 1380500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2761,
+      "AvgCoinsActive": 2761
+    },
+    {
+      "Timestamp": "2026-02-09T21:33:34.6163239Z",
+      "GlobalCoinPool": 50032650,
+      "CoinsDistributed": 1410500,
+      "CoinsInWallets": 1410500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2821,
+      "AvgCoinsActive": 2821
+    },
+    {
+      "Timestamp": "2026-02-09T22:33:34.6163239Z",
+      "GlobalCoinPool": 50033344,
+      "CoinsDistributed": 1440500,
+      "CoinsInWallets": 1440500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2881,
+      "AvgCoinsActive": 2881
+    },
+    {
+      "Timestamp": "2026-02-09T23:33:34.6163239Z",
+      "GlobalCoinPool": 50034039,
+      "CoinsDistributed": 1470500,
+      "CoinsInWallets": 1470500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 2941,
+      "AvgCoinsActive": 2941
+    },
+    {
+      "Timestamp": "2026-02-10T00:33:34.6163239Z",
+      "GlobalCoinPool": 50034733,
+      "CoinsDistributed": 1500500,
+      "CoinsInWallets": 1500500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3001,
+      "AvgCoinsActive": 3001
+    },
+    {
+      "Timestamp": "2026-02-10T01:33:34.6163239Z",
+      "GlobalCoinPool": 50035428,
+      "CoinsDistributed": 1530500,
+      "CoinsInWallets": 1530500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3061,
+      "AvgCoinsActive": 3061
+    },
+    {
+      "Timestamp": "2026-02-10T02:33:34.6163239Z",
+      "GlobalCoinPool": 50036122,
+      "CoinsDistributed": 1560500,
+      "CoinsInWallets": 1560500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3121,
+      "AvgCoinsActive": 3121
+    },
+    {
+      "Timestamp": "2026-02-10T03:33:34.6163239Z",
+      "GlobalCoinPool": 50036817,
+      "CoinsDistributed": 1590500,
+      "CoinsInWallets": 1590500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3181,
+      "AvgCoinsActive": 3181
+    },
+    {
+      "Timestamp": "2026-02-10T04:33:34.6163239Z",
+      "GlobalCoinPool": 50037511,
+      "CoinsDistributed": 1620500,
+      "CoinsInWallets": 1620500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3241,
+      "AvgCoinsActive": 3241
+    },
+    {
+      "Timestamp": "2026-02-10T05:33:34.6163239Z",
+      "GlobalCoinPool": 50038206,
+      "CoinsDistributed": 1650500,
+      "CoinsInWallets": 1650500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3301,
+      "AvgCoinsActive": 3301
+    },
+    {
+      "Timestamp": "2026-02-10T06:33:34.6163239Z",
+      "GlobalCoinPool": 50038900,
+      "CoinsDistributed": 1680500,
+      "CoinsInWallets": 1680500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3361,
+      "AvgCoinsActive": 3361
+    },
+    {
+      "Timestamp": "2026-02-10T07:33:34.6163239Z",
+      "GlobalCoinPool": 50039594,
+      "CoinsDistributed": 1710500,
+      "CoinsInWallets": 1710500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3421,
+      "AvgCoinsActive": 3421
+    },
+    {
+      "Timestamp": "2026-02-10T08:33:34.6163239Z",
+      "GlobalCoinPool": 50040289,
+      "CoinsDistributed": 1740500,
+      "CoinsInWallets": 1740500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3481,
+      "AvgCoinsActive": 3481
+    },
+    {
+      "Timestamp": "2026-02-10T09:33:34.6163239Z",
+      "GlobalCoinPool": 50040983,
+      "CoinsDistributed": 1770500,
+      "CoinsInWallets": 1770500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3541,
+      "AvgCoinsActive": 3541
+    },
+    {
+      "Timestamp": "2026-02-10T10:33:34.6163239Z",
+      "GlobalCoinPool": 50041678,
+      "CoinsDistributed": 1800500,
+      "CoinsInWallets": 1800500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3601,
+      "AvgCoinsActive": 3601
+    },
+    {
+      "Timestamp": "2026-02-10T11:33:34.6163239Z",
+      "GlobalCoinPool": 50042372,
+      "CoinsDistributed": 1830500,
+      "CoinsInWallets": 1830500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3661,
+      "AvgCoinsActive": 3661
+    },
+    {
+      "Timestamp": "2026-02-10T12:33:34.6163239Z",
+      "GlobalCoinPool": 50043067,
+      "CoinsDistributed": 1860500,
+      "CoinsInWallets": 1860500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3721,
+      "AvgCoinsActive": 3721
+    },
+    {
+      "Timestamp": "2026-02-10T13:33:34.6163239Z",
+      "GlobalCoinPool": 50043761,
+      "CoinsDistributed": 1890500,
+      "CoinsInWallets": 1890500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3781,
+      "AvgCoinsActive": 3781
+    },
+    {
+      "Timestamp": "2026-02-10T14:33:34.6163239Z",
+      "GlobalCoinPool": 50044456,
+      "CoinsDistributed": 1920500,
+      "CoinsInWallets": 1920500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3841,
+      "AvgCoinsActive": 3841
+    },
+    {
+      "Timestamp": "2026-02-10T15:33:34.6163239Z",
+      "GlobalCoinPool": 50045150,
+      "CoinsDistributed": 1950500,
+      "CoinsInWallets": 1950500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3901,
+      "AvgCoinsActive": 3901
+    },
+    {
+      "Timestamp": "2026-02-10T16:33:34.6163239Z",
+      "GlobalCoinPool": 50045844,
+      "CoinsDistributed": 1980500,
+      "CoinsInWallets": 1980500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 3961,
+      "AvgCoinsActive": 3961
+    },
+    {
+      "Timestamp": "2026-02-10T17:33:34.6163239Z",
+      "GlobalCoinPool": 50046539,
+      "CoinsDistributed": 2010500,
+      "CoinsInWallets": 2010500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4021,
+      "AvgCoinsActive": 4021
+    },
+    {
+      "Timestamp": "2026-02-10T18:33:34.6163239Z",
+      "GlobalCoinPool": 50047233,
+      "CoinsDistributed": 2040500,
+      "CoinsInWallets": 2040500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4081,
+      "AvgCoinsActive": 4081
+    },
+    {
+      "Timestamp": "2026-02-10T19:33:34.6163239Z",
+      "GlobalCoinPool": 50047928,
+      "CoinsDistributed": 2070500,
+      "CoinsInWallets": 2070500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4141,
+      "AvgCoinsActive": 4141
+    },
+    {
+      "Timestamp": "2026-02-10T20:33:34.6163239Z",
+      "GlobalCoinPool": 50048622,
+      "CoinsDistributed": 2100500,
+      "CoinsInWallets": 2100500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4201,
+      "AvgCoinsActive": 4201
+    },
+    {
+      "Timestamp": "2026-02-10T21:33:34.6163239Z",
+      "GlobalCoinPool": 50049317,
+      "CoinsDistributed": 2130500,
+      "CoinsInWallets": 2130500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4261,
+      "AvgCoinsActive": 4261
+    },
+    {
+      "Timestamp": "2026-02-10T22:33:34.6163239Z",
+      "GlobalCoinPool": 50050011,
+      "CoinsDistributed": 2160500,
+      "CoinsInWallets": 2160500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4321,
+      "AvgCoinsActive": 4321
+    },
+    {
+      "Timestamp": "2026-02-10T23:33:34.6163239Z",
+      "GlobalCoinPool": 50050706,
+      "CoinsDistributed": 2190500,
+      "CoinsInWallets": 2190500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4381,
+      "AvgCoinsActive": 4381
+    },
+    {
+      "Timestamp": "2026-02-11T00:33:34.6163239Z",
+      "GlobalCoinPool": 50051400,
+      "CoinsDistributed": 2220500,
+      "CoinsInWallets": 2220500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4441,
+      "AvgCoinsActive": 4441
+    },
+    {
+      "Timestamp": "2026-02-11T01:33:34.6163239Z",
+      "GlobalCoinPool": 50052094,
+      "CoinsDistributed": 2250500,
+      "CoinsInWallets": 2250500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4501,
+      "AvgCoinsActive": 4501
+    },
+    {
+      "Timestamp": "2026-02-11T02:33:34.6163239Z",
+      "GlobalCoinPool": 50052789,
+      "CoinsDistributed": 2280500,
+      "CoinsInWallets": 2280500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4561,
+      "AvgCoinsActive": 4561
+    },
+    {
+      "Timestamp": "2026-02-11T03:33:34.6163239Z",
+      "GlobalCoinPool": 50053483,
+      "CoinsDistributed": 2310500,
+      "CoinsInWallets": 2310500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4621,
+      "AvgCoinsActive": 4621
+    },
+    {
+      "Timestamp": "2026-02-11T04:33:34.6163239Z",
+      "GlobalCoinPool": 50054178,
+      "CoinsDistributed": 2340500,
+      "CoinsInWallets": 2340500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4681,
+      "AvgCoinsActive": 4681
+    },
+    {
+      "Timestamp": "2026-02-11T05:33:34.6163239Z",
+      "GlobalCoinPool": 50054872,
+      "CoinsDistributed": 2370500,
+      "CoinsInWallets": 2370500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4741,
+      "AvgCoinsActive": 4741
+    },
+    {
+      "Timestamp": "2026-02-11T06:33:34.6163239Z",
+      "GlobalCoinPool": 50055567,
+      "CoinsDistributed": 2400500,
+      "CoinsInWallets": 2400500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4801,
+      "AvgCoinsActive": 4801
+    },
+    {
+      "Timestamp": "2026-02-11T07:33:34.6163239Z",
+      "GlobalCoinPool": 50056261,
+      "CoinsDistributed": 2430500,
+      "CoinsInWallets": 2430500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4861,
+      "AvgCoinsActive": 4861
+    },
+    {
+      "Timestamp": "2026-02-11T08:33:34.6163239Z",
+      "GlobalCoinPool": 50056956,
+      "CoinsDistributed": 2460500,
+      "CoinsInWallets": 2460500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4921,
+      "AvgCoinsActive": 4921
+    },
+    {
+      "Timestamp": "2026-02-11T09:33:34.6163239Z",
+      "GlobalCoinPool": 50057650,
+      "CoinsDistributed": 2490500,
+      "CoinsInWallets": 2490500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 4981,
+      "AvgCoinsActive": 4981
+    },
+    {
+      "Timestamp": "2026-02-11T10:33:34.6163239Z",
+      "GlobalCoinPool": 50058344,
+      "CoinsDistributed": 2520500,
+      "CoinsInWallets": 2520500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5041,
+      "AvgCoinsActive": 5041
+    },
+    {
+      "Timestamp": "2026-02-11T11:33:34.6163239Z",
+      "GlobalCoinPool": 50059038,
+      "CoinsDistributed": 2550500,
+      "CoinsInWallets": 2550500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5101,
+      "AvgCoinsActive": 5101
+    },
+    {
+      "Timestamp": "2026-02-11T12:33:34.6163239Z",
+      "GlobalCoinPool": 50059731,
+      "CoinsDistributed": 2580500,
+      "CoinsInWallets": 2580500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5161,
+      "AvgCoinsActive": 5161
+    },
+    {
+      "Timestamp": "2026-02-11T13:33:34.6163239Z",
+      "GlobalCoinPool": 50060423,
+      "CoinsDistributed": 2610500,
+      "CoinsInWallets": 2610500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5221,
+      "AvgCoinsActive": 5221
+    },
+    {
+      "Timestamp": "2026-02-11T14:33:34.6163239Z",
+      "GlobalCoinPool": 50061114,
+      "CoinsDistributed": 2640500,
+      "CoinsInWallets": 2640500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5281,
+      "AvgCoinsActive": 5281
+    },
+    {
+      "Timestamp": "2026-02-11T15:33:34.6163239Z",
+      "GlobalCoinPool": 50061804,
+      "CoinsDistributed": 2670500,
+      "CoinsInWallets": 2670500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5341,
+      "AvgCoinsActive": 5341
+    },
+    {
+      "Timestamp": "2026-02-11T16:33:34.6163239Z",
+      "GlobalCoinPool": 50062492,
+      "CoinsDistributed": 2700500,
+      "CoinsInWallets": 2700500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5401,
+      "AvgCoinsActive": 5401
+    },
+    {
+      "Timestamp": "2026-02-11T17:33:34.6163239Z",
+      "GlobalCoinPool": 50063180,
+      "CoinsDistributed": 2730500,
+      "CoinsInWallets": 2730500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5461,
+      "AvgCoinsActive": 5461
+    },
+    {
+      "Timestamp": "2026-02-11T18:33:34.6163239Z",
+      "GlobalCoinPool": 50063867,
+      "CoinsDistributed": 2760500,
+      "CoinsInWallets": 2760500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5521,
+      "AvgCoinsActive": 5521
+    },
+    {
+      "Timestamp": "2026-02-11T19:33:34.6163239Z",
+      "GlobalCoinPool": 50064552,
+      "CoinsDistributed": 2790500,
+      "CoinsInWallets": 2790500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5581,
+      "AvgCoinsActive": 5581
+    },
+    {
+      "Timestamp": "2026-02-11T20:33:34.6163239Z",
+      "GlobalCoinPool": 50065237,
+      "CoinsDistributed": 2820500,
+      "CoinsInWallets": 2820500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5641,
+      "AvgCoinsActive": 5641
+    },
+    {
+      "Timestamp": "2026-02-11T21:33:34.6163239Z",
+      "GlobalCoinPool": 50065921,
+      "CoinsDistributed": 2850500,
+      "CoinsInWallets": 2850500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5701,
+      "AvgCoinsActive": 5701
+    },
+    {
+      "Timestamp": "2026-02-11T22:33:34.6163239Z",
+      "GlobalCoinPool": 50066603,
+      "CoinsDistributed": 2880500,
+      "CoinsInWallets": 2880500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5761,
+      "AvgCoinsActive": 5761
+    },
+    {
+      "Timestamp": "2026-02-11T23:33:34.6163239Z",
+      "GlobalCoinPool": 50067285,
+      "CoinsDistributed": 2910500,
+      "CoinsInWallets": 2910500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5821,
+      "AvgCoinsActive": 5821
+    },
+    {
+      "Timestamp": "2026-02-12T00:33:34.6163239Z",
+      "GlobalCoinPool": 50067965,
+      "CoinsDistributed": 2940500,
+      "CoinsInWallets": 2940500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5881,
+      "AvgCoinsActive": 5881
+    },
+    {
+      "Timestamp": "2026-02-12T01:33:34.6163239Z",
+      "GlobalCoinPool": 50068645,
+      "CoinsDistributed": 2970500,
+      "CoinsInWallets": 2970500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 5941,
+      "AvgCoinsActive": 5941
+    },
+    {
+      "Timestamp": "2026-02-12T02:33:34.6163239Z",
+      "GlobalCoinPool": 50069323,
+      "CoinsDistributed": 3000500,
+      "CoinsInWallets": 3000500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6001,
+      "AvgCoinsActive": 6001
+    },
+    {
+      "Timestamp": "2026-02-12T03:33:34.6163239Z",
+      "GlobalCoinPool": 50070000,
+      "CoinsDistributed": 3030500,
+      "CoinsInWallets": 3030500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6061,
+      "AvgCoinsActive": 6061
+    },
+    {
+      "Timestamp": "2026-02-12T04:33:34.6163239Z",
+      "GlobalCoinPool": 50070677,
+      "CoinsDistributed": 3060500,
+      "CoinsInWallets": 3060500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6121,
+      "AvgCoinsActive": 6121
+    },
+    {
+      "Timestamp": "2026-02-12T05:33:34.6163239Z",
+      "GlobalCoinPool": 50071352,
+      "CoinsDistributed": 3090500,
+      "CoinsInWallets": 3090500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6181,
+      "AvgCoinsActive": 6181
+    },
+    {
+      "Timestamp": "2026-02-12T06:33:34.6163239Z",
+      "GlobalCoinPool": 50072026,
+      "CoinsDistributed": 3120500,
+      "CoinsInWallets": 3120500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6241,
+      "AvgCoinsActive": 6241
+    },
+    {
+      "Timestamp": "2026-02-12T07:33:34.6163239Z",
+      "GlobalCoinPool": 50072700,
+      "CoinsDistributed": 3150500,
+      "CoinsInWallets": 3150500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6301,
+      "AvgCoinsActive": 6301
+    },
+    {
+      "Timestamp": "2026-02-12T08:33:34.6163239Z",
+      "GlobalCoinPool": 50073372,
+      "CoinsDistributed": 3180500,
+      "CoinsInWallets": 3180500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6361,
+      "AvgCoinsActive": 6361
+    },
+    {
+      "Timestamp": "2026-02-12T09:33:34.6163239Z",
+      "GlobalCoinPool": 50074043,
+      "CoinsDistributed": 3210500,
+      "CoinsInWallets": 3210500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6421,
+      "AvgCoinsActive": 6421
+    },
+    {
+      "Timestamp": "2026-02-12T10:33:34.6163239Z",
+      "GlobalCoinPool": 50074713,
+      "CoinsDistributed": 3240500,
+      "CoinsInWallets": 3240500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6481,
+      "AvgCoinsActive": 6481
+    },
+    {
+      "Timestamp": "2026-02-12T11:33:34.6163239Z",
+      "GlobalCoinPool": 50075382,
+      "CoinsDistributed": 3270500,
+      "CoinsInWallets": 3270500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6541,
+      "AvgCoinsActive": 6541
+    },
+    {
+      "Timestamp": "2026-02-12T12:33:34.6163239Z",
+      "GlobalCoinPool": 50076050,
+      "CoinsDistributed": 3300500,
+      "CoinsInWallets": 3300500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6601,
+      "AvgCoinsActive": 6601
+    },
+    {
+      "Timestamp": "2026-02-12T13:33:34.6163239Z",
+      "GlobalCoinPool": 50076717,
+      "CoinsDistributed": 3330500,
+      "CoinsInWallets": 3330500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6661,
+      "AvgCoinsActive": 6661
+    },
+    {
+      "Timestamp": "2026-02-12T14:33:34.6163239Z",
+      "GlobalCoinPool": 50077384,
+      "CoinsDistributed": 3360500,
+      "CoinsInWallets": 3360500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6721,
+      "AvgCoinsActive": 6721
+    },
+    {
+      "Timestamp": "2026-02-12T15:33:34.6163239Z",
+      "GlobalCoinPool": 50078048,
+      "CoinsDistributed": 3390500,
+      "CoinsInWallets": 3390500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6781,
+      "AvgCoinsActive": 6781
+    },
+    {
+      "Timestamp": "2026-02-12T16:33:34.6163239Z",
+      "GlobalCoinPool": 50078712,
+      "CoinsDistributed": 3420500,
+      "CoinsInWallets": 3420500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6841,
+      "AvgCoinsActive": 6841
+    },
+    {
+      "Timestamp": "2026-02-12T17:33:34.6163239Z",
+      "GlobalCoinPool": 50079375,
+      "CoinsDistributed": 3450500,
+      "CoinsInWallets": 3450500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6901,
+      "AvgCoinsActive": 6901
+    },
+    {
+      "Timestamp": "2026-02-12T18:33:34.6163239Z",
+      "GlobalCoinPool": 50080037,
+      "CoinsDistributed": 3480500,
+      "CoinsInWallets": 3480500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 6961,
+      "AvgCoinsActive": 6961
+    },
+    {
+      "Timestamp": "2026-02-12T19:33:34.6163239Z",
+      "GlobalCoinPool": 50080698,
+      "CoinsDistributed": 3510500,
+      "CoinsInWallets": 3510500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7021,
+      "AvgCoinsActive": 7021
+    },
+    {
+      "Timestamp": "2026-02-12T20:33:34.6163239Z",
+      "GlobalCoinPool": 50081358,
+      "CoinsDistributed": 3540500,
+      "CoinsInWallets": 3540500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7081,
+      "AvgCoinsActive": 7081
+    },
+    {
+      "Timestamp": "2026-02-12T21:33:34.6163239Z",
+      "GlobalCoinPool": 50082017,
+      "CoinsDistributed": 3570500,
+      "CoinsInWallets": 3570500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7141,
+      "AvgCoinsActive": 7141
+    },
+    {
+      "Timestamp": "2026-02-12T22:33:34.6163239Z",
+      "GlobalCoinPool": 50082674,
+      "CoinsDistributed": 3600500,
+      "CoinsInWallets": 3600500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7201,
+      "AvgCoinsActive": 7201
+    },
+    {
+      "Timestamp": "2026-02-12T23:33:34.6163239Z",
+      "GlobalCoinPool": 50083331,
+      "CoinsDistributed": 3630500,
+      "CoinsInWallets": 3630500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7261,
+      "AvgCoinsActive": 7261
+    },
+    {
+      "Timestamp": "2026-02-13T00:33:34.6163239Z",
+      "GlobalCoinPool": 50083987,
+      "CoinsDistributed": 3660500,
+      "CoinsInWallets": 3660500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7321,
+      "AvgCoinsActive": 7321
+    },
+    {
+      "Timestamp": "2026-02-13T01:33:34.6163239Z",
+      "GlobalCoinPool": 50084641,
+      "CoinsDistributed": 3690500,
+      "CoinsInWallets": 3690500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7381,
+      "AvgCoinsActive": 7381
+    },
+    {
+      "Timestamp": "2026-02-13T02:33:34.6163239Z",
+      "GlobalCoinPool": 50085295,
+      "CoinsDistributed": 3720500,
+      "CoinsInWallets": 3720500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7441,
+      "AvgCoinsActive": 7441
+    },
+    {
+      "Timestamp": "2026-02-13T03:33:34.6163239Z",
+      "GlobalCoinPool": 50085948,
+      "CoinsDistributed": 3750500,
+      "CoinsInWallets": 3750500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7501,
+      "AvgCoinsActive": 7501
+    },
+    {
+      "Timestamp": "2026-02-13T04:33:34.6163239Z",
+      "GlobalCoinPool": 50086599,
+      "CoinsDistributed": 3780500,
+      "CoinsInWallets": 3780500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7561,
+      "AvgCoinsActive": 7561
+    },
+    {
+      "Timestamp": "2026-02-13T05:33:34.6163239Z",
+      "GlobalCoinPool": 50087250,
+      "CoinsDistributed": 3810500,
+      "CoinsInWallets": 3810500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7621,
+      "AvgCoinsActive": 7621
+    },
+    {
+      "Timestamp": "2026-02-13T06:33:34.6163239Z",
+      "GlobalCoinPool": 50087899,
+      "CoinsDistributed": 3840500,
+      "CoinsInWallets": 3840500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7681,
+      "AvgCoinsActive": 7681
+    },
+    {
+      "Timestamp": "2026-02-13T07:33:34.6163239Z",
+      "GlobalCoinPool": 50088548,
+      "CoinsDistributed": 3870500,
+      "CoinsInWallets": 3870500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7741,
+      "AvgCoinsActive": 7741
+    },
+    {
+      "Timestamp": "2026-02-13T08:33:34.6163239Z",
+      "GlobalCoinPool": 50089195,
+      "CoinsDistributed": 3900500,
+      "CoinsInWallets": 3900500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7801,
+      "AvgCoinsActive": 7801
+    },
+    {
+      "Timestamp": "2026-02-13T09:33:34.6163239Z",
+      "GlobalCoinPool": 50089841,
+      "CoinsDistributed": 3930500,
+      "CoinsInWallets": 3930500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7861,
+      "AvgCoinsActive": 7861
+    },
+    {
+      "Timestamp": "2026-02-13T10:33:34.6163239Z",
+      "GlobalCoinPool": 50090487,
+      "CoinsDistributed": 3960500,
+      "CoinsInWallets": 3960500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7921,
+      "AvgCoinsActive": 7921
+    },
+    {
+      "Timestamp": "2026-02-13T11:33:34.6163239Z",
+      "GlobalCoinPool": 50091131,
+      "CoinsDistributed": 3990500,
+      "CoinsInWallets": 3990500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 7981,
+      "AvgCoinsActive": 7981
+    },
+    {
+      "Timestamp": "2026-02-13T12:33:34.6163239Z",
+      "GlobalCoinPool": 50091774,
+      "CoinsDistributed": 4020500,
+      "CoinsInWallets": 4020500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8041,
+      "AvgCoinsActive": 8041
+    },
+    {
+      "Timestamp": "2026-02-13T13:33:34.6163239Z",
+      "GlobalCoinPool": 50092417,
+      "CoinsDistributed": 4050500,
+      "CoinsInWallets": 4050500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8101,
+      "AvgCoinsActive": 8101
+    },
+    {
+      "Timestamp": "2026-02-13T14:33:34.6163239Z",
+      "GlobalCoinPool": 50093058,
+      "CoinsDistributed": 4080500,
+      "CoinsInWallets": 4080500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8161,
+      "AvgCoinsActive": 8161
+    },
+    {
+      "Timestamp": "2026-02-13T15:33:34.6163239Z",
+      "GlobalCoinPool": 50093698,
+      "CoinsDistributed": 4110500,
+      "CoinsInWallets": 4110500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8221,
+      "AvgCoinsActive": 8221
+    },
+    {
+      "Timestamp": "2026-02-13T16:33:34.6163239Z",
+      "GlobalCoinPool": 50094337,
+      "CoinsDistributed": 4140500,
+      "CoinsInWallets": 4140500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8281,
+      "AvgCoinsActive": 8281
+    },
+    {
+      "Timestamp": "2026-02-13T17:33:34.6163239Z",
+      "GlobalCoinPool": 50094975,
+      "CoinsDistributed": 4170500,
+      "CoinsInWallets": 4170500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8341,
+      "AvgCoinsActive": 8341
+    },
+    {
+      "Timestamp": "2026-02-13T18:33:34.6163239Z",
+      "GlobalCoinPool": 50095612,
+      "CoinsDistributed": 4200500,
+      "CoinsInWallets": 4200500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8401,
+      "AvgCoinsActive": 8401
+    },
+    {
+      "Timestamp": "2026-02-13T19:33:34.6163239Z",
+      "GlobalCoinPool": 50096248,
+      "CoinsDistributed": 4230500,
+      "CoinsInWallets": 4230500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8461,
+      "AvgCoinsActive": 8461
+    },
+    {
+      "Timestamp": "2026-02-13T20:33:34.6163239Z",
+      "GlobalCoinPool": 50096883,
+      "CoinsDistributed": 4260500,
+      "CoinsInWallets": 4260500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8521,
+      "AvgCoinsActive": 8521
+    },
+    {
+      "Timestamp": "2026-02-13T21:33:34.6163239Z",
+      "GlobalCoinPool": 50097517,
+      "CoinsDistributed": 4290500,
+      "CoinsInWallets": 4290500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8581,
+      "AvgCoinsActive": 8581
+    },
+    {
+      "Timestamp": "2026-02-13T22:33:34.6163239Z",
+      "GlobalCoinPool": 50098150,
+      "CoinsDistributed": 4320500,
+      "CoinsInWallets": 4320500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8641,
+      "AvgCoinsActive": 8641
+    },
+    {
+      "Timestamp": "2026-02-13T23:33:34.6163239Z",
+      "GlobalCoinPool": 50098782,
+      "CoinsDistributed": 4350500,
+      "CoinsInWallets": 4350500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8701,
+      "AvgCoinsActive": 8701
+    },
+    {
+      "Timestamp": "2026-02-14T00:33:34.6163239Z",
+      "GlobalCoinPool": 50099413,
+      "CoinsDistributed": 4380500,
+      "CoinsInWallets": 4380500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8761,
+      "AvgCoinsActive": 8761
+    },
+    {
+      "Timestamp": "2026-02-14T01:33:34.6163239Z",
+      "GlobalCoinPool": 50100043,
+      "CoinsDistributed": 4410500,
+      "CoinsInWallets": 4410500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8821,
+      "AvgCoinsActive": 8821
+    },
+    {
+      "Timestamp": "2026-02-14T02:33:34.6163239Z",
+      "GlobalCoinPool": 50100672,
+      "CoinsDistributed": 4440500,
+      "CoinsInWallets": 4440500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8881,
+      "AvgCoinsActive": 8881
+    },
+    {
+      "Timestamp": "2026-02-14T03:33:34.6163239Z",
+      "GlobalCoinPool": 50101300,
+      "CoinsDistributed": 4470500,
+      "CoinsInWallets": 4470500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 8941,
+      "AvgCoinsActive": 8941
+    },
+    {
+      "Timestamp": "2026-02-14T04:33:34.6163239Z",
+      "GlobalCoinPool": 50101926,
+      "CoinsDistributed": 4500500,
+      "CoinsInWallets": 4500500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9001,
+      "AvgCoinsActive": 9001
+    },
+    {
+      "Timestamp": "2026-02-14T05:33:34.6163239Z",
+      "GlobalCoinPool": 50102552,
+      "CoinsDistributed": 4530500,
+      "CoinsInWallets": 4530500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9061,
+      "AvgCoinsActive": 9061
+    },
+    {
+      "Timestamp": "2026-02-14T06:33:34.6163239Z",
+      "GlobalCoinPool": 50103177,
+      "CoinsDistributed": 4560500,
+      "CoinsInWallets": 4560500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9121,
+      "AvgCoinsActive": 9121
+    },
+    {
+      "Timestamp": "2026-02-14T07:33:34.6163239Z",
+      "GlobalCoinPool": 50103800,
+      "CoinsDistributed": 4590500,
+      "CoinsInWallets": 4590500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9181,
+      "AvgCoinsActive": 9181
+    },
+    {
+      "Timestamp": "2026-02-14T08:33:34.6163239Z",
+      "GlobalCoinPool": 50104423,
+      "CoinsDistributed": 4620500,
+      "CoinsInWallets": 4620500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9241,
+      "AvgCoinsActive": 9241
+    },
+    {
+      "Timestamp": "2026-02-14T09:33:34.6163239Z",
+      "GlobalCoinPool": 50105045,
+      "CoinsDistributed": 4650500,
+      "CoinsInWallets": 4650500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9301,
+      "AvgCoinsActive": 9301
+    },
+    {
+      "Timestamp": "2026-02-14T10:33:34.6163239Z",
+      "GlobalCoinPool": 50105665,
+      "CoinsDistributed": 4680500,
+      "CoinsInWallets": 4680500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9361,
+      "AvgCoinsActive": 9361
+    },
+    {
+      "Timestamp": "2026-02-14T11:33:34.6163239Z",
+      "GlobalCoinPool": 50106285,
+      "CoinsDistributed": 4710500,
+      "CoinsInWallets": 4710500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9421,
+      "AvgCoinsActive": 9421
+    },
+    {
+      "Timestamp": "2026-02-14T12:33:34.6163239Z",
+      "GlobalCoinPool": 50106903,
+      "CoinsDistributed": 4740500,
+      "CoinsInWallets": 4740500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9481,
+      "AvgCoinsActive": 9481
+    },
+    {
+      "Timestamp": "2026-02-14T13:33:34.6163239Z",
+      "GlobalCoinPool": 50107521,
+      "CoinsDistributed": 4770500,
+      "CoinsInWallets": 4770500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9541,
+      "AvgCoinsActive": 9541
+    },
+    {
+      "Timestamp": "2026-02-14T14:33:34.6163239Z",
+      "GlobalCoinPool": 50108137,
+      "CoinsDistributed": 4800500,
+      "CoinsInWallets": 4800500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9601,
+      "AvgCoinsActive": 9601
+    },
+    {
+      "Timestamp": "2026-02-14T15:33:34.6163239Z",
+      "GlobalCoinPool": 50108752,
+      "CoinsDistributed": 4830500,
+      "CoinsInWallets": 4830500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9661,
+      "AvgCoinsActive": 9661
+    },
+    {
+      "Timestamp": "2026-02-14T16:33:34.6163239Z",
+      "GlobalCoinPool": 50109367,
+      "CoinsDistributed": 4860500,
+      "CoinsInWallets": 4860500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9721,
+      "AvgCoinsActive": 9721
+    },
+    {
+      "Timestamp": "2026-02-14T17:33:34.6163239Z",
+      "GlobalCoinPool": 50109980,
+      "CoinsDistributed": 4890500,
+      "CoinsInWallets": 4890500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9781,
+      "AvgCoinsActive": 9781
+    },
+    {
+      "Timestamp": "2026-02-14T18:33:34.6163239Z",
+      "GlobalCoinPool": 50110592,
+      "CoinsDistributed": 4920500,
+      "CoinsInWallets": 4920500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9841,
+      "AvgCoinsActive": 9841
+    },
+    {
+      "Timestamp": "2026-02-14T19:33:34.6163239Z",
+      "GlobalCoinPool": 50111204,
+      "CoinsDistributed": 4950500,
+      "CoinsInWallets": 4950500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9901,
+      "AvgCoinsActive": 9901
+    },
+    {
+      "Timestamp": "2026-02-14T20:33:34.6163239Z",
+      "GlobalCoinPool": 50111814,
+      "CoinsDistributed": 4980500,
+      "CoinsInWallets": 4980500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 9961,
+      "AvgCoinsActive": 9961
+    },
+    {
+      "Timestamp": "2026-02-14T21:33:34.6163239Z",
+      "GlobalCoinPool": 50112423,
+      "CoinsDistributed": 5010500,
+      "CoinsInWallets": 5010500,
+      "ActivePlayers": 500,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 10021,
+      "AvgCoinsActive": 10021
+    }
+  ],
+  "PlayerSnapshots": [
+    {
+      "PlayerID": "player_1",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_2",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_3",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_4",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_5",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_6",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_7",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_8",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_9",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_10",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_11",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_12",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_13",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_14",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_15",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_16",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_17",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_18",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_19",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_20",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_21",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_22",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_23",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_24",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_25",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_26",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_27",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_28",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_29",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_30",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_31",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_32",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_33",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_34",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_35",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_36",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_37",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_38",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_39",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_40",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_41",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_42",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_43",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_44",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_45",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_46",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_47",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_48",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_49",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_50",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_51",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_52",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_53",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_54",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_55",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_56",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_57",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_58",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_59",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_60",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_61",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_62",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_63",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_64",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_65",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_66",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_67",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_68",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_69",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_70",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_71",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_72",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_73",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_74",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_75",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_76",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_77",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_78",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_79",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_80",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_81",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_82",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_83",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_84",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_85",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_86",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_87",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_88",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_89",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_90",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_91",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_92",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_93",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_94",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_95",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_96",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_97",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_98",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_99",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_100",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_101",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_102",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_103",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_104",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_105",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_106",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_107",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_108",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_109",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_110",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_111",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_112",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_113",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_114",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_115",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_116",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_117",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_118",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_119",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_120",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_121",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_122",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_123",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_124",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_125",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_126",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_127",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_128",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_129",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_130",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_131",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_132",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_133",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_134",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_135",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_136",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_137",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_138",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_139",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_140",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_141",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_142",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_143",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_144",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_145",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_146",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_147",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_148",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_149",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_150",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_151",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_152",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_153",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_154",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_155",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_156",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_157",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_158",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_159",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_160",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_161",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_162",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_163",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_164",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_165",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_166",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_167",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_168",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_169",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_170",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_171",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_172",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_173",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_174",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_175",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_176",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_177",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_178",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_179",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_180",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_181",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_182",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_183",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_184",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_185",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_186",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_187",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_188",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_189",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_190",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_191",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_192",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_193",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_194",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_195",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_196",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_197",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_198",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_199",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_200",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_201",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_202",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_203",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_204",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_205",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_206",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_207",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_208",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_209",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_210",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_211",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_212",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_213",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_214",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_215",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_216",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_217",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_218",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_219",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_220",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_221",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_222",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_223",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_224",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_225",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_226",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_227",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_228",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_229",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_230",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_231",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_232",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_233",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_234",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_235",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_236",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_237",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_238",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_239",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_240",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_241",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_242",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_243",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_244",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_245",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_246",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_247",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_248",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_249",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_250",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_251",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_252",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_253",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_254",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_255",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_256",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_257",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_258",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_259",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_260",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_261",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_262",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_263",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_264",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_265",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_266",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_267",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_268",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_269",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_270",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_271",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_272",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_273",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_274",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_275",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_276",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_277",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_278",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_279",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_280",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_281",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_282",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_283",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_284",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_285",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_286",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_287",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_288",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_289",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_290",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_291",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_292",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_293",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_294",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_295",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_296",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_297",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_298",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_299",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_300",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_301",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_302",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_303",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_304",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_305",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_306",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_307",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_308",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_309",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_310",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_311",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_312",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_313",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_314",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_315",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_316",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_317",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_318",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_319",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_320",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_321",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_322",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_323",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_324",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_325",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_326",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_327",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_328",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_329",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_330",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_331",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_332",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_333",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_334",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_335",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_336",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_337",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_338",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_339",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_340",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_341",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_342",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_343",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_344",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_345",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_346",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_347",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_348",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_349",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_350",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_351",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_352",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_353",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_354",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_355",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_356",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_357",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_358",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_359",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_360",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_361",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_362",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_363",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_364",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_365",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_366",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_367",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_368",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_369",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_370",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_371",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_372",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_373",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_374",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_375",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_376",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_377",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_378",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_379",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_380",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_381",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_382",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_383",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_384",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_385",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_386",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_387",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_388",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_389",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_390",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_391",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_392",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_393",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_394",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_395",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_396",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_397",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_398",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_399",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_400",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_401",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_402",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_403",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_404",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_405",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_406",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_407",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_408",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_409",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_410",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_411",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_412",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_413",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_414",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_415",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_416",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_417",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_418",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_419",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_420",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_421",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_422",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_423",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_424",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_425",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_426",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_427",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_428",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_429",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_430",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_431",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_432",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_433",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_434",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_435",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_436",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_437",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_438",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_439",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_440",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_441",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_442",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_443",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_444",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_445",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_446",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_447",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_448",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_449",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_450",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_451",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_452",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_453",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_454",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_455",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_456",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_457",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_458",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_459",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_460",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_461",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_462",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_463",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_464",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_465",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_466",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_467",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_468",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_469",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_470",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_471",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_472",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_473",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_474",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_475",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_476",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_477",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_478",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_479",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_480",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_481",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_482",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_483",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_484",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_485",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_486",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_487",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_488",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_489",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_490",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_491",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_492",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_493",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_494",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_495",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_496",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_497",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_498",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_499",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    },
+    {
+      "PlayerID": "player_500",
+      "Coins": 10080,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6163239Z"
+    }
+  ],
+  "TimeToFirstStar": -1,
+  "CoinEarningRate": 0.5,
+  "FinalStarPrice": 10000,
+  "MaxMarketPressure": 1,
+  "PoolExhaustionCount": 0,
+  "PoolExhaustionRate": 0,
+  "IsAffordableAtEnd": true,
+  "PassesValidation": true,
+  "ValidationNotes": []
+}
