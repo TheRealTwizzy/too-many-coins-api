@@ -1125,6 +1125,7 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 							<button type="button" data-target="admin-players">Players</button>
 							<button type="button" data-target="admin-abuse-monitor">Abuse Monitor</button>
 							<button type="button" data-target="admin-whitelist">Whitelist</button>
+							<button type="button" data-target="admin-bug-reports">Bug Reports</button>
 							<button type="button" data-target="admin-emergency">Emergency</button>
 							<button type="button" data-target="admin-audit">Audit Log</button>
 						</nav>
@@ -1301,6 +1302,20 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 							</div>
 						</section>
 
+						<section id="admin-bug-reports" class="admin-section">
+							<h3>Bug Reports (Read-Only)</h3>
+							<div class="card">
+								<div class="label">Player-submitted bug reports</div>
+								<div class="muted">Reports are immutable and for observation only. No responses or feedback loop in Alpha.</div>
+								<div class="row" style="margin-top:0.75rem;">
+									<input id="admin-bug-search" placeholder="Search by title or description" />
+									<button id="admin-bug-refresh" class="primary" type="button">Refresh</button>
+								</div>
+								<div id="admin-bug-results" class="section-stack" style="margin-top:0.75rem;"></div>
+								<div class="admin-empty" id="admin-bug-empty">No bug reports yet.</div>
+							</div>
+						</section>
+
 						<section id="admin-emergency" class="admin-section">
 							<h3>EMERGENCY OVERRIDES (ALPHA)</h3>
 							<div class="card">
@@ -1414,9 +1429,36 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 				</div>
 			</div>
 		</section>
+		<section id="view-bug-report" class="view" style="display:none;">
+			<div class="section-stack" style="max-width: 560px;">
+				<div class="card hero-card">
+					<div class="label">Report a bug</div>
+					<h2 style="margin:0.35rem 0 0;">Help us improve Too Many Coins.</h2>
+					<div class="muted">Bug reports are read-only during Alpha. We'll review and fix issues as we discover them.</div>
+				</div>
+				<div class="card">
+					<div class="stack">
+						<input id="bug-title" placeholder="Brief bug title" maxlength="200" />
+						<textarea id="bug-description" rows="6" placeholder="Describe the issue in detail. What were you doing? What happened?"></textarea>
+						<select id="bug-category">
+							<option value="other">Category: Other</option>
+							<option value="ui">Category: UI / Display</option>
+							<option value="economy">Category: Economy / Coins</option>
+							<option value="performance">Category: Performance / Speed</option>
+						</select>
+						<input id="bug-client-version" placeholder="Client version (optional)" maxlength="50" />
+						<button class="primary" id="bug-submit">Submit report</button>
+						<div id="bug-status" class="label"></div>
+						<button id="bug-cancel">Back</button>
+					</div>
+				</div>
+			</div>
+		</section>
 	</main>
 
-	<div class="footer">Made by AI</div>
+	<div class="footer">
+		Made by AI · <a href="#" id="report-bug-link" style="color:#c5cae9; text-decoration:none; cursor:pointer;">Report a bug</a>
+	</div>
 	<div id="debug-status" class="toast" style="display:none; position:fixed; left:1rem; bottom:1rem; z-index:40; max-width:420px;"></div>
 	<script>
 		(() => {
@@ -2653,6 +2695,10 @@ function initAdmin() {
 			updateDebugVisibility();
 		});
 	}
+	const bugRefreshBtn = document.getElementById("admin-bug-refresh");
+	if (bugRefreshBtn) {
+		bugRefreshBtn.addEventListener("click", () => loadAdminBugReports());
+	}
 	updateDebugVisibility();
 }
 
@@ -2668,6 +2714,7 @@ function refreshAdminView() {
 	if (adminShell) adminShell.style.display = "grid";
 	loadAdminPlayerSearch();
 	loadAdminAuditLog();
+	loadAdminBugReports();
 }
 
 function setIndicator(el, text, level) {
@@ -2840,6 +2887,55 @@ async function loadAdminAuditLog() {
 				</div>
 				<div class="label">${reason}</div>
 				<div class="label">${when}</div>
+			</div>
+		`;
+	}).join("");
+}
+
+async function loadAdminBugReports() {
+	if (!currentUser || !currentUser.isAdmin) return;
+	const results = document.getElementById("admin-bug-results");
+	const empty = document.getElementById("admin-bug-empty");
+	if (!results || !empty) return;
+	
+	const params = new URLSearchParams();
+	params.set("limit", "50");
+	params.set("offset", "0");
+	
+	const res = await apiFetch(`/admin/bugs?${params.toString()}`);
+	const data = await res.json();
+	if (!data.ok) {
+		empty.innerText = "Unable to load bug reports.";
+		empty.style.display = "block";
+		results.innerHTML = "";
+		return;
+	}
+	const items = data.items || [];
+	if (!items.length) {
+		empty.innerText = "No bug reports submitted yet.";
+		empty.style.display = "block";
+		results.innerHTML = "";
+		return;
+	}
+	empty.style.display = "none";
+	results.innerHTML = items.map((item) => {
+		const playerInfo = item.playerId ? `Player ${escapeHtml(item.playerId)}` : "Anonymous";
+		const when = item.createdAt ? formatRelativeTime(item.createdAt) : "";
+		const clientVer = item.clientVersion ? `v${escapeHtml(item.clientVersion)}` : "—";
+		return `
+			<div class="card">
+				<div class="row" style="justify-content:space-between;">
+					<div><strong>${escapeHtml(item.title)}</strong></div>
+					<span class="badge">${escapeHtml(item.category || "other")}</span>
+				</div>
+				<div class="label">${escapeHtml(item.description)}</div>
+				<div class="notice-meta" style="margin-top:0.5rem;">
+					<span class="muted">${playerInfo}</span>
+					<span class="muted">·</span>
+					<span class="muted">${when}</span>
+					<span class="muted">·</span>
+					<span class="muted">Client ${clientVer}</span>
+				</div>
 			</div>
 		`;
 	}).join("");
@@ -3597,6 +3693,96 @@ route().catch((err) => {
 	setToast(`Error: ${message}`, "error");
 	updateDebugVisibility();
 });
+
+// Bug Report Handler
+function initBugReporting() {
+	const reportLink = document.getElementById("report-bug-link");
+	const bugView = document.getElementById("view-bug-report");
+	const bugTitle = document.getElementById("bug-title");
+	const bugDescription = document.getElementById("bug-description");
+	const bugCategory = document.getElementById("bug-category");
+	const bugClientVersion = document.getElementById("bug-client-version");
+	const bugSubmit = document.getElementById("bug-submit");
+	const bugStatus = document.getElementById("bug-status");
+	const bugCancel = document.getElementById("bug-cancel");
+
+	if (!reportLink || !bugView) return;
+
+	reportLink.addEventListener("click", (event) => {
+		event.preventDefault();
+		setView("view-bug-report");
+		if (bugTitle) bugTitle.value = "";
+		if (bugDescription) bugDescription.value = "";
+		if (bugCategory) bugCategory.value = "other";
+		if (bugClientVersion) bugClientVersion.value = "";
+		if (bugStatus) bugStatus.innerText = "";
+	});
+
+	if (bugCancel) {
+		bugCancel.addEventListener("click", () => {
+			location.hash = "#/home";
+		});
+	}
+
+	if (bugSubmit) {
+		bugSubmit.addEventListener("click", async () => {
+			const title = bugTitle?.value?.trim() || "";
+			const description = bugDescription?.value?.trim() || "";
+			const category = bugCategory?.value?.trim() || "other";
+			const clientVersion = bugClientVersion?.value?.trim() || "";
+
+			if (!title || !description) {
+				if (bugStatus) bugStatus.innerText = "Title and description are required.";
+				bugStatus.style.color = "#fecaca";
+				return;
+			}
+
+			if (bugStatus) bugStatus.innerText = "Submitting...";
+			bugStatus.style.color = "";
+
+			try {
+				const res = await apiFetch("/bugs/report", {
+					method: "POST",
+					body: JSON.stringify({
+						title,
+						description,
+						category,
+						clientVersion
+					})
+				});
+
+				const data = await res.json();
+				if (!data.ok) {
+					if (bugStatus) bugStatus.innerText = data.error || "Submission failed.";
+					bugStatus.style.color = "#fecaca";
+					return;
+				}
+
+				// Clear form on success
+				if (bugTitle) bugTitle.value = "";
+				if (bugDescription) bugDescription.value = "";
+				if (bugCategory) bugCategory.value = "other";
+				if (bugClientVersion) bugClientVersion.value = "";
+
+				if (bugStatus) {
+					bugStatus.innerText = "Thank you for your report. Redirecting...";
+					bugStatus.style.color = "#bbf7d0";
+				}
+
+				setTimeout(() => {
+					location.hash = "#/home";
+				}, 800);
+			} catch (e) {
+				if (bugStatus) {
+					bugStatus.innerText = "Submission failed (network error).";
+					bugStatus.style.color = "#fecaca";
+				}
+			}
+		});
+	}
+}
+
+initBugReporting();
 	</script>
 </body>
 </html>

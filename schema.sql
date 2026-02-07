@@ -380,3 +380,28 @@ CREATE TABLE IF NOT EXISTS season_control_events (
     emission_pool_snapshot BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- =========================
+-- ALPHA REQUIRED
+-- Bug Reporting (append-only, immutable)
+-- Players can report bugs. Admins can view only. No edits or deletes.
+-- =========================
+CREATE TABLE IF NOT EXISTS bug_reports (
+    bug_report_id BIGSERIAL PRIMARY KEY,
+    player_id TEXT,
+    season_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'other',
+    client_version TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_bug_reports_season_id
+    ON bug_reports (season_id);
+
+CREATE INDEX IF NOT EXISTS idx_bug_reports_player_id
+    ON bug_reports (player_id);
+
+CREATE INDEX IF NOT EXISTS idx_bug_reports_created_at
+    ON bug_reports (created_at DESC);
