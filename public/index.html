@@ -1624,6 +1624,11 @@ let adminAbuseTimer = null;
 let adminAntiCheatTimer = null;
 let currentSeasonSnapshot = null;
 
+// Bootstrap gate state
+let bootstrapSeasonReady = false;
+let bootstrapGateResolved = false;
+let bootstrapTimeoutId = null;
+
 function apiFetch(url, options = {}) {
 	return fetch(url, {
 		...options,
@@ -1899,7 +1904,102 @@ function disconnectLiveStream() {
 	updateLiveStatus("offline", "Offline");
 }
 
+// Bootstrap season readiness gate
+async function waitForBootstrapSeason() {
+	// If already resolved, return immediately
+	if (bootstrapGateResolved) {
+		return bootstrapSeasonReady;
+	}
+
+	// Check if season is ready by fetching /seasons endpoint
+	try {
+		const result = await apiFetchJson("/seasons", {}, 2500);
+		const data = result.data || {};
+		
+		// Check if we have season data and it's valid
+		bootstrapSeasonReady = data.seasons && data.seasons.length > 0;
+		bootstrapGateResolved = true;
+		
+		// Clear timeout if it was set
+		if (bootstrapTimeoutId) {
+			clearTimeout(bootstrapTimeoutId);
+			bootstrapTimeoutId = null;
+		}
+		
+		// Remove bootstrap message
+		if (authStatus) {
+			authStatus.innerText = "Log in to save your profile.";
+		}
+		
+		return bootstrapSeasonReady;
+	} catch (e) {
+		// If fetch fails, treat as season not ready
+		bootstrapSeasonReady = false;
+		bootstrapGateResolved = false;
+		
+		// Set timeout if not already set
+		if (!bootstrapTimeoutId) {
+			setBootstrapTimeout();
+		}
+		
+		return false;
+	}
+}
+
+// Set 15-second timeout for bootstrap
+function setBootstrapTimeout() {
+	if (bootstrapTimeoutId) return;
+	
+	bootstrapTimeoutId = setTimeout(() => {
+		bootstrapTimeoutId = null;
+		bootstrapGateResolved = true;
+		bootstrapSeasonReady = false;
+		
+		// Show timeout message
+		if (authStatus) {
+			authStatus.innerHTML = '<div style="color:#fecaca;">Season is still initializing.<br>Please refresh the page in a moment.</div>';
+		}
+		
+		// Disable login button and inputs
+		const loginBtn = document.getElementById("login-btn");
+		const usernameInput = document.getElementById("username");
+		const passwordInput = document.getElementById("password");
+		
+		if (loginBtn) loginBtn.disabled = true;
+		if (usernameInput) usernameInput.disabled = true;
+		if (passwordInput) passwordInput.disabled = true;
+	}, 15000);
+}
+
 async function loadAuth() {
+	// Show bootstrap message while waiting for season readiness
+	if (!bootstrapGateResolved) {
+		authStatus.innerText = "Preparing the season…";
+		authForms.style.display = "none";
+		logoutBtn.style.display = "none";
+		
+		// Disable all login inputs while bootstrapping
+		const usernameInput = document.getElementById("username");
+		const passwordInput = document.getElementById("password");
+		const loginBtn = document.getElementById("login-btn");
+		const signupLink = document.getElementById("signup-link");
+		
+		if (usernameInput) usernameInput.disabled = true;
+		if (passwordInput) passwordInput.disabled = true;
+		if (loginBtn) loginBtn.disabled = true;
+		
+		// Start waiting for season readiness
+		setBootstrapTimeout(); // Set the 15-second timeout
+		await waitForBootstrapSeason();
+		
+		// If still not ready after waiting, return early
+		// (the timeout will handle the UI state)
+		if (!bootstrapSeasonReady) {
+			return;
+		}
+	}
+	
+	// Now proceed with auth check only after bootstrap is ready
 	const result = await apiFetchJson("/auth/me", {}, 2500);
 	const data = result.data || { ok: false };
 	if (!data.ok) {
@@ -1919,6 +2019,16 @@ async function loadAuth() {
 		setNotificationViewport(false);
 		document.getElementById("seasons").style.display = "none";
 		document.getElementById("locked-message").innerText = "Log in to access seasons.";
+		
+		// Enable login inputs once bootstrap is complete
+		const usernameInput = document.getElementById("username");
+		const passwordInput = document.getElementById("password");
+		const loginBtn = document.getElementById("login-btn");
+		
+		if (usernameInput) usernameInput.disabled = false;
+		if (passwordInput) passwordInput.disabled = false;
+		if (loginBtn) loginBtn.disabled = false;
+		
 		connectLiveStream();
 		return;
 	}
@@ -3259,6 +3369,12 @@ async function route() {
 function initHome() {
 	homeInitialized = true;
 	document.getElementById("login-btn").addEventListener("click", async () => {
+		// Guard: don't allow login before bootstrap is complete
+		if (!bootstrapGateResolved) {
+			setToast("System is still initializing. Please wait.", "error");
+			return;
+		}
+		
 		const username = document.getElementById("username").value;
 		const password = document.getElementById("password").value;
 		if (!username || !password) {
