@@ -1731,7 +1731,7 @@ function formatCoinsInCirculationForSeason(season) {
 		? season.finalCoinsInCirculation
 		: season?.coinsInCirculation;
 	const count = typeof rawCoins === "number" && isFinite(rawCoins)
-		? rawCoins
+		? (rawCoins / 1000).toFixed(3)
 		: null;
 	if (ended) {
 		return count === null ? "Final snapshot recorded" : `Final snapshot: ${count} coins`;
@@ -1781,7 +1781,7 @@ function updateSeasonSnapshot(season) {
 		: season.coinsInCirculation;
 	if (seasonTitle) seasonTitle.innerText = "Season 1";
 	if (seasonRemaining) seasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
-	if (seasonStarPrice) seasonStarPrice.innerText = typeof starPriceValue === "number" ? `${starPriceValue} coins` : "--";
+	if (seasonStarPrice) seasonStarPrice.innerText = typeof starPriceValue === "number" ? `${(starPriceValue / 1000).toFixed(3)} coins` : "--";
 	if (seasonCoins) seasonCoins.innerText = formatCoinsInCirculationForSeason({ ...season, coinsInCirculation: coinsValue });
 	if (seasonEmission) seasonEmission.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
 	if (seasonPressure) seasonPressure.innerText = formatPressureValue(season.marketPressure, ended);
@@ -1789,7 +1789,7 @@ function updateSeasonSnapshot(season) {
 	if (seasonScarcityMessage) seasonScarcityMessage.innerText = scarcityMessage(season.secondsRemaining || 0);
 	if (heroSeasonId) heroSeasonId.innerText = "Season 1";
 	if (heroSeasonRemaining) heroSeasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
-	if (heroStarPrice) heroStarPrice.innerText = typeof starPriceValue === "number" ? `${starPriceValue} coins` : "--";
+	if (heroStarPrice) heroStarPrice.innerText = typeof starPriceValue === "number" ? `${(starPriceValue / 1000).toFixed(3)} coins` : "--";
 	if (heroInflation) heroInflation.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
 	if (heroPressure) heroPressure.innerText = formatPressureValue(season.marketPressure, ended);
 	if (seasonStatus) {
@@ -2037,9 +2037,10 @@ async function refreshPlayer() {
 	const data = await res.json();
 	playerCoins = data.playerCoins || 0;
 	playerStars = data.playerStars || 0;
-	coinsDiv.innerText = `Coins: ${playerCoins}`;
+	const displayCoins = (playerCoins / 1000).toFixed(3);
+	coinsDiv.innerText = `Coins: ${displayCoins}`;
 	starsDiv.innerText = `Stars: ${playerStars}`;
-	statPill.innerText = `${playerCoins} coins · ${playerStars} stars`;
+	statPill.innerText = `${displayCoins} coins · ${playerStars} stars`;
 }
 
 async function loadProfile() {
@@ -2079,9 +2080,10 @@ async function loadSeasons() {
 		const isJoined = Boolean(currentUser);
 		const isThisSeasonJoined = isJoined;
 		const ended = seasonStatusValue(season) === "ended";
-		const starPrice = ended && typeof season.finalStarPrice === "number"
+		const starPriceMicro = ended && typeof season.finalStarPrice === "number"
 			? season.finalStarPrice
 			: season.currentStarPrice;
+		const starPrice = starPriceMicro != null ? (starPriceMicro / 1000).toFixed(3) : null;
 		const remainingLabel = ended
 			? "Season ended — read-only."
 			: `${formatRemaining(season.secondsRemaining)} remaining`;
@@ -2105,7 +2107,7 @@ async function loadSeasons() {
 			<div class="season-card-grid">
 				<div class="metric">
 					<div class="label" data-season-price-label>${starPriceLabel}</div>
-					<div class="stat-value" data-season-price>${starPrice} coins</div>
+					<div class="stat-value" data-season-price>${starPrice !== null ? starPrice + ' coins' : '--'}</div>
 				</div>
 				<div class="metric">
 					<div class="label">Coins in circulation</div>
@@ -2168,9 +2170,9 @@ async function loadSeasons() {
 				}
 				lastQuote = data;
 				const perStarPrice = typeof data.finalStarPrice === "number"
-					? data.finalStarPrice
-					: (data.breakdown && data.breakdown.length > 0 ? data.breakdown[data.breakdown.length - 1].finalPrice : null);
-				const totalCost = typeof data.totalCoinsSpent === "number" ? data.totalCoinsSpent : null;
+					? (data.finalStarPrice / 1000).toFixed(3)
+					: (data.breakdown && data.breakdown.length > 0 ? (data.breakdown[data.breakdown.length - 1].finalPrice / 1000).toFixed(3) : null);
+				const totalCost = typeof data.totalCoinsSpent === "number" ? (data.totalCoinsSpent / 1000).toFixed(3) : null;
 				if (quoteEl) {
 					if (totalCost != null && perStarPrice != null) {
 						quoteEl.innerText = `Total cost: ${totalCost} coins · Per-star: ${perStarPrice} coins`;
@@ -2981,7 +2983,7 @@ async function loadAdminSeasons() {
 						<span class="${badgeClass}">${status}</span>
 					</div>
 					<div class="label" style="margin-top:0.5rem;">Day ${formatSeasonDay(season)}</div>
-					<div class="label">Base price ${economyData.baseStarPrice || "--"} · Effective ${season.currentStarPrice || "--"}</div>
+					<div class="label">Base price ${typeof economyData.baseStarPrice === 'number' ? (economyData.baseStarPrice / 1000).toFixed(3) : "--"} · Effective ${typeof season.currentStarPrice === 'number' ? (season.currentStarPrice / 1000).toFixed(3) : "--"}</div>
 					<div class="label">Market pressure ${marketPressure}</div>
 					<div class="label">Emission target ${emissionTarget}</div>
 				</div>
@@ -3025,8 +3027,8 @@ async function loadAdminSeasons() {
 				<div class="admin-metric"><div class="label">Season ID</div><div class="stat-value">${first.seasonId}</div></div>
 				<div class="admin-metric"><div class="label">Day</div><div class="stat-value">${formatSeasonDay(first)}</div></div>
 				<div class="admin-metric"><div class="label">Status</div><div class="stat-value">${seasonStatusLabelAdmin(first)}</div></div>
-				<div class="admin-metric"><div class="label">Base price</div><div class="stat-value">${economyData.baseStarPrice ?? "--"}</div></div>
-				<div class="admin-metric"><div class="label">Effective price</div><div class="stat-value">${first.currentStarPrice ?? "--"}</div></div>
+				<div class="admin-metric"><div class="label">Base price</div><div class="stat-value">${typeof economyData.baseStarPrice === 'number' ? (economyData.baseStarPrice / 1000).toFixed(3) : \"--\"}</div></div>
+				<div class="admin-metric"><div class="label">Effective price</div><div class="stat-value">${typeof first.currentStarPrice === 'number' ? (first.currentStarPrice / 1000).toFixed(3) : \"--\"}</div></div>
 				<div class="admin-metric"><div class="label">Market pressure</div><div class="stat-value">${marketPressure}</div></div>
 				<div class="admin-metric"><div class="label">Emission state</div><div class="stat-value">${emissionTarget}</div></div>
 				<div class="admin-metric"><div class="label">Coins in circulation</div><div class="stat-value">${formatCoinsInCirculationForSeason(first)}</div></div>
@@ -3789,3 +3791,4 @@ initBugReporting();
 	</script>
 </body>
 </html>
+
