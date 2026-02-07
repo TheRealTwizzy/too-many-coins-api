@@ -57,9 +57,83 @@ func LoadSeasonState(db *sql.DB) error {
 		return err
 	}
 	if !ok {
-		return nil
+		// No active season exists; auto-create one if in Alpha
+		if CurrentPhase() == PhaseAlpha {
+			if err := ensureAlphaSeasonExists(db); err != nil {
+				log.Println("Alpha season auto-create failed:", err)
+				return err
+			}
+			// Reload the newly created season
+			state, ok, err = fetchActiveSeasonState(db)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				log.Println("Alpha season auto-create succeeded, but state not retrievable")
+				return errors.New("active season not found after creation")
+			}
+			log.Println("Active Alpha season auto-created:", state.SeasonID)
+		} else {
+			// Season not found and not in Alpha
+			return nil
+		}
+	} else {
+		log.Println("Active season found:", state.SeasonID)
 	}
 	setActiveSeasonState(state, true)
+	return nil
+}
+
+func ensureAlphaSeasonExists(db *sql.DB) error {
+	if db == nil {
+		return nil
+	}
+
+	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Check again if an active season exists (may have been created by another instance)
+	_, ok, err := fetchActiveSeasonStateForUpdate(tx)
+	if err != nil {
+		return err
+	}
+	if ok {
+		// Another instance created a season concurrently
+		return nil
+	}
+
+	// Create new Alpha season
+	newSeasonID := buildAlphaSeasonID(time.Now().UTC())
+	newStart := time.Now().UTC()
+
+	if _, err := tx.ExecContext(context.Background(), `
+		INSERT INTO season_economy (
+			season_id,
+			global_coin_pool,
+			global_stars_purchased,
+			coins_distributed,
+			emission_remainder,
+			market_pressure,
+			price_floor,
+			last_updated
+		)
+		VALUES ($1, 0, 0, 0, 0, 1.0, 0, NOW())
+		ON CONFLICT (season_id) DO NOTHING
+	`, newSeasonID); err != nil {
+		return err
+	}
+
+	if err := persistActiveSeasonState(tx, SeasonState{SeasonID: newSeasonID, StartUTC: newStart}); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -410,6 +484,7 @@ func advanceAlphaSeason(db *sql.DB, now time.Time, allowIfNoActive bool) error {
 	}
 
 	setActiveSeasonState(SeasonState{SeasonID: newSeasonID, StartUTC: newStart}, true)
+	log.Println("Alpha season advanced:", newSeasonID)
 	resetSeasonRuntimeState()
 	if _, err := LoadOrCalibrateSeason(db, newSeasonID); err != nil {
 		log.Println("season calibration failed:", err)
