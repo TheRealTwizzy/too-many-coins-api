@@ -66,3 +66,26 @@ Allows requesting a system-quoted trade.
 Shows eligibility gates, burn cost, and premium.
 
 Requires explicit confirmation and warns that trades are expensive and irreversible.
+
+---
+
+## Alpha UI Copy (Player-Facing)
+
+About this game (Alpha):
+
+Earn Coins, buy Stars, climb the leaderboard. Coins enter the world as people play, and Stars become harder to buy as the season moves forward. The pressure is shared: when everyone earns and spends, prices rise. Scarcity builds toward the end, and every decision matters.
+
+What is missing (intentional in Alpha):
+
+- Trading
+- Multiple seasons
+- Messaging and forums
+- Cosmetics and profiles
+- Advanced admin tools
+- Daily tasks, comeback rewards, passive drip
+
+These omissions are temporary and intentional so the core economy can be tested without distractions.
+
+What is coming (post-Alpha / Beta):
+
+We expect to explore trading, messaging and forums, persistent cosmetics and history, multiple seasons, and expanded anti-abuse systems. No timelines or guarantees. Alpha may reset and change.
