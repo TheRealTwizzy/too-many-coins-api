@@ -3137,8 +3137,8 @@ async function loadAdminSeasons() {
 				<div class="admin-metric"><div class="label">Season ID</div><div class="stat-value">${first.seasonId}</div></div>
 				<div class="admin-metric"><div class="label">Day</div><div class="stat-value">${formatSeasonDay(first)}</div></div>
 				<div class="admin-metric"><div class="label">Status</div><div class="stat-value">${seasonStatusLabelAdmin(first)}</div></div>
-				<div class="admin-metric"><div class="label">Base price</div><div class="stat-value">${typeof economyData.baseStarPrice === 'number' ? (economyData.baseStarPrice / 1000).toFixed(3) : \"--\"}</div></div>
-				<div class="admin-metric"><div class="label">Effective price</div><div class="stat-value">${typeof first.currentStarPrice === 'number' ? (first.currentStarPrice / 1000).toFixed(3) : \"--\"}</div></div>
+				<div class="admin-metric"><div class="label">Base price</div><div class="stat-value">${typeof economyData.baseStarPrice === 'number' ? (economyData.baseStarPrice / 1000).toFixed(3) : "--"}</div></div>
+				<div class="admin-metric"><div class="label">Effective price</div><div class="stat-value">${typeof first.currentStarPrice === 'number' ? (first.currentStarPrice / 1000).toFixed(3) : "--"}</div></div>
 				<div class="admin-metric"><div class="label">Market pressure</div><div class="stat-value">${marketPressure}</div></div>
 				<div class="admin-metric"><div class="label">Emission state</div><div class="stat-value">${emissionTarget}</div></div>
 				<div class="admin-metric"><div class="label">Coins in circulation</div><div class="stat-value">${formatCoinsInCirculationForSeason(first)}</div></div>
