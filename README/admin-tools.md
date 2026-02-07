@@ -2,7 +2,79 @@ The system must include a minimal internal admin and observability interface.
 
 Admin access is restricted to authorized accounts only.
 
-Required admin capabilities are split by phase. Alpha is read‑only.
+---
+
+## Admin Role Philosophy — Sentinels, Not Gods
+
+**Admins are sentinels, not gods.**
+
+The economy must **self-regulate**. Admins provide oversight and emergency safeguards, not active management.
+
+### What Admins MAY Do
+
+Admins may:
+
+- **Emergency pause 1 or all seasons** (temporary freeze)
+- **Ban extreme abuse cases** (only after anti-cheat recommendation)
+- **Monitor telemetry and economy health** (read-only observability)
+- **Advance seasons manually** (recovery only, not normal flow)
+
+### What Admins MUST NOT Do
+
+Admins must NOT:
+
+- Micromanage the economy
+- Manually adjust player balances
+- Override anti-cheat without justification
+- Edit past season data
+- Interfere with normal economic flow
+
+**The economy is designed to self-regulate.** Admin intervention must be rare, deliberate, and auditable.
+
+---
+
+## Telemetry Rules — Player-Facing Subset Only
+
+Only telemetry that influences **player decisions** may be shown to players.
+
+### Allowed Player-Facing Telemetry
+
+- **Total Coins in Circulation**: Sum of all player wallet balances (NOT the unreleased Coin Pool)
+- **Market pressure trends**: Graphs showing pressure changes over time
+- **Star price graphs**: Historical and current pricing
+- **Time remaining**: Season countdown and milestones
+- **Leaderboard changes**: Rank movements and competitive dynamics
+
+Telemetry may include:
+
+- Graphs
+- Timers
+- Trend indicators
+- Aggregated statistics
+
+### Forbidden Player-Facing Telemetry
+
+Telemetry must NOT expose:
+
+- **Exact internal formulas** (pricing algorithms, emission calculations)
+- **Anti-cheat thresholds** (thresholds, multipliers, detection signals)
+- **Exploitable signals** (precise emission pool size, exact faucet pacing)
+- **Admin control granularity** (exact admin actions beyond high-level pauses)
+
+### Admin-Only Telemetry
+
+Admins have access to:
+
+- Full economy state (emission pool, exact rates, throttle status)
+- Anti-cheat signals and abuse event logs
+- Player-level detail (balances, earning history, throttle state)
+- Trade logs and market activity (when trading is enabled)
+
+Admin telemetry is **never exposed to players**.
+
+---
+
+## Required admin capabilities are split by phase. Alpha is read‑only.
 
 Alpha (read‑only, current build):
 

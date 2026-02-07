@@ -5,6 +5,28 @@ End-of-season resolution:
 Star purchases and coin earning are disabled once the season ends.
 Brokered trading is disabled once the season ends; any pending offers are canceled safely.
 
+## Star Conversion — Permanent Profile Statistic
+
+At season end, Stars convert into a **permanent profile statistic**.
+
+**Stars do NOT carry over as a currency.**
+
+**After season end**:
+
+- Stars are converted into a permanent, non-spendable statistic
+- The statistic reflects seasonal performance and competitive achievement
+- Stars are NOT tradable (before or after conversion)
+- Stars are NOT spendable (except via Star Sacrifice for TSAs during the season)
+- Stars influence **long-term profile rank and identity**
+
+**Star value scales with season population**:
+
+- Stars earned in larger, more competitive seasons carry more weight
+- The conversion reflects the difficulty and competitiveness of the season
+- This prevents early-season or low-population inflation of permanent stats
+
+**Stars are the permanent score of seasonal performance**, not a currency that carries forward.
+
 TSA note (post‑alpha/Beta‑only):
 
 All TSA holdings and any pending TSA trades are wiped at season end. TSAs never carry over between seasons.

@@ -10,6 +10,23 @@ If any rule in this prompt conflicts with another instruction,
 THIS PROMPT TAKES PRIORITY.
 
 ----------------------------
+PRE-FLIGHT CHECKLIST GATE (MANDATORY)
+----------------------------
+
+Before acting on ANY prompt requesting code, configuration, database, or runtime changes,
+Codex MUST verify the full pre-flight checklist.
+
+The canonical pre-flight checklist is maintained as a separate prompt artifact
+and MUST be satisfied before execution may proceed.
+
+If any checklist item is false, unknown, or unverifiable:
+- STOP immediately
+- Report the specific failed item
+- Do NOT proceed
+
+This gate is non-negotiable and applies to all execution contexts.
+
+----------------------------
 WHEN THIS PROMPT APPLIES
 ----------------------------
 

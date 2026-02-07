@@ -12,6 +12,68 @@ The game runs in fixed-length seasons and resets regularly, while preserving lon
 
 ---
 
+## Game Bible — Structure and Authority
+
+This repository contains a **Game Bible**: the complete, authoritative definition of the game.
+
+The Game Bible consists of:
+
+- `README.md` (this file) — Core overview and governance
+- `README/*.md` — System-specific definitions and contracts
+- `TODO.md` — Canonical execution plan
+- `.github/instructions/AI_CONSTITUTION.txt` — Execution boundaries and constraints
+
+Game Bible requirements:
+
+- Total files ≤ 24 (one slot reserved for inspection/debug)
+- Allowed formats: `.md`, `.txt` only
+- Must be as small as possible while remaining complete
+- All terminology must be defined within the Bible
+- Humans and AI must be able to interpret all terminology without external context
+
+The Game Bible defines:
+
+- Game systems
+- Economy rules
+- Prompting constraints
+- Implementation boundaries
+
+The Game Bible is the single source of truth. Code must match canon; canon does not match code.
+
+---
+
+## UI vs Economy Philosophy — The Curtain and the Brain
+
+**UI is the curtain. Economy is the brain.**
+
+Players interact with a beautiful, simple surface. Underneath is a complex, self-regulating economy.
+
+Players may sense hidden systems but never fully see them.
+
+This philosophy guides:
+
+- **UI decisions**: Simple, elegant, and accessible
+- **Telemetry exposure**: Only information that influences player decisions
+- **Player perception**: Mystery, tension, and strategic depth without overwhelming complexity
+
+Only telemetry that influences player decisions may be shown. Examples:
+
+- Total Coins in Circulation (sum of all player wallet balances, NOT the unreleased Coin Pool)
+- Market pressure trends
+- Time remaining
+- Star price graphs
+
+Telemetry must NOT expose:
+
+- Exact internal formulas
+- Anti-cheat thresholds
+- Exploitable signals
+- Admin control granularity
+
+The goal: players feel the weight of the economy without needing to understand its machinery.
+
+---
+
 ## Alpha Scope (Current Build)
 
 Alpha is focused on the first playable economy loop:

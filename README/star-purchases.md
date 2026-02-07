@@ -2,6 +2,23 @@ Stars may only be obtained by purchasing them from the system using coins.
 
 Stars are minted only by the system. Brokered trading may transfer existing Stars between players but never creates new Stars and never bypasses scarcity.
 
+## Star Characteristics
+
+**Stars are NOT tradable in any context** (player-to-player trading, brokered trading, or any other mechanism).
+
+**Stars are NOT spendable** (except via Star Sacrifice for TSAs in Beta+, which permanently destroys them).
+
+**Stars are seasonal competitive units** that:
+
+- Determine leaderboard rank directly
+- Reset at season end (do not carry over as currency)
+- Convert into a **permanent profile statistic** after season end
+- Influence long-term profile rank and identity
+
+**Star value scales with season population**. Stars earned in larger, more competitive seasons carry more weight as a permanent statistic.
+
+**Stars are the permanent score of seasonal performance.**
+
 Star purchases follow these rules:
 
 Players may buy stars one at a time or in bulk.

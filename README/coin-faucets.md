@@ -1,5 +1,29 @@
 Players earn coins through a limited set of server-controlled faucets.
 
+## Universal Basic Income (UBI) — Minimum Payout
+
+Every player receives coins every game tick (continuous income).
+
+**Minimum payout per tick: 0.001 coin**
+
+**Coins support decimal precision to thousandths** (three decimal places).
+
+This ensures:
+
+- Players are **never unable to play**
+- Even late-season or throttled players receive minimal income
+- The game remains accessible at all population levels
+
+**Star costs MUST scale over the season** to prevent UBI from trivializing scarcity.
+
+**Inflation and UBI must be considered together** when tuning the economy.
+
+UBI is the foundation of the economy; all other faucets are additive.
+
+---
+
+## Faucet Types
+
 Daily Login:
 
 Available once per 20 hours per season.

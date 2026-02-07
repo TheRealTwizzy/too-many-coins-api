@@ -2,6 +2,62 @@
 
 The bot runner is a separate process that uses the same HTTP APIs as real players. It authenticates via HTTP-only session cookies, and only acts when `BOTS_ENABLED=true`.
 
+---
+
+## Bot Philosophy and Behavior
+
+Bots exist to:
+
+- Populate seasons with realistic competitive activity
+- Provide baseline market activity
+- Test server load and economy dynamics
+- Create social presence and leaderboard competition
+
+### Bot Learning and Behavior
+
+Bots **learn from aggregate "normal player" behavior**:
+
+- Bots observe patterns across many players
+- Bots do NOT clone individual players
+- Bots do NOT target specific players
+- Bots vary in skill, strategy, and effectiveness
+
+### Bot Skill Variation
+
+Bots range from:
+
+- **Cautious and inefficient** (poor timing, low activity)
+- **Moderate and average** (baseline competitive behavior)
+- **Aggressive and optimal** (strong timing, high activity)
+
+This variation creates a **realistic competitive environment**.
+
+### Bot Trading
+
+- Bots **CAN trade with bots** (bot-to-bot trading allowed)
+- Bots **CANNOT trade with players** (no bot-to-player trading)
+- Bot trades contribute to market pressure and economic telemetry
+- Bot trades follow the same rules as player trades
+
+### Bot Leaderboard
+
+Bots have **their own leaderboard**:
+
+- Bots compete against each other
+- Bots are visible on the main leaderboard with a **BOT badge**
+- Bots create competitive pressure and social presence
+
+### Bot Bad Actors
+
+Bots **may be bad actors at realistic rates**:
+
+- Some bots may exhibit suspicious behavior
+- Anti-cheat applies **equally to bots and players**
+- Bots help test anti-cheat systems
+- Bots should reflect realistic abuse patterns
+
+---
+
 ## Environment Variables
 
 Required:
