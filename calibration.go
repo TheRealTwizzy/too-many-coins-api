@@ -94,23 +94,23 @@ func CalibrateSeason(seasonID string, start time.Time, telemetry TelemetrySnapsh
 	params := CalibrationParams{
 		SeasonID:                     seasonID,
 		Seed:                         seed,
-		P0:                           p0,
-		CBase:                        cBase,
+		P0:                           p0 * COIN_SCALE,    // scale from coins to microcoins
+		CBase:                        cBase * COIN_SCALE, // scale from coins to microcoins
 		Alpha:                        alpha,
 		SScale:                       sScale,
-		GScale:                       gScale,
+		GScale:                       gScale * float64(COIN_SCALE), // scale from coins to microcoins
 		Beta:                         beta,
 		Gamma:                        gamma,
-		DailyLoginReward:             dailyLoginReward,
+		DailyLoginReward:             dailyLoginReward * COIN_SCALE, // scale from coins to microcoins
 		DailyLoginCooldownHours:      20,
-		ActivityReward:               activityReward,
+		ActivityReward:               activityReward * COIN_SCALE, // scale from coins to microcoins
 		ActivityCooldownSeconds:      activityCooldownSeconds,
-		DailyCapEarly:                dailyCapEarly,
-		DailyCapLate:                 dailyCapLate,
+		DailyCapEarly:                dailyCapEarly * COIN_SCALE, // scale from coins to microcoins
+		DailyCapLate:                 dailyCapLate * COIN_SCALE,  // scale from coins to microcoins
 		PassiveActiveIntervalSeconds: passiveActiveInterval,
 		PassiveIdleIntervalSeconds:   passiveIdleInterval,
-		PassiveActiveAmount:          passiveActiveAmount,
-		PassiveIdleAmount:            passiveIdleAmount,
+		PassiveActiveAmount:          passiveActiveAmount * COIN_SCALE, // scale from coins to microcoins
+		PassiveIdleAmount:            passiveIdleAmount * COIN_SCALE,   // scale from coins to microcoins
 		HopeThreshold:                0.22,
 	}
 

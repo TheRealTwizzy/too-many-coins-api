@@ -139,11 +139,11 @@ func applyFaucetCooldownScaling(cooldown time.Duration, multiplier float64) time
 	return adjusted
 }
 
-// DistributeUniversalBasicIncome grants the minimum 0.001 coin (1 unit) to all eligible players.
+// DistributeUniversalBasicIncome grants the minimum 0.001 coin (1 microcoin) to all eligible players.
 // UBI is foundation income: always-on, emission-backed, non-negotiable.
 // Failures per-player do not block UBI for other players.
 func DistributeUniversalBasicIncome(db *sql.DB, now time.Time) (ubiCount int, ubiTotal int, poolExhausted bool) {
-	const ubiPerTick = 1 // Represents 0.001 coins in decimal spec
+	const ubiPerTick = 1 // 1 microcoin = 0.001 coins per tick
 
 	if db == nil {
 		return 0, 0, false

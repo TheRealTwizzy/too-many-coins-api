@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+// COIN_SCALE: 1 coin = 1000 microcoins
+// All internal economy math uses microcoins
+// This allows UBI of 0.001 coins (1 microcoin) per tick to be represented as integers
+const COIN_SCALE = 1000
+
 //go:embed schema.sql
 var schemaSQL string
 
@@ -37,29 +42,29 @@ type EconomyInvariantSnapshot struct {
 var economy = &EconomyState{
 	globalCoinPool:       0,
 	globalStarsPurchased: 0,
-	dailyEmissionTarget:  1000,
+	dailyEmissionTarget:  1000 * COIN_SCALE, // 1000 coins = 1,000,000 microcoins
 	emissionRemainder:    0,
 	marketPressure:       1.0,
 	priceFloor:           0,
 	calibration: CalibrationParams{
 		SeasonID:                     defaultSeasonID,
-		P0:                           10,
-		CBase:                        1000,
+		P0:                           10 * COIN_SCALE,   // 10 coins = 10,000 microcoins
+		CBase:                        1000 * COIN_SCALE, // 1000 coins = 1,000,000 microcoins
 		Alpha:                        3.0,
 		SScale:                       25.0,
-		GScale:                       1000.0,
+		GScale:                       1000.0 * float64(COIN_SCALE),
 		Beta:                         2.6,
 		Gamma:                        0.08,
-		DailyLoginReward:             20,
+		DailyLoginReward:             20 * COIN_SCALE, // 20 coins
 		DailyLoginCooldownHours:      20,
-		ActivityReward:               3,
+		ActivityReward:               3 * COIN_SCALE, // 3 coins
 		ActivityCooldownSeconds:      300,
-		DailyCapEarly:                100,
-		DailyCapLate:                 30,
+		DailyCapEarly:                100 * COIN_SCALE, // 100 coins
+		DailyCapLate:                 30 * COIN_SCALE,  // 30 coins
 		PassiveActiveIntervalSeconds: 60,
 		PassiveIdleIntervalSeconds:   240,
-		PassiveActiveAmount:          2,
-		PassiveIdleAmount:            1,
+		PassiveActiveAmount:          2 * COIN_SCALE, // 2 coins
+		PassiveIdleAmount:            1 * COIN_SCALE, // 1 coin
 		HopeThreshold:                0.22,
 	},
 }
