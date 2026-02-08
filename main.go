@@ -34,9 +34,10 @@ func mustSubFS(fsys fs.FS, dir string) fs.FS {
    ====================== */
 
 type BuyStarRequest struct {
-	SeasonID string `json:"seasonId"`
-	PlayerID string `json:"playerId"`
-	Quantity int    `json:"quantity,omitempty"`
+	SeasonID  string `json:"seasonId"`
+	PlayerID  string `json:"playerId"`
+	Quantity  int    `json:"quantity,omitempty"`
+	PriceTick *int64 `json:"priceTick"`
 }
 
 type BulkStarBreakdown struct {

@@ -300,6 +300,7 @@ func startTickLoop(db *sql.DB) {
 			remaining := seasonSecondsRemaining(now)
 			currentPrice := ComputeSeasonAuthorityStarPrice(coins, remaining)
 			economy.SetCurrentStarPrice(currentPrice)
+			economy.SetCurrentPriceTick(now.Unix())
 
 			activeCoins := economy.ActiveCoinsInCirculation()
 			dailyTarget := economy.EffectiveDailyEmissionTarget(remaining, activeCoins)

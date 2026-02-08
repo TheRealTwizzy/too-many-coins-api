@@ -106,6 +106,21 @@ This ensures:
 - Price continuity is maintained during unexpected downtime
 - The season-authoritative star price is recoverable from database state
 
+## Price Tick Locking (Authoritative Match)
+
+Every season snapshot includes a `price_tick` identifier alongside `current_star_price`.
+
+Client purchase requests MUST include the `price_tick` observed by the client.
+
+Server validation:
+- If `request.price_tick == current_price_tick`: purchase proceeds using the snapshotted price
+- If `request.price_tick != current_price_tick`: request fails with `PRICE_CHANGED`
+
+This guarantees:
+- UI price and server-enforced price match exactly (or fail explicitly)
+- No silent recomputation or price drift between display and enforcement
+- `NOT_ENOUGH_COINS` is reserved strictly for true insufficiency at the locked price
+
 ### Star Price Computation (Season-Level Authority)
 
 The star price is computed from **season-level inputs only**. All players see the **identical price** at any given moment in the season.

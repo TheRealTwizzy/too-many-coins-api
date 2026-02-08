@@ -134,6 +134,7 @@ Allowed to be rough or missing in Alpha:
 - [x] [DONE] 5.2a Align pricing time progression to runtime season length (Alpha 14 days / extension-aware)
 - [ ] [ALPHA REQUIRED] 5.3 Validate pricing curves vs coin emission (affordability and late‑season scarcity)
 - [x] [DONE] 5.4 Validate bulk purchase warnings and re‑check at confirmation
+- [x] [DONE] 5.5 Price tick locking for star purchases (client price_tick must match server tick)
 
 ---
 

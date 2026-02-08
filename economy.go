@@ -30,6 +30,7 @@ type EconomyState struct {
 	marketPressure       float64
 	priceFloor           int
 	currentStarPrice     int
+	currentPriceTick     int64
 	calibration          CalibrationParams
 }
 
@@ -141,6 +142,18 @@ func (e *EconomyState) SetCurrentStarPrice(price int) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.currentStarPrice = price
+}
+
+func (e *EconomyState) CurrentPriceTick() int64 {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.currentPriceTick
+}
+
+func (e *EconomyState) SetCurrentPriceTick(tick int64) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.currentPriceTick = tick
 }
 
 func (e *EconomyState) load(seasonID string, db *sql.DB) error {

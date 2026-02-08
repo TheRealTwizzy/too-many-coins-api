@@ -2279,12 +2279,21 @@ function attachBuyStarHandler(buyButton, seasonCardDiv, season) {
 				return;
 			}
 		}
+		const observedPriceTick = typeof (currentSeasonSnapshot || season)?.priceTick === "number"
+			? (currentSeasonSnapshot || season).priceTick
+			: null;
 		const res = await apiFetch("/buy-star", {
 			method: "POST",
-			body: JSON.stringify({ seasonId: season.seasonId, quantity: qty })
+			body: JSON.stringify({ seasonId: season.seasonId, quantity: qty, priceTick: observedPriceTick })
 		});
 		const data = await res.json();
 		if (!data.ok) {
+			if (data.error === "PRICE_CHANGED") {
+				setToast("Price changed. Refreshing...", "warning");
+				await loadSeasons();
+				await refreshQuote();
+				return;
+			}
 			setToast(data.error || "Purchase failed", "error");
 			return;
 		}
