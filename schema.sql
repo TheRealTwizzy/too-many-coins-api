@@ -406,3 +406,14 @@ CREATE INDEX IF NOT EXISTS idx_bug_reports_player_id
 
 CREATE INDEX IF NOT EXISTS idx_bug_reports_created_at
     ON bug_reports (created_at DESC);
+
+-- =========================
+-- SCHEMA MIGRATIONS
+-- Additive changes to existing tables
+-- =========================
+
+-- Migration: Add current_star_price to season_economy
+-- Required for star price persistence
+-- Safe for existing deployments (nullable, no defaults)
+ALTER TABLE season_economy
+ADD COLUMN IF NOT EXISTS current_star_price NUMERIC(12,3);

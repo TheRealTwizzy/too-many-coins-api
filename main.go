@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -401,6 +402,17 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to open database:", err)
 	}
+
+	// Diagnostic logging: reveal actual database connection
+	u, err := url.Parse(dbURL)
+	if err == nil {
+		log.Printf(
+			"DB CONNECT → host=%s db=%s",
+			u.Host,
+			strings.TrimPrefix(u.Path, "/"),
+		)
+	}
+
 	db.SetMaxOpenConns(5)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(30 * time.Minute)
