@@ -194,6 +194,15 @@ func seasonsHandler(db *sql.DB) http.HandlerFunc {
 			}
 			currentPrice = &price
 			liveCoins = &coins
+
+			// DEFENSIVE INVARIANT ASSERTION (Alpha Correctness)
+			// An Active season MUST always return a complete economy snapshot.
+			// If any field is nil here, it indicates a critical initialization failure.
+			// This state must be impossible to reach in a correctly initialized system.
+			if emission == nil || marketPressure == nil || nextEmission == nil || currentPrice == nil || liveCoins == nil {
+				log.Fatalf("INVARIANT VIOLATION: Active season %s missing economy data: emission=%v marketPressure=%v nextEmission=%v price=%v coins=%v",
+					currentSeasonID(), emission == nil, marketPressure == nil, nextEmission == nil, currentPrice == nil, liveCoins == nil)
+			}
 		} else {
 			var snapshotEnded time.Time
 			var snapshotCoins int64

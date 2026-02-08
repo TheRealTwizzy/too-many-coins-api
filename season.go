@@ -79,6 +79,12 @@ func LoadSeasonState(db *sql.DB) error {
 		}
 	} else {
 		log.Println("Active season found:", state.SeasonID)
+		// INVARIANT: If a season is marked active in global_settings, its economy row must exist.
+		// Ensure it exists (idempotent INSERT...ON CONFLICT).
+		if err := ensureSeasonEconomyExists(db, state.SeasonID); err != nil {
+			log.Println("WARNING: Failed to ensure season economy row exists:", err)
+			// Don't fail the entire load; the error will be caught at handler time
+		}
 	}
 	setActiveSeasonState(state, true)
 	return nil
@@ -135,6 +141,34 @@ func ensureAlphaSeasonExists(db *sql.DB) error {
 	}
 
 	return nil
+}
+
+func ensureSeasonEconomyExists(db *sql.DB, seasonID string) error {
+	if db == nil || seasonID == "" {
+		return nil
+	}
+	// INVARIANT ENFORCEMENT (Alpha Correctness):
+	// If a season is marked as active in global_settings, it MUST have a corresponding
+	// economy snapshot row in season_economy table. This ensures that when the handler
+	// loads and displays the season, complete economy data (coins, emission, market pressure)
+	// is always available.
+	//
+	// This is an idempotent operation: if the row already exists, nothing happens.
+	_, err := db.Exec(`
+		INSERT INTO season_economy (
+			season_id,
+			global_coin_pool,
+			global_stars_purchased,
+			coins_distributed,
+			emission_remainder,
+			market_pressure,
+			price_floor,
+			last_updated
+		)
+		VALUES ($1, 0, 0, 0, 0, 1.0, 0, NOW())
+		ON CONFLICT (season_id) DO NOTHING
+	`, seasonID)
+	return err
 }
 
 func ActiveSeasonState() (SeasonState, bool) {

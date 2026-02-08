@@ -441,11 +441,15 @@ func main() {
 	if !acquired && lockConn != nil {
 		_ = lockConn.Close()
 	}
+	// Load active season and enforce invariant: any season marked as active in global_settings
+	// MUST have a corresponding economy snapshot row in season_economy table.
+	// This ensures the API can always return complete economy data for active seasons.
 	if err := LoadSeasonState(db); err != nil {
 		log.Println("Failed to load season state:", err)
 	}
 
 	// Economy (safe for all instances; writes are idempotent)
+	// At this point, the active season's economy row is guaranteed to exist.
 	if err := economy.load(currentSeasonID(), db); err != nil {
 		log.Fatal("Failed to load economy state:", err)
 	}
