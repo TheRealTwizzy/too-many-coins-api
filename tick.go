@@ -293,8 +293,13 @@ func startTickLoop(db *sql.DB) {
 
 			refreshCoinsInWallets(db)
 
-			activeCoins := economy.ActiveCoinsInCirculation()
+			// Compute and persist current star price
+			coins := economy.CoinsInCirculation()
 			remaining := seasonSecondsRemaining(now)
+			currentPrice := ComputeStarPrice(coins, remaining)
+			economy.SetCurrentStarPrice(currentPrice)
+
+			activeCoins := economy.ActiveCoinsInCirculation()
 			dailyTarget := economy.EffectiveDailyEmissionTarget(remaining, activeCoins)
 
 			emissionMultiplier := getEmissionMultiplier(seasonControls)

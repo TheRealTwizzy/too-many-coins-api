@@ -29,6 +29,7 @@ type EconomyState struct {
 	emissionRemainder    float64
 	marketPressure       float64
 	priceFloor           int
+	currentStarPrice     int
 	calibration          CalibrationParams
 }
 
@@ -82,9 +83,10 @@ func (e *EconomyState) persist(seasonID string, db *sql.DB) {
 			emission_remainder,
 			market_pressure,
 			price_floor,
+			current_star_price,
 			last_updated
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
 		ON CONFLICT (season_id)
 		DO UPDATE SET
 			global_coin_pool = EXCLUDED.global_coin_pool,
@@ -93,6 +95,7 @@ func (e *EconomyState) persist(seasonID string, db *sql.DB) {
 			emission_remainder = EXCLUDED.emission_remainder,
 			market_pressure = EXCLUDED.market_pressure,
 			price_floor = EXCLUDED.price_floor,
+			current_star_price = EXCLUDED.current_star_price,
 			last_updated = NOW()
 	`,
 		seasonID,
@@ -102,6 +105,7 @@ func (e *EconomyState) persist(seasonID string, db *sql.DB) {
 		e.emissionRemainder,
 		e.marketPressure,
 		e.priceFloor,
+		e.currentStarPrice,
 	)
 
 	if err != nil {
@@ -127,13 +131,25 @@ func (e *EconomyState) StarsPurchased() int {
 	return e.globalStarsPurchased
 }
 
+func (e *EconomyState) CurrentStarPrice() int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.currentStarPrice
+}
+
+func (e *EconomyState) SetCurrentStarPrice(price int) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.currentStarPrice = price
+}
+
 func (e *EconomyState) load(seasonID string, db *sql.DB) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	row := db.QueryRow(`
 		SELECT global_coin_pool, global_stars_purchased, coins_distributed, emission_remainder,
-			COALESCE(market_pressure, 1.0), COALESCE(price_floor, 0)
+			COALESCE(market_pressure, 1.0), COALESCE(price_floor, 0), COALESCE(current_star_price, 0)
 		FROM season_economy
 		WHERE season_id = $1
 	`, seasonID)
@@ -144,8 +160,9 @@ func (e *EconomyState) load(seasonID string, db *sql.DB) error {
 	var remainder float64
 	var pressure float64
 	var floor int64
+	var starPrice float64
 
-	err := row.Scan(&pool, &stars, &distributed, &remainder, &pressure, &floor)
+	err := row.Scan(&pool, &stars, &distributed, &remainder, &pressure, &floor, &starPrice)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Println("Economy: no existing state, starting fresh")
@@ -160,11 +177,13 @@ func (e *EconomyState) load(seasonID string, db *sql.DB) error {
 	e.emissionRemainder = remainder
 	e.marketPressure = pressure
 	e.priceFloor = int(floor)
+	e.currentStarPrice = int(starPrice)
 
 	log.Println(
 		"Economy: loaded state",
 		"coins =", e.globalCoinPool,
 		"stars =", e.globalStarsPurchased,
+		"star_price =", e.currentStarPrice,
 	)
 	return nil
 }

@@ -71,3 +71,21 @@ Star supply is system-managed and cannot be exhausted.
 Scarcity is enforced through pricing, not limited stock.
 
 All star purchases are validated server-side and recorded in an append-only log.
+
+## Star Price Persistence
+
+The current star price is persisted in the season economy table and updated each emission tick (every 60 seconds).
+
+This ensures:
+- Star price remains consistent across server restarts
+- Price continuity is maintained during unexpected downtime
+- The season-authoritative star price is recoverable from database state
+
+The price is computed from:
+- Current coins in circulation
+- Stars purchased this season
+- Market pressure
+- Time remaining in season
+- Active player metrics
+
+If the persisted price is NULL on startup (new season or legacy data), it will be populated by the next emission tick.

@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS season_economy (
     emission_remainder DOUBLE PRECISION NOT NULL,
     market_pressure DOUBLE PRECISION NOT NULL DEFAULT 1.0,
     price_floor BIGINT NOT NULL DEFAULT 0,
+    current_star_price NUMERIC(12,3) NULL,
     last_updated TIMESTAMPTZ NOT NULL
 );
 

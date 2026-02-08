@@ -117,6 +117,7 @@ Allowed to be rough or missing in Alpha:
   - [x] [DONE] Quantity scaling for bulk purchases
   - [x] [DONE] Market pressure multiplier + caps
   - [x] [DONE] Affordability guardrail
+  - [x] [DONE] Star price persistence (current_star_price in season_economy)
 - [x] [DONE] 5.2 Atomic star purchases (single + bulk)
 - [x] [DONE] 5.2a Align pricing time progression to runtime season length (Alpha 14 days / extension-aware)
 - [ ] [ALPHA REQUIRED] 5.3 Validate pricing curves vs coin emission (affordability and late‑season scarcity)
