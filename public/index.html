@@ -763,7 +763,7 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 					<div class="metric-grid">
 						<div class="metric">
 							<div class="label">Current season</div>
-							<div id="hero-season-id" class="stat-value">Season 1</div>
+							<div id="hero-season-id" class="stat-value">--</div>
 						</div>
 						<div class="metric">
 							<div id="hero-time-label" class="label">Time remaining</div>
@@ -800,7 +800,7 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 						<div class="card-header">
 							<div>
 								<div class="label">Season snapshot</div>
-								<div id="season-title" class="stat-value">Season 1</div>
+								<div id="season-title" class="stat-value">--</div>
 							</div>
 							<span id="season-status" class="badge accent">Active</span>
 						</div>
@@ -1604,7 +1604,6 @@ let activityPingInterval = null;
 let liveEventSource = null;
 let notificationEventSource = null;
 let lastNotificationId = 0;
-const ALPHA_SEASON_ID = "season-1";
 const bulkStarMax = 5;
 let leaderboardPage = 1;
 const notificationCategories = [
@@ -1791,84 +1790,9 @@ function updateSeasonSnapshot(season) {
 	if (!season) return;
 	currentSeasonSnapshot = season;
 	
-	// SINGLE SOURCE OF TRUTH: When a valid season is set, clear any stale error state
-	// and ensure the season card is rendered in the seasons container.
-	// This prevents contradictory UI states (snapshot visible + "unavailable" banner).
-	const seasonsContainer = document.getElementById("seasons");
-	if (seasonsContainer) {
-		// Clear error messages and old season card
-		const hasError = seasonsContainer.innerHTML.includes("unavailable") || 
-		                 seasonsContainer.innerHTML.includes("Unable to load");
-		const hasCard = seasonsContainer.querySelector(`[data-season-id="${season.seasonId}"]`);
-		
-		// If there's an error or no card, we need to render the season card
-		if (hasError || !hasCard) {
-			seasonsContainer.innerHTML = "";
-			
-			// Render the season card for the current season
-			const div = document.createElement("div");
-			const isJoined = Boolean(currentUser);
-			const ended = seasonStatusValue(season) === "ended";
-			const starPriceMicro = ended && typeof season.finalStarPrice === "number"
-				? season.finalStarPrice
-				: season.currentStarPrice;
-		const starPrice = formatMicrocoinsToCoins(starPriceMicro);
-			div.className = "card season-card";
-			div.dataset.seasonId = season.seasonId;
-
-			div.innerHTML = `
-				<div class="season-card-header">
-					<div>
-						<div class="label">Season 1</div>
-						<div class="stat-value" data-season-remaining>${remainingLabel}</div>
-					</div>
-				</div>
-				<div class="season-card-grid">
-					<div class="metric">
-						<div class="label" data-season-price-label>${starPriceLabel}</div>
-						<div class="stat-value" data-season-price>${starPrice !== null ? starPrice + ' coins' : '--'}</div>
-					</div>
-					<div class="metric">
-						<div class="label">Coins in circulation</div>
-						<div class="stat-value" data-season-coins>${formatCoinsInCirculationForSeason(season)}</div>
-					</div>
-					<div class="metric">
-						<div class="label">Inflation pressure</div>
-						<div class="stat-value" data-season-emission>${formatEmissionValue(season.coinEmissionPerMinute, ended)}</div>
-					</div>
-					<div class="metric">
-						<div class="label">Market pressure</div>
-						<div class="stat-value" data-season-pressure>${formatPressureValue(season.marketPressure, ended)}</div>
-					</div>
-				</div>
-				<div class="season-actions">
-					${isJoined
-						? (ended
-							? "<div class='label'>Season ended — read-only.</div>"
-							: `
-								<div class="row" style="margin-top:0.35rem;">
-									<label class="label">Qty</label>
-									<input class="bulk-qty" type="number" min="1" max="${bulkStarMax}" value="1" />
-									<button class="buy-star-btn primary">Buy Stars</button>
-								</div>
-								<div class="label bulk-quote"></div>
-								<div class="label bulk-warning"></div>
-								<div class="label bulk-breakdown"></div>
-							`)
-						: "<div class='label'>Log in to join the season.</div>"
-					}
-				</div>
-			`;
-
-			seasonsContainer.appendChild(div);
-			
-			// Attach Buy Stars event handler
-			const buyButton = div.querySelector(".buy-star-btn");
-			if (buyButton) {
-				attachBuyStarHandler(buyButton, div, season);
-			}
-		}
-	}
+	// SSE OVERLAY PATTERN: Update DOM elements with server snapshot values.
+	// Do NOT re-render the season card here; that's done once by loadSeasons.
+	// This function overlays live/updated values on top of the existing structure.
 	
 	const ended = seasonStatusValue(season) === "ended";
 	const starPriceValue = ended && typeof season.finalStarPrice === "number"
@@ -1877,7 +1801,9 @@ function updateSeasonSnapshot(season) {
 	const coinsValue = ended && typeof season.finalCoinsInCirculation === "number"
 		? season.finalCoinsInCirculation
 		: season.coinsInCirculation;
-	if (seasonTitle) seasonTitle.innerText = "Season 1";
+	
+	// Update season snapshot panel (if visible)
+	if (seasonTitle) seasonTitle.innerText = season.seasonId || "--";
 	if (seasonRemaining) seasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
 	if (seasonStarPrice) seasonStarPrice.innerText = formatMicrocoinsToCoinsDisplay(starPriceValue);
 	if (seasonCoins) seasonCoins.innerText = formatCoinsInCirculationForSeason({ ...season, coinsInCirculation: coinsValue });
@@ -1885,7 +1811,9 @@ function updateSeasonSnapshot(season) {
 	if (seasonPressure) seasonPressure.innerText = formatPressureValue(season.marketPressure, ended);
 	if (seasonNextEmission) seasonNextEmission.innerText = formatNextEmissionValue(season.nextEmissionInSeconds, ended);
 	if (seasonScarcityMessage) seasonScarcityMessage.innerText = scarcityMessage(season.secondsRemaining || 0);
-	if (heroSeasonId) heroSeasonId.innerText = "Season 1";
+	
+	// Update hero panel (top dashboard)
+	if (heroSeasonId) heroSeasonId.innerText = season.seasonId || "--";
 	if (heroSeasonRemaining) heroSeasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
 	if (heroStarPrice) heroStarPrice.innerText = formatMicrocoinsToCoinsDisplay(starPriceValue);
 	if (heroInflation) heroInflation.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
@@ -2367,13 +2295,18 @@ async function loadSeasons() {
 		return;
 	}
 	container.innerHTML = "";
-	const alphaSeason = (data.seasons || []).find(season => season.seasonId === ALPHA_SEASON_ID);
-	if (!alphaSeason) {
+	
+	// Use the recommended season from server, or first available season (Alpha: single season only)
+	const activeSeason = data.seasons && data.seasons.length > 0
+		? (data.seasons.find(s => s.seasonId === data.recommendedSeasonId) || data.seasons[0])
+		: null;
+	
+	if (!activeSeason) {
 		container.innerHTML = "<div class='card'>Season unavailable.</div>";
 		return;
 	}
 
-	[alphaSeason].forEach(season => {
+	[activeSeason].forEach(season => {
 		const div = document.createElement("div");
 		const isJoined = Boolean(currentUser);
 		const isThisSeasonJoined = isJoined;
@@ -2397,10 +2330,10 @@ async function loadSeasons() {
 		div.innerHTML = `
 			<div class="season-card-header">
 				<div>
-					<div class="label">Season 1</div>
+					<div class="label">Active Season</div>
 					<div class="stat-value" data-season-remaining>${remainingLabel}</div>
 				</div>
-				${season.seasonId === data.recommendedSeasonId ? '<span class="badge accent">Recommended</span>' : ''}
+				${season.seasonId === data.recommendedSeasonId ? '<span class="badge accent">Active</span>' : ''}
 			</div>
 			<div class="season-card-grid">
 				<div class="metric">
