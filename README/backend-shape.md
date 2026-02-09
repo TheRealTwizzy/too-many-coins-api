@@ -1,3 +1,17 @@
+# Backend Shape
+
+## Scope
+- **Type:** System contract
+- **Status:** Canonical (Game Bible)
+- **Owner:** Game Bible
+
+## Change Protocol
+- Update alongside related systems and TODO entries in the same logical unit.
+- Preserve cross-file invariants defined in README.md.
+- Prefer additive clarifications; flag any breaking change explicitly.
+
+---
+
 The backend will start as a single authoritative API service.
 This service handles authentication, seasons, economy logic, purchases, brokered trading, and abuse prevention.
 

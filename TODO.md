@@ -2,6 +2,12 @@
 
 This document supersedes any prior task list. It is ordered by dependency and reflects current code + README canon as of February 7, 2026.
 
+## Scope & Change Protocol
+
+- **Scope:** Execution plan only (requirements live in README/*.md and README.md).
+- **Change protocol:** When a task modifies canon, update the relevant README/*.md section in the same logical unit.
+- **Invariant safety:** If a task impacts Layer 1 invariants (README.md), treat it as a new primary logical unit.
+
 Legend: each task is explicitly marked with a status tag.
 
 Status Tags:

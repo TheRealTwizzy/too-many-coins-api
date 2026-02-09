@@ -1,3 +1,17 @@
+# Phase0 Contract
+
+## Scope
+- **Type:** System contract
+- **Status:** Canonical (Game Bible)
+- **Owner:** Game Bible
+
+## Change Protocol
+- Update alongside related systems and TODO entries in the same logical unit.
+- Preserve cross-file invariants defined in README.md.
+- Prefer additive clarifications; flag any breaking change explicitly.
+
+---
+
 # Phase 0 Contract — Infrastructure Alignment
 
 This phase prioritizes infrastructure correctness over gameplay completeness.

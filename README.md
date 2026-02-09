@@ -14,16 +14,28 @@ The game runs in fixed-length seasons and resets regularly, while preserving lon
 
 ## Game Bible — Structure and Authority
 
-This repository contains a **Game Bible**: the complete, authoritative definition of the game.
+This repository contains a **Game Bible**: the complete, authoritative definition of the game. It is organized so that future updates can be made safely without eroding the core design.
 
-The Game Bible consists of:
+### Bible Layers (Design-Implementation Contract)
+
+1. **Layer 1 — Invariants (Immutable by default)**
+   - Defines the self-governed economy rules that may not drift without explicit authorization.
+2. **Layer 2 — System Contracts**
+   - System-by-system specifications for economy, time, trading, telemetry, and admin controls.
+3. **Layer 3 — Phase-Specific Behavior**
+   - Alpha/Beta/Release rules, toggles, and temporary constraints.
+
+When updating, preserve Layer 1 invariants unless explicitly changing the game’s fundamental design.
+
+### Bible Components
 
 - `README.md` (this file) — Core overview and governance
-- `README/*.md` — System-specific definitions and contracts
+- `README/*.md` — System contracts and requirements
 - `TODO.md` — Canonical execution plan
-- `.github/instructions/AI_CONSTITUTION.txt` — Execution boundaries and constraints
+- `instructions/AI_CONSTITUTION.txt` — Execution boundaries and constraints
+- `instructions/ai_preflight_checklist.txt` — Execution gate checklist
 
-Game Bible requirements:
+### Bible Requirements
 
 - Total files ≤ 24 (one slot reserved for inspection/debug)
 - Allowed formats: `.md`, `.txt` only
@@ -31,14 +43,27 @@ Game Bible requirements:
 - All terminology must be defined within the Bible
 - Humans and AI must be able to interpret all terminology without external context
 
-The Game Bible defines:
-
-- Game systems
-- Economy rules
-- Prompting constraints
-- Implementation boundaries
-
 The Game Bible is the single source of truth. Code must match canon; canon does not match code.
+
+---
+
+## Design Drift Protocol (Flexibility Without Loss)
+
+Design drift is allowed in presentation and tuning, but core economy invariants must remain intact.
+
+**Immutable invariants (Layer 1):**
+- No currency may ever convert into Coins or Stars, directly or indirectly.
+- Stars are the only direct leaderboard unit.
+- Past seasons are immutable and never rewritten.
+- Economy logic is server-authoritative.
+
+**Flexible surfaces (Layer 2/3):**
+- UI and copy
+- Telemetry presentation
+- Tuning coefficients (emission rates, pressure curves) within invariant bounds
+- Phase-specific constraints (Alpha/Beta/Release toggles)
+
+When changes affect a flexible surface, update the relevant system contract and TODO entry together. If any invariant must change, treat it as a new primary logical unit and update this section explicitly.
 
 ---
 
