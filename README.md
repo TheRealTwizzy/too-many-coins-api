@@ -21,7 +21,7 @@ The Game Bible consists of:
 - `README.md` (this file) — Core overview and governance
 - `README/*.md` — System-specific definitions and contracts
 - `TODO.md` — Canonical execution plan
-- `instructions/AI_CONSTITUTION.txt` — Execution boundaries and constraints
+- `.github/instructions/AI_CONSTITUTION.txt` — Execution boundaries and constraints
 
 Game Bible requirements:
 

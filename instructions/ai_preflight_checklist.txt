@@ -12,7 +12,7 @@ If scope expands → STOP.
 
 CANON & AUTHORITY
 
- I have reviewed instructions/AI_CONSTITUTION.txt.
+ I have reviewed AI_CONSTITUTION.txt.
 
  This change does not violate any immutable systems.
 
