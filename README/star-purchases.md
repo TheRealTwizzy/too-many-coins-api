@@ -148,3 +148,164 @@ Purchase flow:
 - Star purchase log records both:
   - season_price_snapshot (authoritative)
   - effective_price_paid (actual cost including anti-abuse adjustments)
+
+---
+
+## Variant Stars (Alpha Feature)
+
+Variant stars are specialty stars purchased separately from regular stars. They **do not count toward leaderboard rank** but are tracked per player for cosmetic/collection purposes.
+
+### Available Variants
+
+| Variant | Cost Multiplier | Display Price Formula |
+|---------|----------------|----------------------|
+| **Ember** | 2.0x | `base_star_price × 2.0` |
+| **Void** | 4.0x | `base_star_price × 4.0` |
+
+### Mechanics
+
+**Purchase Endpoint:** `POST /buy-variant-star`
+
+**Request:**
+```json
+{
+  "variantType": "ember",
+  "quantity": 1
+}
+```
+
+**Response:**
+```json
+{
+  "ok": true,
+  "variant": "ember",
+  "purchased": 1,
+  "coinsBurned": 900,
+  "playerCoins": 4100,
+  "variantCount": 5
+}
+```
+
+**Pricing:**
+- Base price = season-authoritative star price (same as regular stars)
+- Display price = base price × variant multiplier
+- Effective price = display price × abuse enforcement multipliers (if applicable)
+
+**Leaderboard Impact:** **NONE** — variant stars stored separately, not counted in `player.stars`
+
+**Storage:** `player_star_variants` table (player_id, variant, count)
+
+**Purchase Log:** Recorded in `star_purchase_log` with `purchase_type = "variant"`
+
+### Gating & Requirements
+
+- Same as regular stars (must be authenticated, season active, sinks enabled)
+- No additional unlock requirements
+- Subject to bot rate limits if player is bot
+
+### Design Intent
+
+- **Cosmetic expression** — Players collect variants for prestige without competitive advantage
+- **Coin sink diversification** — Provides alternative spending target beyond leaderboard position
+- **Future collectibles** — May unlock badges, titles, or cosmetic rewards post-alpha
+
+---
+
+## Activity Boosts (Alpha Feature)
+
+Activity boosts are temporary purchased buffs that enhance coin earning from activity faucets.
+
+### Available Boosts
+
+| Boost Type | Cost | Duration | Effect |
+|-----------|------|----------|--------|
+| **Activity** | 25 coins | 30 minutes | +1 coin per activity faucet claim |
+
+### Mechanics
+
+**Purchase Endpoint:** `POST /buy-boost`
+
+**Request:**
+```json
+{
+  "boostType": "activity",
+  "quantity": 1
+}
+```
+
+**Response:**
+```json
+{
+  "ok": true,
+  "boostType": "activity",
+  "durationSeconds": 1800,
+  "expiresAt": "2026-02-09T13:04:56Z",
+  "coinsBurned": 25,
+  "playerCoins": 5221
+}
+```
+
+**Cost Calculation:**
+- Base cost: 25 coins
+- Subject to abuse enforcement price multipliers (if player flagged)
+- Subject to IP dampening multipliers (if player throttled)
+
+**Duration:**
+- 30 minutes from purchase time
+- Multiple purchases **extend** expiration (does not stack quantity)
+- Example: Buy boost at 12:00 → expires at 12:30. Buy again at 12:15 → expires at 12:45.
+
+**Effect Application:**
+- When `HasActiveBoost(db, playerID, "activity")` returns true during activity claim
+- Reward calculation: `base_reward + 1` coin
+- Applied **before** abuse enforcement earning multipliers
+
+**Storage:** `player_boosts` table (player_id, boost_type, expires_at)
+
+**Schema (⚠️ Missing from schema.sql):**
+```sql
+CREATE TABLE IF NOT EXISTS player_boosts (
+    player_id TEXT NOT NULL,
+    boost_type TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (player_id, boost_type)
+);
+```
+
+### Gating & Requirements
+
+- Season must be active (`SEASON_ENDED`)
+- Sinks must be enabled (`ENABLE_SINKS` feature flag)
+- Player must have sufficient coins (`NOT_ENOUGH_COINS`)
+- Boost type must be valid (`INVALID_BOOST`)
+
+### Design Intent
+
+- **Time investment strategy** — Players who commit to extended play sessions earn more
+- **Coin sink timing** — Encourages spending coins on earning multiplier rather than hoarding for stars
+- **Optional optimization** — Not required for competitive play; casual players can skip entirely
+
+### Economics
+
+**Break-even analysis:**
+```
+Cost: 25 coins
+Duration: 30 minutes
+Boost: +1 coin per claim
+Activity cooldown: 6 minutes
+
+Theoretical max claims in 30 min: 5 claims
+Max gain: 5 coins
+Net loss: 20 coins
+```
+
+**Never profitable directly** — Boost costs more than it earns. Strategic value:
+- Sustaining warmup multiplier during intensive play
+- Ensuring cap claims don't leave coins on table
+- Psychological engagement (active optimization vs passive earning)
+
+---
+
+## Coin Burning (Voluntary Sink)
+
+See [README/sinks.md](sinks.md) for complete burn mechanics.
