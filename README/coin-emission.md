@@ -58,6 +58,8 @@ Players earn coins by drawing from this pool via allowed faucets.
 
 Coin faucets include:
 
+**Universal Basic Income (UBI)** — Dynamic activity-based drip (1-10 microcoins/tick)
+
 Daily login rewards
 
 Capped active play rewards
@@ -87,3 +89,12 @@ Coins cannot exceed the remaining global budget for the day.
 All coin grants are validated server-side and recorded in an append-only log.
 
 Star pricing is balanced against emission and average per-player coin availability to keep stars purchasable throughout the season.
+
+**UBI and Emission Interaction:**
+
+The Universal Basic Income system provides a continuous baseline income that scales with player activity. At maximum warmup (10x base), active players receive 10 microcoins (0.010 coins) per tick. This means:
+
+- The emission pool must account for sustained active player income
+- Population size directly affects emission pool consumption via UBI
+- Activity warmup creates natural income stratification (active vs idle players)
+- Emission tuning must balance UBI maximum rates with other faucets to maintain scarcity

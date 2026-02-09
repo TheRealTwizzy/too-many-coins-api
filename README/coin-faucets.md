@@ -38,19 +38,36 @@ This ensures:
 
 Players earn coins through a limited set of server-controlled faucets.
 
-## Universal Basic Income (UBI) — Minimum Payout
+## Universal Basic Income (UBI) — Dynamic Activity-Based Payout
 
 Every player receives coins every game tick (continuous income).
 
-**Minimum payout per tick: 1 microcoin (0.001 coin)**
+**Base payout per tick: 1 microcoin (0.001 coin)**
+
+**Active players earn up to 10x more through activity warmup:**
+
+- Players start at the base rate (1 microcoin/tick)
+- Sustained activity increases the "warmup level" over ~30 minutes
+- At maximum warmup, players earn 10 microcoins (0.010 coins) per tick
+- When idle, warmup decreases gradually
+- Players with more recent activity lose warmup more slowly
+
+**Activity Warmup Mechanics:**
+
+- **Warmup increase**: Linear growth during sustained activity (30 minutes to reach maximum)
+- **Warmup decay**: Gradual decrease when idle, slower decay for recently active players
+- **Activity threshold**: Based on the active activity window (configurable, default varies by phase)
+- **Income scaling**: Linear from 1x (base) to 10x (fully warmed up)
 
 **Coins are displayed with exactly 3 decimal places** (thousandths precision).
 
 This ensures:
 
-- Players are **never unable to play**
+- Players are **never unable to play** (minimum 1 microcoin/tick guaranteed)
+- Active engagement is rewarded with higher sustained income
 - Even late-season or throttled players receive minimal income
 - The game remains accessible at all population levels
+- Active players have a meaningful income advantage without gatekeeping
 
 **Star costs MUST scale over the season** to prevent UBI from trivializing scarcity.
 

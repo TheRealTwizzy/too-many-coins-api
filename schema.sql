@@ -92,6 +92,14 @@ ALTER TABLE players ADD COLUMN IF NOT EXISTS drip_multiplier DOUBLE PRECISION NO
 ALTER TABLE players ADD COLUMN IF NOT EXISTS drip_paused BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- =========================
+-- Activity Warmup System
+-- Dynamic drip based on sustained activity
+-- =========================
+ALTER TABLE players ADD COLUMN IF NOT EXISTS activity_warmup_level DOUBLE PRECISION NOT NULL DEFAULT 0.0;
+ALTER TABLE players ADD COLUMN IF NOT EXISTS activity_warmup_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE players ADD COLUMN IF NOT EXISTS recent_activity_seconds BIGINT NOT NULL DEFAULT 0;
+
+-- =========================
 -- PHASE 0 REQUIRED
 -- Burn tracking, bots, provenance
 -- =========================

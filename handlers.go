@@ -96,9 +96,31 @@ func playerHandler(db *sql.DB) http.HandlerFunc {
 			}
 		}
 
+		// Fetch activity warmup state
+		var warmupLevel float64
+		var warmupUpdated time.Time
+		err = db.QueryRow(`
+			SELECT activity_warmup_level, activity_warmup_updated_at
+			FROM players
+			WHERE player_id = $1
+		`, playerID).Scan(&warmupLevel, &warmupUpdated)
+		if err != nil {
+			// Default to 0 if not found
+			warmupLevel = 0.0
+			warmupUpdated = time.Now().UTC()
+		}
+
+		// Calculate current UBI multiplier
+		baseUBI := 1
+		currentUBI := CalculateDynamicUBI(baseUBI, warmupLevel)
+		ubiMultiplier := float64(currentUBI) / float64(baseUBI)
+
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"playerCoins": player.Coins,
-			"playerStars": player.Stars,
+			"playerCoins":      player.Coins,
+			"playerStars":      player.Stars,
+			"activityWarmup":   warmupLevel,
+			"ubiMultiplier":    ubiMultiplier,
+			"currentUBIPerTick": currentUBI,
 		})
 	}
 }
