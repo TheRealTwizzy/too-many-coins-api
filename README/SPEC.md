@@ -1,3 +1,5 @@
+# VISION-1 Game Spec
+
 Game: Too Many Coins! (MMO web)
 
 Seasons (phase‑bound, server‑defined):

@@ -1,3 +1,5 @@
+# TIME-1 Time System
+
 The server is the sole authority over time.
 
 The system uses three time layers:

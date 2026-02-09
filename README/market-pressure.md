@@ -1,3 +1,5 @@
+# ECON-4 Market Pressure
+
 Market pressure represents recent demand for stars and influences star prices.
 
 Market pressure is calculated using rolling averages over time and is rate-limited.

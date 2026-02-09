@@ -1,3 +1,5 @@
+# ADMIN-2 Backend Shape
+
 The backend will start as a single authoritative API service.
 This service handles authentication, seasons, economy logic, purchases, brokered trading, and abuse prevention.
 
