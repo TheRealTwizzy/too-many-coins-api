@@ -1,3 +1,5 @@
+# TIME-2 Season End
+
 At the end of a season, the economy is frozen and final standings are recorded.
 
 End-of-season resolution:

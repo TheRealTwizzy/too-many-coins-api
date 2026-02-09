@@ -1,4 +1,4 @@
-# Alpha Execution Plan (First Playable)
+# ROAD-2 Alpha Execution Plan (First Playable)
 
 This plan defines the minimum goals and metrics for the first alpha test. It aligns with the first‑playable scope and server‑authoritative economy.
 

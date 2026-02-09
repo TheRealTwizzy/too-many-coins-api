@@ -1,3 +1,5 @@
+# UI-1 Frontend MVP
+
 The frontend will launch with a minimal set of pages focused on core gameplay.
 
 Required Pages:

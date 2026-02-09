@@ -1,3 +1,5 @@
+# TIME-3 Between Seasons
+
 Between seasons, player power resets but identity and progression persist.
 
 Post‑alpha: between‑season progression is not implemented in Alpha.
