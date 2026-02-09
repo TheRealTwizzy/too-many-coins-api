@@ -352,14 +352,17 @@ func startTickLoop(db *sql.DB) {
 			if featureFlags.Telemetry {
 				snapshot := economy.InvariantSnapshot()
 				emitServerTelemetry(db, nil, "", "emission_tick", map[string]interface{}{
-					"seasonId":         currentSeasonID(),
-					"emitted":          emitNow,
-					"dailyTarget":      dailyTarget,
-					"baseTarget":       baseTarget,
-					"remainingSeconds": remaining,
-					"globalCoinPool":   snapshot.GlobalCoinPool,
-					"coinsDistributed": snapshot.CoinsDistributed,
-					"availableCoins":   snapshot.AvailableCoins,
+					"seasonId":                 currentSeasonID(),
+					"emitted":                  emitNow,
+					"dailyTarget":              dailyTarget,
+					"baseTarget":               baseTarget,
+					"remainingSeconds":         remaining,
+					"globalCoinPool":           snapshot.GlobalCoinPool,
+					"coinsDistributed":         snapshot.CoinsDistributed,
+					"availableCoins":           snapshot.AvailableCoins,
+					"activeCoinsInCirculation": snapshot.ActiveCoinsInCirculation,
+					"activePlayers":            snapshot.ActivePlayers,
+					"totalCoinsInCirculation":  snapshot.TotalCoinsInCirculation,
 				})
 			}
 

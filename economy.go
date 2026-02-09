@@ -35,10 +35,13 @@ type EconomyState struct {
 }
 
 type EconomyInvariantSnapshot struct {
-	GlobalCoinPool   int
-	CoinsDistributed int
-	AvailableCoins   int
-	MarketPressure   float64
+	GlobalCoinPool            int
+	CoinsDistributed          int
+	AvailableCoins            int
+	MarketPressure            float64
+	ActiveCoinsInCirculation  int64
+	ActivePlayers             int
+	TotalCoinsInCirculation   int64
 }
 
 var economy = &EconomyState{
@@ -543,10 +546,13 @@ func (e *EconomyState) InvariantSnapshot() EconomyInvariantSnapshot {
 	defer e.mu.Unlock()
 	available := e.globalCoinPool - e.coinsDistributed
 	return EconomyInvariantSnapshot{
-		GlobalCoinPool:   e.globalCoinPool,
-		CoinsDistributed: e.coinsDistributed,
-		AvailableCoins:   available,
-		MarketPressure:   e.marketPressure,
+		GlobalCoinPool:           e.globalCoinPool,
+		CoinsDistributed:         e.coinsDistributed,
+		AvailableCoins:           available,
+		MarketPressure:           e.marketPressure,
+		ActiveCoinsInCirculation: e.activeCoinsInWallets,
+		ActivePlayers:            e.activePlayers,
+		TotalCoinsInCirculation:  e.coinsInWallets,
 	}
 }
 

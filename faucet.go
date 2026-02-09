@@ -193,13 +193,17 @@ func DistributeUniversalBasicIncome(db *sql.DB, now time.Time) (ubiCount int, ub
 	}
 
 	if featureFlags.Telemetry && (granted > 0 || poolExhausted) {
+		snapshot := economy.InvariantSnapshot()
 		emitServerTelemetry(db, nil, "", "ubi_tick", map[string]interface{}{
-			"seasonId":       seasonID,
-			"ubiPerTick":     ubiPerTick,
-			"playersGranted": granted,
-			"totalGranted":   total,
-			"poolExhausted":  poolExhausted,
-			"availableCoins": economy.AvailableCoins(),
+			"seasonId":                 seasonID,
+			"ubiPerTick":               ubiPerTick,
+			"playersGranted":           granted,
+			"totalGranted":             total,
+			"poolExhausted":            poolExhausted,
+			"availableCoins":           snapshot.AvailableCoins,
+			"activeCoinsInCirculation": snapshot.ActiveCoinsInCirculation,
+			"activePlayers":            snapshot.ActivePlayers,
+			"totalCoinsInCirculation":  snapshot.TotalCoinsInCirculation,
 		})
 	}
 
