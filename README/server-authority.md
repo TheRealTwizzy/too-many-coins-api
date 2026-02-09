@@ -1,5 +1,3 @@
-# VISION-2 Server Authority
-
 The server is the sole authority over the game economy.
 The client never calculates prices, limits, caps, or outcomes.
 

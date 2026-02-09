@@ -1,4 +1,4 @@
-# ADMIN-5 Bot Runner
+# Bot Runner
 
 The bot runner is a separate process that uses the same HTTP APIs as real players. It authenticates via HTTP-only session cookies, and only acts when `BOTS_ENABLED=true`.
 

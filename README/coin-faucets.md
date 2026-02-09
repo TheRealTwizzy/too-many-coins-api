@@ -1,4 +1,4 @@
-# ECON-2 Coin Faucets
+# Coin Faucets
 
 ## Currency Model: Integer Microcoins
 

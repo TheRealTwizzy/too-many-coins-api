@@ -1,4 +1,4 @@
-# ROAD-3 Phase 0 Contract — Infrastructure Alignment
+# Phase 0 Contract — Infrastructure Alignment
 
 This phase prioritizes infrastructure correctness over gameplay completeness.
 

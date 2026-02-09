@@ -1,4 +1,4 @@
-# UI-2 Notifications
+# Notifications (Alpha Scope)
 
 Notifications are informational, server-generated updates for players and admins. They do not control gameplay and are never authoritative.
 

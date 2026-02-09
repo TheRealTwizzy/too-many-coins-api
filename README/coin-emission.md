@@ -1,4 +1,4 @@
-# ECON-1 Coin Emission
+# Coin Emission
 
 ## Currency Model: Integer Microcoins
 

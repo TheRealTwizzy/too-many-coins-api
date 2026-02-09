@@ -1,5 +1,3 @@
-# ABUSE-1 Anti-Abuse
-
 The system must actively prevent and mitigate abuse and coordinated manipulation.
 
 ---

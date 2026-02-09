@@ -1,4 +1,4 @@
-# ECON-3 Star Purchases
+# Star Purchases
 
 ## Currency Model: Integer Microcoins
 

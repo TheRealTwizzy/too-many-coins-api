@@ -1,4 +1,4 @@
-# UI-3 Communication & Bug Reporting
+# Communication & Bug Reporting
 
 This document defines player communication boundaries and the bug reporting intake system.
 

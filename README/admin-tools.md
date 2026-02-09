@@ -1,5 +1,3 @@
-# ADMIN-1 Admin Tools
-
 The system must include a minimal internal admin and observability interface.
 
 Admin access is restricted to authorized accounts only.
