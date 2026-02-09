@@ -1,6 +1,62 @@
 The system must actively prevent and mitigate abuse and coordinated manipulation.
 
-Access controls:
+---
+
+## Anti-Cheat Philosophy — Soft Enforcement
+
+Anti-cheat is **gradual, invisible, and corrective**, not punitive.
+
+### What Anti-Cheat NEVER Does
+
+Anti-cheat **NEVER**:
+
+- Bans automatically
+- Suspends accounts automatically
+- Zeroes a wallet
+- Hard-blocks players
+- Exposes enforcement actions publicly
+
+### What Anti-Cheat DOES
+
+Anti-cheat acts by **adjusting coin faucet flow**:
+
+- Gradually reduces earning rates for suspicious behavior
+- Increases star prices for suspicious accounts
+- Adds cooldowns and jitter to sensitive actions
+- Throttles activity without blocking it
+
+### Enforcement Scaling
+
+**Effects should be**:
+
+- **Gradual**: Small adjustments at first, increasing over time
+- **Mostly invisible**: Players feel resistance, not punishment
+- **Severe only in extreme abuse**: Heavy throttles reserved for confirmed bad actors
+
+**Behavior → consequence must scale smoothly**:
+
+- Minor suspicious activity → minor throttles
+- Moderate abuse patterns → noticeable resistance
+- Extreme abuse → heavy economic dampening
+
+### Admin Involvement
+
+Admins may ban ONLY:
+
+- **After anti-cheat recommendation** (system flags extreme cases)
+- **In extreme cases** (confirmed, egregious abuse)
+
+Admins **must not**:
+
+- Micromanage economy
+- Manually adjust individual player balances
+- Override anti-cheat without justification
+
+The goal: **Make abuse economically ineffective, not publicly punishing.**
+
+---
+
+## Access controls:
 
 Only one active player per IP address per season is the default baseline.
 
@@ -14,7 +70,8 @@ Account creation is rate-limited.
 
 CAPTCHA and verification are post‑alpha.
 
-New accounts must wait a short cooldown period before joining a season.
+Account age is a soft signal only. Hard gating first-session play is forbidden.
+New accounts may face softer throttles (cooldown multipliers, reward dampening, bulk limits), but never hard blocks.
 
 Throttles:
 
@@ -59,7 +116,7 @@ Implemented (confirmed in code):
 
 - Whitelisting removed; alpha relies on throttles only.
 - Auth rate limits for signup/login (IP‑based windows).
-- New‑account cooldown before sensitive actions (account age gate).
+- Account age used as a soft throttling signal (cooldown/reward/bulk multipliers), never a hard gate.
 - IP association tracking and dampening (delay + reward/price multipliers when multiple accounts share an IP).
 - Abuse scoring with throttles (earn multiplier, price multiplier, bulk max, cooldown jitter) driven by detected signals.
 - Abuse signals include purchase bursts, regular purchase cadence, activity cadence, tick‑reaction patterns, and IP clustering.

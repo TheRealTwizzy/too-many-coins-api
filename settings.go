@@ -24,8 +24,8 @@ var (
 	cachedSettings = GlobalSettings{
 		ActiveDripIntervalSeconds: 60,
 		IdleDripIntervalSeconds:   240,
-		ActiveDripAmount:          2,
-		IdleDripAmount:            1,
+		ActiveDripAmount:          2 * COIN_SCALE, // 2 coins = 2000 microcoins
+		IdleDripAmount:            1 * COIN_SCALE, // 1 coin = 1000 microcoins
 		ActivityWindowSeconds:     120,
 		DripEnabled:               false,
 		BotsEnabled:               true,

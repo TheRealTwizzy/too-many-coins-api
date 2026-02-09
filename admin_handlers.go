@@ -1,8 +1,14 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/sha1"
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -240,7 +246,7 @@ func adminEconomyHandler(db *sql.DB) http.HandlerFunc {
 				OK:                  true,
 				DailyEmissionTarget: economy.DailyEmissionTarget(),
 				BaseStarPrice:       params.P0,
-				CurrentStarPrice:    ComputeStarPrice(coins, remaining),
+				CurrentStarPrice:    ComputeSeasonAuthorityStarPrice(coins, remaining),
 				MarketPressure:      economy.MarketPressure(),
 				DailyCapEarly:       params.DailyCapEarly,
 				DailyCapLate:        params.DailyCapLate,
@@ -253,6 +259,593 @@ func adminEconomyHandler(db *sql.DB) http.HandlerFunc {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
+	}
+}
+
+type AdminSeasonControlItem struct {
+	ControlName    string          `json:"controlName"`
+	Value          json.RawMessage `json:"value"`
+	ExpiresAt      *time.Time      `json:"expiresAt,omitempty"`
+	LastModifiedAt time.Time       `json:"lastModifiedAt"`
+	LastModifiedBy string          `json:"lastModifiedBy"`
+}
+
+type AdminSeasonControlsResponse struct {
+	OK    bool                     `json:"ok"`
+	Error string                   `json:"error,omitempty"`
+	Items []AdminSeasonControlItem `json:"items,omitempty"`
+	Item  *AdminSeasonControlItem  `json:"item,omitempty"`
+}
+
+type AdminSeasonAdvanceResponse struct {
+	OK              bool   `json:"ok"`
+	Error           string `json:"error,omitempty"`
+	SeasonID        string `json:"seasonId,omitempty"`
+	SeasonStartTime string `json:"seasonStartTime,omitempty"`
+	SeasonEndTime   string `json:"seasonEndTime,omitempty"`
+	TotalDays       int    `json:"totalDays,omitempty"`
+}
+
+type AdminSeasonRecoveryRequest struct {
+	Confirm string `json:"confirm"`
+}
+
+type AdminSeasonRecoveryResponse struct {
+	OK              bool   `json:"ok"`
+	Error           string `json:"error,omitempty"`
+	SeasonID        string `json:"seasonId,omitempty"`
+	SeasonStartTime string `json:"seasonStartTime,omitempty"`
+	SeasonEndTime   string `json:"seasonEndTime,omitempty"`
+	TotalDays       int    `json:"totalDays,omitempty"`
+	PriorSeasonID   string `json:"priorSeasonId,omitempty"`
+}
+
+type AdminSeasonControlRequest struct {
+	ControlName string          `json:"controlName"`
+	Value       json.RawMessage `json:"value"`
+	ExpiresAt   *string         `json:"expiresAt,omitempty"`
+	Reason      string          `json:"reason"`
+	Intent      string          `json:"intent"`
+}
+
+const (
+	seasonControlFreeze             = "SEASON_FREEZE"
+	seasonControlEmissionMultiplier = "EMISSION_MULTIPLIER"
+	seasonControlExtensionDays      = "SEASON_EXTENSION_DAYS"
+	seasonControlPressureClamp      = "MARKET_PRESSURE_RATE_CLAMP"
+)
+
+var allowedSeasonControlIntents = map[string]bool{
+	"EMERGENCY_FREEZE":       true,
+	"STARVATION_PREVENTION":  true,
+	"FLOOD_CONTROL":          true,
+	"VOLATILITY_DAMPENING":   true,
+	"TELEMETRY_PRESERVATION": true,
+}
+
+func adminSeasonControlsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		seasonID, ok := parseSeasonControlsPath(r.URL.Path)
+		if !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		switch r.Method {
+		case http.MethodGet, http.MethodPost:
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
+		adminAccount, ok := requireAdmin(db, w, r)
+		if !ok {
+			return
+		}
+
+		seasonUUID := normalizeUUIDFromString(seasonID, "season")
+
+		if r.Method == http.MethodGet {
+			rows, err := db.Query(`
+				SELECT control_name, value, expires_at, last_modified_at, last_modified_by
+				FROM season_controls
+				WHERE season_id = $1
+				ORDER BY control_name ASC
+			`, seasonUUID)
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+			defer rows.Close()
+
+			items := []AdminSeasonControlItem{}
+			for rows.Next() {
+				var item AdminSeasonControlItem
+				var value []byte
+				var expiresAt sql.NullTime
+				if err := rows.Scan(&item.ControlName, &value, &expiresAt, &item.LastModifiedAt, &item.LastModifiedBy); err != nil {
+					continue
+				}
+				item.Value = json.RawMessage(value)
+				if expiresAt.Valid {
+					exp := expiresAt.Time.UTC()
+					item.ExpiresAt = &exp
+				}
+				items = append(items, item)
+			}
+
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: true, Items: items})
+			return
+		}
+
+		var req AdminSeasonControlRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+
+		controlName := strings.TrimSpace(req.ControlName)
+		reason := strings.TrimSpace(req.Reason)
+		intent := strings.TrimSpace(req.Intent)
+		if controlName == "" || reason == "" || intent == "" {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+		if len(reason) < 20 {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_REASON"})
+			return
+		}
+		if !allowedSeasonControlIntents[intent] {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_INTENT"})
+			return
+		}
+		if len(req.Value) == 0 || strings.TrimSpace(string(req.Value)) == "null" {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_VALUE"})
+			return
+		}
+
+		now := time.Now().UTC()
+		var expiresAt *time.Time
+		if req.ExpiresAt != nil && strings.TrimSpace(*req.ExpiresAt) != "" {
+			parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(*req.ExpiresAt))
+			if err != nil {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_EXPIRES_AT"})
+				return
+			}
+			value := parsed.UTC()
+			expiresAt = &value
+		}
+
+		var normalizedValue json.RawMessage
+		var normalizedInterface interface{}
+		switch controlName {
+		case seasonControlFreeze:
+			var value bool
+			if err := json.Unmarshal(req.Value, &value); err != nil {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_VALUE"})
+				return
+			}
+			payload, _ := json.Marshal(value)
+			normalizedValue = payload
+			normalizedInterface = value
+		case seasonControlEmissionMultiplier:
+			var value float64
+			if err := json.Unmarshal(req.Value, &value); err != nil {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_VALUE"})
+				return
+			}
+			if value < 0.5 || value > 1.5 {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "OUT_OF_BOUNDS"})
+				return
+			}
+			rounded := math.Round(value*100) / 100
+			if rounded < 0.5 || rounded > 1.5 {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "OUT_OF_BOUNDS"})
+				return
+			}
+			payload, _ := json.Marshal(rounded)
+			normalizedValue = payload
+			normalizedInterface = rounded
+		case seasonControlExtensionDays:
+			var value float64
+			if err := json.Unmarshal(req.Value, &value); err != nil {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_VALUE"})
+				return
+			}
+			if value != math.Trunc(value) {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_VALUE"})
+				return
+			}
+			days := int(value)
+			if days < 0 || days > 7 {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "OUT_OF_BOUNDS"})
+				return
+			}
+			if alphaSeasonLengthDays+days > alphaSeasonMaxDays {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "OUT_OF_BOUNDS"})
+				return
+			}
+			payload, _ := json.Marshal(days)
+			normalizedValue = payload
+			normalizedInterface = days
+		case seasonControlPressureClamp:
+			if expiresAt == nil {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "MISSING_EXPIRES_AT"})
+				return
+			}
+			expiry := *expiresAt
+			if expiry.Before(now) || expiry.After(now.Add(48*time.Hour)) {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_EXPIRES_AT"})
+				return
+			}
+			var value float64
+			if err := json.Unmarshal(req.Value, &value); err != nil {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_VALUE"})
+				return
+			}
+			if value < 0.5 || value > 1.0 {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "OUT_OF_BOUNDS"})
+				return
+			}
+			payload, _ := json.Marshal(value)
+			normalizedValue = payload
+			normalizedInterface = value
+		default:
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INVALID_CONTROL"})
+			return
+		}
+
+		tx, err := db.Begin()
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		defer tx.Rollback()
+
+		var existingValue []byte
+		var existingExpires sql.NullTime
+		var existingModified time.Time
+		exists := false
+		err = tx.QueryRow(`
+			SELECT value, expires_at, last_modified_at
+			FROM season_controls
+			WHERE season_id = $1 AND control_name = $2
+		`, seasonUUID, controlName).Scan(&existingValue, &existingExpires, &existingModified)
+		if err == nil {
+			exists = true
+		} else if err != sql.ErrNoRows {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		switch controlName {
+		case seasonControlEmissionMultiplier:
+			if exists && now.Sub(existingModified) < 24*time.Hour {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "COOLDOWN_ACTIVE"})
+				return
+			}
+		case seasonControlExtensionDays:
+			if exists {
+				json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "COOLDOWN_ACTIVE"})
+				return
+			}
+		case seasonControlPressureClamp:
+			if exists {
+				if !existingExpires.Valid || existingExpires.Time.After(now) {
+					json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "COOLDOWN_ACTIVE"})
+					return
+				}
+			}
+		}
+
+		adminUUID := normalizeUUIDFromString(adminAccount.AccountID, "admin")
+
+		_, err = tx.Exec(`
+			INSERT INTO season_controls (season_id, control_name, value, expires_at, last_modified_by)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (season_id, control_name)
+			DO UPDATE SET value = EXCLUDED.value,
+				expires_at = EXCLUDED.expires_at,
+				last_modified_at = NOW(),
+				last_modified_by = EXCLUDED.last_modified_by
+		`, seasonUUID, controlName, normalizedValue, expiresAt, adminUUID)
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		var updated AdminSeasonControlItem
+		var updatedValue []byte
+		var updatedExpires sql.NullTime
+		if err := tx.QueryRow(`
+			SELECT control_name, value, expires_at, last_modified_at, last_modified_by
+			FROM season_controls
+			WHERE season_id = $1 AND control_name = $2
+		`, seasonUUID, controlName).Scan(&updated.ControlName, &updatedValue, &updatedExpires, &updated.LastModifiedAt, &updated.LastModifiedBy); err != nil {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		updated.Value = json.RawMessage(updatedValue)
+		if updatedExpires.Valid {
+			value := updatedExpires.Time.UTC()
+			updated.ExpiresAt = &value
+		}
+
+		oldValue := interface{}(nil)
+		if exists {
+			if len(existingValue) > 0 {
+				var decoded interface{}
+				if err := json.Unmarshal(existingValue, &decoded); err == nil {
+					oldValue = decoded
+				} else {
+					oldValue = string(existingValue)
+				}
+			}
+		}
+
+		eventID := generateRandomUUID()
+		dayIndex := seasonDayIndex(now)
+		coinsInCirculation := economy.CoinsInCirculation()
+		activePlayers := economy.ActivePlayers()
+		marketPressure := economy.MarketPressure()
+
+		var emissionPoolRemaining int64
+		var globalCoinPool int64
+		var coinsDistributed int64
+		_ = db.QueryRow(`
+			SELECT COALESCE(global_coin_pool, 0), COALESCE(coins_distributed, 0)
+			FROM season_economy
+			WHERE season_id = $1
+		`, currentSeasonID()).Scan(&globalCoinPool, &coinsDistributed)
+		emissionPoolRemaining = globalCoinPool - coinsDistributed
+		if emissionPoolRemaining < 0 {
+			emissionPoolRemaining = 0
+		}
+
+		_, err = tx.Exec(`
+			INSERT INTO season_control_events (
+				event_id,
+				season_id,
+				control_name,
+				intent,
+				old_value,
+				new_value,
+				reason,
+				season_day_index,
+				coins_in_circulation_snapshot,
+				active_players_snapshot,
+				market_pressure_snapshot,
+				emission_pool_snapshot,
+				created_at
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+		`, eventID, seasonUUID, controlName, intent, existingValue, normalizedValue, reason,
+			dayIndex, coinsInCirculation, activePlayers, marketPressure, emissionPoolRemaining)
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		payload := map[string]interface{}{
+			"seasonId":    seasonID,
+			"controlName": controlName,
+			"intent":      intent,
+			"oldValue":    oldValue,
+			"newValue":    normalizedInterface,
+		}
+		if expiresAt != nil {
+			payload["expiresAt"] = expiresAt.Format(time.RFC3339)
+		}
+		payloadBytes, err := json.Marshal(payload)
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		_, err = tx.Exec(`
+			INSERT INTO admin_audit_log (admin_account_id, action_type, scope_type, scope_id, reason, details, created_at)
+			VALUES ($1, $2, $3, $4, NULLIF($5, ''), $6, NOW())
+		`, adminAccount.AccountID, "season_control_set", "season_control", seasonID+":"+controlName, reason, string(payloadBytes))
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
+			json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		telemetryPayload := map[string]interface{}{
+			"eventId":                eventID,
+			"seasonId":               seasonUUID,
+			"controlName":            controlName,
+			"intent":                 intent,
+			"reason":                 reason,
+			"oldValue":               oldValue,
+			"newValue":               normalizedInterface,
+			"dayIndex":               dayIndex,
+			"coinsSnapshot":          coinsInCirculation,
+			"activePlayersSnapshot":  activePlayers,
+			"marketPressureSnapshot": marketPressure,
+			"emissionPoolSnapshot":   emissionPoolRemaining,
+		}
+		telemetryBytes, _ := json.Marshal(telemetryPayload)
+		_, _ = db.Exec(`
+			INSERT INTO player_telemetry (account_id, player_id, event_type, payload, created_at)
+			VALUES ($1, $2, $3, $4, NOW())
+		`, adminAccount.AccountID, "", "admin_season_control", telemetryBytes)
+
+		json.NewEncoder(w).Encode(AdminSeasonControlsResponse{OK: true, Item: &updated})
+	}
+}
+
+func adminSeasonAdvanceHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		adminAccount, ok := requireAdmin(db, w, r)
+		if !ok {
+			return
+		}
+		if CurrentPhase() != PhaseAlpha {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminSeasonAdvanceResponse{OK: false, Error: "INVALID_PHASE"})
+			return
+		}
+		if r.Body != nil {
+			var payload interface{}
+			decoder := json.NewDecoder(r.Body)
+			if err := decoder.Decode(&payload); err == nil || err != io.EOF {
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(AdminSeasonAdvanceResponse{OK: false, Error: "INVALID_REQUEST"})
+				return
+			}
+		}
+
+		now := time.Now().UTC()
+		previous, hasPrevious := ActiveSeasonState()
+		if hasPrevious && !isSeasonEndedRaw(now) {
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(AdminSeasonAdvanceResponse{OK: false, Error: "SEASON_ACTIVE"})
+			return
+		}
+
+		if err := AdvanceAlphaSeasonOverride(db, now); err != nil {
+			if errors.Is(err, ErrActiveSeason) {
+				w.WriteHeader(http.StatusConflict)
+				json.NewEncoder(w).Encode(AdminSeasonAdvanceResponse{OK: false, Error: "SEASON_ACTIVE"})
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminSeasonAdvanceResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		current, ok := ActiveSeasonState()
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminSeasonAdvanceResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		totalDays := int(seasonLength().Hours() / 24)
+		if totalDays < 1 {
+			totalDays = 1
+		}
+		startTime := current.StartUTC.UTC()
+		endTime := startTime.Add(seasonLength()).UTC()
+
+		_ = logAdminAction(db, adminAccount.AccountID, "season_advance", "season", current.SeasonID, "override", map[string]interface{}{
+			"previousSeasonId": func() string {
+				if hasPrevious {
+					return previous.SeasonID
+				}
+				return ""
+			}(),
+			"startedAt": startTime.Format(time.RFC3339),
+		})
+
+		json.NewEncoder(w).Encode(AdminSeasonAdvanceResponse{
+			OK:              true,
+			SeasonID:        current.SeasonID,
+			SeasonStartTime: startTime.Format(time.RFC3339),
+			SeasonEndTime:   endTime.Format(time.RFC3339),
+			TotalDays:       totalDays,
+		})
+	}
+}
+
+func adminSeasonRecoveryHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		adminAccount, ok := requireAdmin(db, w, r)
+		if !ok {
+			return
+		}
+		if CurrentPhase() != PhaseAlpha {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminSeasonRecoveryResponse{OK: false, Error: "INVALID_PHASE"})
+			return
+		}
+
+		var req AdminSeasonRecoveryRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminSeasonRecoveryResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+
+		// Require explicit confirmation text
+		if strings.TrimSpace(req.Confirm) != "I understand this is a recovery action" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminSeasonRecoveryResponse{OK: false, Error: "INVALID_CONFIRMATION"})
+			return
+		}
+
+		now := time.Now().UTC()
+
+		// Check that the current season exists and has ended
+		current, hasCurrent := ActiveSeasonState()
+		if !hasCurrent {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminSeasonRecoveryResponse{OK: false, Error: "NO_ACTIVE_SEASON"})
+			return
+		}
+
+		if !isSeasonEndedRaw(now) {
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(AdminSeasonRecoveryResponse{OK: false, Error: "SEASON_ACTIVE"})
+			return
+		}
+
+		// Call the existing advancement logic to trigger rollover
+		if err := AdvanceAlphaSeasonOverride(db, now); err != nil {
+			if errors.Is(err, ErrActiveSeason) {
+				w.WriteHeader(http.StatusConflict)
+				json.NewEncoder(w).Encode(AdminSeasonRecoveryResponse{OK: false, Error: "SEASON_ACTIVE"})
+				return
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminSeasonRecoveryResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		// Get the new season details
+		newSeason, ok := ActiveSeasonState()
+		if !ok {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminSeasonRecoveryResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		totalDays := int(seasonLength().Hours() / 24)
+		if totalDays < 1 {
+			totalDays = 1
+		}
+		startTime := newSeason.StartUTC.UTC()
+		endTime := startTime.Add(seasonLength()).UTC()
+
+		// Log to admin audit log
+		_ = logAdminAction(db, adminAccount.AccountID, "season_recovery", "season", newSeason.SeasonID, "recovery-only", map[string]interface{}{
+			"recoveredFromSeasonId": current.SeasonID,
+			"recoveredFromEndTime":  current.StartUTC.Add(seasonLength()).Format(time.RFC3339),
+			"newSeasonId":           newSeason.SeasonID,
+			"newSeasonStartedAt":    startTime.Format(time.RFC3339),
+		})
+
+		json.NewEncoder(w).Encode(AdminSeasonRecoveryResponse{
+			OK:              true,
+			SeasonID:        newSeason.SeasonID,
+			SeasonStartTime: startTime.Format(time.RFC3339),
+			SeasonEndTime:   endTime.Format(time.RFC3339),
+			TotalDays:       totalDays,
+			PriorSeasonID:   current.SeasonID,
+		})
 	}
 }
 
@@ -644,156 +1237,6 @@ func adminAuditLogHandler(db *sql.DB) http.HandlerFunc {
 			Limit: limit,
 			Query: query,
 		})
-	}
-}
-
-type AdminKeySetRequest struct {
-}
-
-type AdminKeySetResponse struct {
-	OK    bool   `json:"ok"`
-	Error string `json:"error,omitempty"`
-}
-
-func bootstrapServerVersion() string {
-	if version := strings.TrimSpace(os.Getenv("GIT_COMMIT")); version != "" {
-		return version
-	}
-	if version := strings.TrimSpace(os.Getenv("APP_VERSION")); version != "" {
-		return version
-	}
-	return "unknown"
-}
-
-func adminKeySetHandler(db *sql.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		ctx := r.Context()
-		// Bootstrap is intentionally sealed after the first admin; admin creation should not occur again in Alpha.
-		if AdminExists(ctx, db) {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
-		bootstrapToken := strings.TrimSpace(r.Header.Get("X-Admin-Bootstrap"))
-		if bootstrapToken == "" {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		tokenHash := hashToken(bootstrapToken)
-
-		tx, err := db.BeginTx(ctx, nil)
-		if err != nil {
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		defer tx.Rollback()
-
-		var adminMarker string
-		err = tx.QueryRowContext(ctx, `
-			SELECT account_id
-			FROM accounts
-			WHERE role = 'admin' OR role = 'frozen:admin'
-			LIMIT 1
-			FOR UPDATE
-		`).Scan(&adminMarker)
-		if err == nil {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
-		if err != sql.ErrNoRows {
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-
-		var storedHash string
-		if err := tx.QueryRowContext(ctx, `
-			SELECT token_hash
-			FROM admin_bootstrap_tokens
-			WHERE token_hash = $1 AND used_at IS NULL
-			FOR UPDATE
-		`, tokenHash).Scan(&storedHash); err != nil {
-			if err == sql.ErrNoRows {
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-
-		account, _, err := getSessionAccount(db, r)
-		if err != nil || account == nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		adminKey, err := generateAdminKey()
-		if err != nil {
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		adminKeyHash, err := hashPassword(adminKey)
-		if err != nil {
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if _, err := tx.ExecContext(ctx, `
-			UPDATE accounts
-			SET admin_key_hash = $2,
-				role = 'admin'
-			WHERE account_id = $1
-		`, account.AccountID, adminKeyHash); err != nil {
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-
-		ip := getClientIP(r)
-		result, err := tx.ExecContext(ctx, `
-			UPDATE admin_bootstrap_tokens
-			SET used_at = NOW(),
-				used_by_account_id = $2,
-				used_by_ip = $3
-			WHERE token_hash = $1 AND used_at IS NULL
-		`, tokenHash, account.AccountID, ip)
-		if err != nil {
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if rows, err := result.RowsAffected(); err != nil || rows != 1 {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		tokenPrefix := tokenHash
-		if len(tokenPrefix) > 8 {
-			tokenPrefix = tokenPrefix[:8]
-		}
-		details := map[string]interface{}{
-			"accountId":       account.AccountID,
-			"ip":              ip,
-			"serverVersion":   bootstrapServerVersion(),
-			"tokenHashPrefix": tokenPrefix,
-		}
-		payload, err := json.Marshal(details)
-		if err != nil {
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO admin_audit_log (admin_account_id, action_type, scope_type, scope_id, reason, details, created_at)
-			VALUES ($1, $2, $3, $4, $5, $6, NOW())
-		`, account.AccountID, "bootstrap_admin", "account", account.AccountID, "bootstrap", string(payload)); err != nil {
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-
-		if err := tx.Commit(); err != nil {
-			json.NewEncoder(w).Encode(AdminKeySetResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
-		}
-		json.NewEncoder(w).Encode(AdminKeySetResponse{OK: true})
 	}
 }
 
@@ -1642,11 +2085,6 @@ func adminBotDeleteHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 		if accountID.Valid {
-			if _, err := tx.Exec(`DELETE FROM refresh_tokens WHERE account_id = $1`, accountID.String); err != nil {
-				tx.Rollback()
-				json.NewEncoder(w).Encode(AdminBotDeleteResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
 			if _, err := tx.Exec(`DELETE FROM sessions WHERE account_id = $1`, accountID.String); err != nil {
 				tx.Rollback()
 				json.NewEncoder(w).Encode(AdminBotDeleteResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -1751,7 +2189,6 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 				return
 			}
 			_, _ = db.Exec(`DELETE FROM sessions WHERE account_id = $1`, accountID)
-			_, _ = db.Exec(`DELETE FROM refresh_tokens WHERE account_id = $1`, accountID)
 			emitNotification(db, NotificationInput{
 				RecipientRole: NotificationRoleAdmin,
 				Category:      NotificationCategoryAdmin,
@@ -1801,11 +2238,6 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 		case "delete":
 			tx, err := db.Begin()
 			if err != nil {
-				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-			if _, err := tx.Exec(`DELETE FROM refresh_tokens WHERE account_id = $1`, accountID); err != nil {
-				tx.Rollback()
 				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
 				return
 			}
@@ -1894,6 +2326,72 @@ func isHumanSessionActive(db *sql.DB, accountID string, lastActive time.Time) (b
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func parseSeasonControlsPath(path string) (string, bool) {
+	const prefix = "/admin/seasons/"
+	const suffix = "/controls"
+	if !strings.HasPrefix(path, prefix) || !strings.HasSuffix(path, suffix) {
+		return "", false
+	}
+	value := strings.TrimPrefix(path, prefix)
+	value = strings.TrimSuffix(value, suffix)
+	value = strings.Trim(value, "/")
+	if value == "" {
+		return "", false
+	}
+	return value, true
+}
+
+func normalizeUUIDFromString(input string, namespace string) string {
+	value := strings.TrimSpace(input)
+	if value == "" {
+		return ""
+	}
+	if isUUIDString(value) {
+		return strings.ToLower(value)
+	}
+	return deriveUUIDFromString(namespace, value)
+}
+
+func isUUIDString(value string) bool {
+	if len(value) != 36 {
+		return false
+	}
+	for i := 0; i < len(value); i++ {
+		ch := value[i]
+		switch i {
+		case 8, 13, 18, 23:
+			if ch != '-' {
+				return false
+			}
+		default:
+			if (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F') {
+				continue
+			}
+			return false
+		}
+	}
+	return true
+}
+
+func deriveUUIDFromString(namespace string, value string) string {
+	sum := sha1.Sum([]byte(namespace + ":" + value))
+	bytes := make([]byte, 16)
+	copy(bytes, sum[:16])
+	bytes[6] = (bytes[6] & 0x0f) | 0x50
+	bytes[8] = (bytes[8] & 0x3f) | 0x80
+	return fmt.Sprintf("%x-%x-%x-%x-%x", bytes[0:4], bytes[4:6], bytes[6:8], bytes[8:10], bytes[10:16])
+}
+
+func generateRandomUUID() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "00000000-0000-0000-0000-000000000000"
+	}
+	b[6] = (b[6] & 0x0f) | 0x40
+	b[8] = (b[8] & 0x3f) | 0x80
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
 }
 
 func logAdminAction(db *sql.DB, adminAccountID string, actionType string, scopeType string, scopeID string, reason string, details map[string]interface{}) error {

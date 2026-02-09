@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"os"
 	"strings"
 	"time"
 )
@@ -33,7 +32,7 @@ func acquireStartupLock(ctx context.Context, db *sql.DB) (*sql.Conn, bool, error
 }
 
 func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
-	if strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV"))) != "alpha" {
+	if CurrentPhase() != PhaseAlpha {
 		return nil
 	}
 
@@ -60,16 +59,39 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
+	adminCount := 0
 	var adminAccountID string
-	adminErr := tx.QueryRowContext(ctx, `
-		SELECT account_id
+	var adminUsername string
+	var adminMustChange bool
+	rows, err := tx.QueryContext(ctx, `
+		SELECT account_id, username, must_change_password
 		FROM accounts
 		WHERE role IN ('admin', 'frozen:admin')
-		LIMIT 1
+		ORDER BY created_at ASC
+		LIMIT 2
 		FOR UPDATE
-	`).Scan(&adminAccountID)
-	if adminErr == nil {
-		if !bootstrapComplete {
+	`)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		adminCount++
+		if adminCount == 1 {
+			if err := rows.Scan(&adminAccountID, &adminUsername, &adminMustChange); err != nil {
+				_ = rows.Close()
+				return err
+			}
+		}
+	}
+	_ = rows.Close()
+	if adminCount > 1 {
+		return errors.New("multiple admin accounts exist; refuse to start")
+	}
+	if adminCount == 1 {
+		if bootstrapComplete && adminMustChange {
+			return errors.New("bootstrap sealed but admin still locked; refuse to start")
+		}
+		if !bootstrapComplete && !adminMustChange {
 			if _, err := tx.ExecContext(ctx, `
 				INSERT INTO global_settings (key, value, updated_at)
 				VALUES ('admin_bootstrap_complete', 'true', NOW())
@@ -81,11 +103,12 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		if err := tx.Commit(); err != nil {
 			return err
 		}
-		log.Println("ALPHA AUTO ADMIN: existing admin detected; bootstrap sealed")
+		if adminMustChange {
+			log.Printf("Alpha admin bootstrap: admin %s locked, awaiting claim", adminUsername)
+		} else {
+			log.Printf("Alpha admin bootstrap: admin %s already active", adminUsername)
+		}
 		return nil
-	}
-	if adminErr != sql.ErrNoRows {
-		return adminErr
 	}
 	if bootstrapComplete {
 		return errors.New("bootstrap sealed but no admin exists; refuse to start")
@@ -112,7 +135,7 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	bootstrapPassword, err := randomToken(24)
+	bootstrapPassword, err := randomToken(32)
 	if err != nil {
 		return err
 	}
@@ -146,17 +169,6 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	gateKey, err := randomToken(32)
-	if err != nil {
-		return err
-	}
-	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO admin_password_gates (account_id, gate_key, created_at)
-		VALUES ($1, $2, NOW())
-	`, accountID, gateKey); err != nil {
-		return err
-	}
-
 	bootstrapDetails := map[string]interface{}{
 		"username":    username,
 		"displayName": displayName,
@@ -174,7 +186,7 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 
 	if _, err := tx.ExecContext(ctx, `
 		INSERT INTO global_settings (key, value, updated_at)
-		VALUES ('admin_bootstrap_complete', 'true', NOW())
+		VALUES ('admin_bootstrap_complete', 'false', NOW())
 		ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
 	`); err != nil {
 		return err
@@ -184,7 +196,7 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 
-	log.Println("ALPHA AUTO ADMIN: created bootstrap admin for @" + username)
+	log.Println("Alpha admin bootstrap: created alpha-admin (locked)")
 	return nil
 }
 

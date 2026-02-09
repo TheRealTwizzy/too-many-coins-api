@@ -1,6 +1,47 @@
+# Star Purchases
+
+## Currency Model: Integer Microcoins
+
+**Canonical Currency Unit: Microcoins (integer only)**
+
+Star purchases are always validated and paid using integer microcoins:
+
+- **1 Coin = 1000 microcoins**
+- All star prices are stored and calculated as integer microcoins
+- All purchase validations compare integer microcoin balances atomically
+- No floating-point price comparisons exist at runtime
+- Coins are a **display format only** derived from microcoins: `microcoins / 1000` with exactly 3 decimal places
+
+This ensures:
+- Perfect fairness and auditability
+- Atomic purchase transactions with no rounding surprises
+- Identical pricing displayed to all players (integer precision removes floating-point divergence)
+- Clean separation between canonical (integer) and display (decimal) representations
+
+---
+
+## Star Purchasing System
+
 Stars may only be obtained by purchasing them from the system using coins.
 
 Stars are minted only by the system. Brokered trading may transfer existing Stars between players but never creates new Stars and never bypasses scarcity.
+
+## Star Characteristics
+
+**Stars are NOT tradable in any context** (player-to-player trading, brokered trading, or any other mechanism).
+
+**Stars are NOT spendable** (except via Star Sacrifice for TSAs in Beta+, which permanently destroys them).
+
+**Stars are seasonal competitive units** that:
+
+- Determine leaderboard rank directly
+- Reset at season end (do not carry over as currency)
+- Convert into a **permanent profile statistic** after season end
+- Influence long-term profile rank and identity
+
+**Star value scales with season population**. Stars earned in larger, more competitive seasons carry more weight as a permanent statistic.
+
+**Stars are the permanent score of seasonal performance.**
 
 Star purchases follow these rules:
 
@@ -54,3 +95,60 @@ Star supply is system-managed and cannot be exhausted.
 Scarcity is enforced through pricing, not limited stock.
 
 All star purchases are validated server-side and recorded in an append-only log.
+
+## Star Price Persistence
+
+The current star price is persisted in the season economy table and updated each emission tick (every 60 seconds).
+
+This ensures:
+- Star price remains **identically consistent** across all players at any given moment
+- Star price remains consistent across server restarts
+- Price continuity is maintained during unexpected downtime
+- The season-authoritative star price is recoverable from database state
+
+## Price Tick Locking (Authoritative Match)
+
+Every season snapshot includes a `price_tick` identifier alongside `current_star_price`.
+
+Client purchase requests MUST include the `price_tick` observed by the client.
+
+Server validation:
+- If `request.price_tick == current_price_tick`: purchase proceeds using the snapshotted price
+- If `request.price_tick != current_price_tick`: request fails with `PRICE_CHANGED`
+
+This guarantees:
+- UI price and server-enforced price match exactly (or fail explicitly)
+- No silent recomputation or price drift between display and enforcement
+- `NOT_ENOUGH_COINS` is reserved strictly for true insufficiency at the locked price
+
+### Star Price Computation (Season-Level Authority)
+
+The star price is computed from **season-level inputs only**. All players see the **identical price** at any given moment in the season.
+
+Season-level inputs:
+- Time progression within the season
+- Total coins in circulation (across all players)
+- Stars purchased this season
+- Market pressure (aggregate purchase activity)
+- Late-season spike (time-based multiplier)
+- Affordability guardrail (derived from total coins / expected player base)
+
+**Active player metrics are NOT a direct input** to star price computation. Player activity influences pricing only indirectly through market pressure (purchase activity).
+
+The computation is performed **once per server tick** and stored in the database. The same value is broadcast to all players via SSE and API endpoints.
+
+If the persisted price is NULL on startup (new season or legacy data), it will be populated by the next emission tick.
+
+### Price Displayed vs. Price Paid
+
+The displayed to all players is the season-authoritative price.
+
+Purchase flow:
+- Player sees the authoritative star price
+- Anti-abuse logic may affect:
+  - Purchase allowance (buying limits)
+  - Effective price paid (through cooldowns or other mechanisms)
+  - But NOT the displayed price
+- Star purchase log records both:
+  - season_price_snapshot (authoritative)
+  - effective_price_paid (actual cost including anti-abuse adjustments)

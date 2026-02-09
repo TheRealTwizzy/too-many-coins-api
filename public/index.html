@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+<!--
+UI ACCEPTANCE CHECKLIST — SEASON MANAGER
+
+- UI is read-only by default
+- No lifecycle configuration controls
+- No Start/Reset buttons
+- No duration inputs
+- Emergency actions are collapsed and explicit
+- Phase is displayed
+- Backend remains authoritative
+-->
 <html lang="en">
 <head>
 	<meta charset="UTF-8" />
@@ -752,7 +763,7 @@
 					<div class="metric-grid">
 						<div class="metric">
 							<div class="label">Current season</div>
-							<div id="hero-season-id" class="stat-value">Season 1</div>
+							<div id="hero-season-id" class="stat-value">--</div>
 						</div>
 						<div class="metric">
 							<div id="hero-time-label" class="label">Time remaining</div>
@@ -789,7 +800,7 @@
 						<div class="card-header">
 							<div>
 								<div class="label">Season snapshot</div>
-								<div id="season-title" class="stat-value">Season 1</div>
+								<div id="season-title" class="stat-value">--</div>
 							</div>
 							<span id="season-status" class="badge accent">Active</span>
 						</div>
@@ -1060,6 +1071,27 @@
 			</div>
 		</section>
 
+		<section id="view-admin-initialize" class="view">
+			<div class="section-stack" style="max-width: 560px;">
+				<div class="card hero-card">
+					<div class="label">Admin initialization</div>
+					<h2 style="margin:0.35rem 0 0;">Claim the admin account.</h2>
+					<div class="muted">Owner-only. Uses the rotating claim code.</div>
+				</div>
+				<div class="card" id="admin-init-card">
+					<div class="stack">
+						<input id="admin-claim-code" placeholder="Owner claim code" />
+						<input id="admin-claim-password" type="password" placeholder="New admin password" />
+						<input id="admin-claim-confirm" type="password" placeholder="Confirm password" />
+						<button class="primary" id="admin-claim-submit" type="button">Set admin password</button>
+						<div id="admin-claim-status" class="label"></div>
+						<div id="admin-claim-rotation" class="muted"></div>
+						<div class="label"><a href="#/home">Back to login</a></div>
+					</div>
+				</div>
+			</div>
+		</section>
+
 		<section id="view-admin" class="view">
 			<div class="section-stack">
 				<div class="card hero-card">
@@ -1093,6 +1125,7 @@
 							<button type="button" data-target="admin-players">Players</button>
 							<button type="button" data-target="admin-abuse-monitor">Abuse Monitor</button>
 							<button type="button" data-target="admin-whitelist">Whitelist</button>
+							<button type="button" data-target="admin-bug-reports">Bug Reports</button>
 							<button type="button" data-target="admin-emergency">Emergency</button>
 							<button type="button" data-target="admin-audit">Audit Log</button>
 						</nav>
@@ -1156,6 +1189,18 @@
 								<div class="label">Seasons (system state)</div>
 								<div id="admin-season-list" class="section-stack" style="margin-top:0.75rem;"></div>
 								<div class="admin-empty" id="admin-season-empty" style="display:none;">No season data available.</div>
+							</div>
+							<div class="card" id="admin-season-status" style="display:none;">
+								<div class="label">SEASON STATUS</div>
+								<div class="admin-grid" style="margin-top:0.75rem;">
+									<div class="admin-metric"><div class="label">Phase</div><div class="stat-value">ALPHA</div></div>
+									<div class="admin-metric"><div class="label">Season</div><div class="stat-value" id="admin-season-status-id">--</div></div>
+									<div class="admin-metric"><div class="label">Status</div><div class="stat-value" id="admin-season-status-value">--</div></div>
+									<div class="admin-metric"><div class="label">Day</div><div class="stat-value" id="admin-season-status-day">--</div></div>
+									<div class="admin-metric"><div class="label">Ends</div><div class="stat-value" id="admin-season-status-ends">--</div></div>
+									<div class="admin-metric"><div class="label">Rollover</div><div class="stat-value">Automatic on natural end</div></div>
+								</div>
+								<div class="muted" id="admin-season-status-message" style="margin-top:0.75rem;"></div>
 							</div>
 							<div class="card" id="admin-season-detail" data-collapsible="true" style="display:none;">
 								<div class="card-toggle">
@@ -1257,8 +1302,22 @@
 							</div>
 						</section>
 
+						<section id="admin-bug-reports" class="admin-section">
+							<h3>Bug Reports (Read-Only)</h3>
+							<div class="card">
+								<div class="label">Player-submitted bug reports</div>
+								<div class="muted">Reports are immutable and for observation only. No responses or feedback loop in Alpha.</div>
+								<div class="row" style="margin-top:0.75rem;">
+									<input id="admin-bug-search" placeholder="Search by title or description" />
+									<button id="admin-bug-refresh" class="primary" type="button">Refresh</button>
+								</div>
+								<div id="admin-bug-results" class="section-stack" style="margin-top:0.75rem;"></div>
+								<div class="admin-empty" id="admin-bug-empty">No bug reports yet.</div>
+							</div>
+						</section>
+
 						<section id="admin-emergency" class="admin-section">
-							<h3>Emergency Controls</h3>
+							<h3>EMERGENCY OVERRIDES (ALPHA)</h3>
 							<div class="card">
 								<div class="label">Acknowledgement required</div>
 								<div class="muted">“I understand this affects all players.”</div>
@@ -1370,9 +1429,36 @@
 				</div>
 			</div>
 		</section>
+		<section id="view-bug-report" class="view" style="display:none;">
+			<div class="section-stack" style="max-width: 560px;">
+				<div class="card hero-card">
+					<div class="label">Report a bug</div>
+					<h2 style="margin:0.35rem 0 0;">Help us improve Too Many Coins.</h2>
+					<div class="muted">Bug reports are read-only during Alpha. You won't receive replies.</div>
+				</div>
+				<div class="card">
+					<div class="stack">
+						<input id="bug-title" placeholder="Brief bug title" maxlength="200" />
+						<textarea id="bug-description" rows="6" placeholder="Describe the issue in detail. What were you doing? What happened?"></textarea>
+						<select id="bug-category">
+							<option value="other">Category: Other</option>
+							<option value="ui">Category: UI / Display</option>
+							<option value="economy">Category: Economy / Coins</option>
+							<option value="performance">Category: Performance / Speed</option>
+						</select>
+						<input id="bug-client-version" placeholder="Client version (optional)" maxlength="50" />
+						<button class="primary" id="bug-submit">Submit report</button>
+						<div id="bug-status" class="label"></div>
+						<button id="bug-cancel">Back</button>
+					</div>
+				</div>
+			</div>
+		</section>
 	</main>
 
-	<div class="footer">Made by AI</div>
+	<div class="footer">
+		Made by AI · <a href="#" id="report-bug-link" style="color:#c5cae9; text-decoration:none; cursor:pointer;">Report a bug</a>
+	</div>
 	<div id="debug-status" class="toast" style="display:none; position:fixed; left:1rem; bottom:1rem; z-index:40; max-width:420px;"></div>
 	<script>
 		(() => {
@@ -1457,10 +1543,23 @@ const adminOverviewThrottles = document.getElementById("admin-overview-throttles
 const adminOverviewFlags = document.getElementById("admin-overview-flags");
 const adminSeasonList = document.getElementById("admin-season-list");
 const adminSeasonEmpty = document.getElementById("admin-season-empty");
+const adminSeasonStatus = document.getElementById("admin-season-status");
+const adminSeasonStatusId = document.getElementById("admin-season-status-id");
+const adminSeasonStatusValue = document.getElementById("admin-season-status-value");
+const adminSeasonStatusDay = document.getElementById("admin-season-status-day");
+const adminSeasonStatusEnds = document.getElementById("admin-season-status-ends");
+const adminSeasonStatusMessage = document.getElementById("admin-season-status-message");
 const adminSeasonDetail = document.getElementById("admin-season-detail");
 const adminSeasonMetrics = document.getElementById("admin-season-metrics");
 const debugStatus = document.getElementById("debug-status");
 const adminDebugToggle = document.getElementById("admin-debug-toggle");
+const adminClaimCode = document.getElementById("admin-claim-code");
+const adminClaimPassword = document.getElementById("admin-claim-password");
+const adminClaimConfirm = document.getElementById("admin-claim-confirm");
+const adminClaimSubmit = document.getElementById("admin-claim-submit");
+const adminClaimStatus = document.getElementById("admin-claim-status");
+const adminClaimRotation = document.getElementById("admin-claim-rotation");
+const adminInitCard = document.getElementById("admin-init-card");
 
 if (window.__INLINE_DEBUG__ && debugStatus) {
 	debugStatus.innerText = "App script running.";
@@ -1484,6 +1583,7 @@ const viewMap = {
 	leaderboard: "view-leaderboard",
 	signup: "view-signup",
 	reset: "view-reset",
+	"admin/initialize": "view-admin-initialize",
 	admin: "view-admin",
 	moderator: "view-moderator"
 };
@@ -1496,6 +1596,7 @@ let moderatorInitialized = false;
 let adminInitialized = false;
 let signupInitialized = false;
 let resetInitialized = false;
+let adminBootstrapInitialized = false;
 let leaderboardInitialized = false;
 let playerRefreshInterval = null;
 let seasonRefreshInterval = null;
@@ -1503,7 +1604,6 @@ let activityPingInterval = null;
 let liveEventSource = null;
 let notificationEventSource = null;
 let lastNotificationId = 0;
-const ALPHA_SEASON_ID = "season-1";
 const bulkStarMax = 5;
 let leaderboardPage = 1;
 const notificationCategories = [
@@ -1522,6 +1622,11 @@ let adminOverviewTimer = null;
 let adminAbuseTimer = null;
 let adminAntiCheatTimer = null;
 let currentSeasonSnapshot = null;
+
+// Bootstrap gate state
+let bootstrapSeasonReady = false;
+let bootstrapGateResolved = false;
+let bootstrapTimeoutId = null;
 
 function apiFetch(url, options = {}) {
 	return fetch(url, {
@@ -1624,14 +1729,27 @@ function formatNextEmissionValue(value, ended) {
 	return `${value}s`;
 }
 
+// Canonical formatters: convert server microcoins to display coins
+// Server always returns microcoins (1 coin = 1000 microcoins)
+// These formatters ensure consistent display across all UI contexts
+function formatMicrocoinsToCoins(microcoins) {
+	if (typeof microcoins !== "number" || !isFinite(microcoins)) {
+		return null;
+	}
+	return (microcoins / 1000).toFixed(3);
+}
+
+function formatMicrocoinsToCoinsDisplay(microcoins) {
+	const formatted = formatMicrocoinsToCoins(microcoins);
+	return formatted !== null ? `${formatted} coins` : "--";
+}
+
 function formatCoinsInCirculationForSeason(season) {
 	const ended = seasonStatusValue(season) === "ended";
 	const rawCoins = ended && typeof season?.finalCoinsInCirculation === "number"
 		? season.finalCoinsInCirculation
 		: season?.coinsInCirculation;
-	const count = typeof rawCoins === "number" && isFinite(rawCoins)
-		? rawCoins
-		: null;
+	const count = formatMicrocoinsToCoins(rawCoins);
 	if (ended) {
 		return count === null ? "Final snapshot recorded" : `Final snapshot: ${count} coins`;
 	}
@@ -1668,9 +1786,32 @@ function updateLiveStatus(state, message) {
 	liveStatus.innerText = message || "Live updates";
 }
 
+function formatSeasonDisplayNumber(season) {
+	// Derive player-facing season number from server data
+	// Internal season IDs must NEVER be exposed to players
+	if (!season) return "Season 0";
+	
+	// If server provides an explicit season_number field, use it
+	if (typeof season.season_number === "number") {
+		return `Season ${season.season_number}`;
+	}
+	
+	// Alpha constraint: single active season only, defaults to Season 0
+	// (Future: if multi-season exists, server will provide season_number)
+	if (isDebugEnabled()) {
+		console.warn("Season object missing season_number field; defaulting to Season 0");
+	}
+	return "Season 0";
+}
+
 function updateSeasonSnapshot(season) {
 	if (!season) return;
 	currentSeasonSnapshot = season;
+	
+	// SSE OVERLAY PATTERN: Update DOM elements with server snapshot values.
+	// Do NOT re-render the season card here; that's done once by loadSeasons.
+	// This function overlays live/updated values on top of the existing structure.
+	
 	const ended = seasonStatusValue(season) === "ended";
 	const starPriceValue = ended && typeof season.finalStarPrice === "number"
 		? season.finalStarPrice
@@ -1678,17 +1819,21 @@ function updateSeasonSnapshot(season) {
 	const coinsValue = ended && typeof season.finalCoinsInCirculation === "number"
 		? season.finalCoinsInCirculation
 		: season.coinsInCirculation;
-	if (seasonTitle) seasonTitle.innerText = "Season 1";
+	
+	// Update season snapshot panel (if visible)
+	if (seasonTitle) seasonTitle.innerText = formatSeasonDisplayNumber(season);
 	if (seasonRemaining) seasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
-	if (seasonStarPrice) seasonStarPrice.innerText = typeof starPriceValue === "number" ? `${starPriceValue} coins` : "--";
+	if (seasonStarPrice) seasonStarPrice.innerText = formatMicrocoinsToCoinsDisplay(starPriceValue);
 	if (seasonCoins) seasonCoins.innerText = formatCoinsInCirculationForSeason({ ...season, coinsInCirculation: coinsValue });
 	if (seasonEmission) seasonEmission.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
 	if (seasonPressure) seasonPressure.innerText = formatPressureValue(season.marketPressure, ended);
 	if (seasonNextEmission) seasonNextEmission.innerText = formatNextEmissionValue(season.nextEmissionInSeconds, ended);
 	if (seasonScarcityMessage) seasonScarcityMessage.innerText = scarcityMessage(season.secondsRemaining || 0);
-	if (heroSeasonId) heroSeasonId.innerText = "Season 1";
+	
+	// Update hero panel (top dashboard)
+	if (heroSeasonId) heroSeasonId.innerText = formatSeasonDisplayNumber(season);
 	if (heroSeasonRemaining) heroSeasonRemaining.innerText = ended ? "Season ended — read-only." : formatRemaining(season.secondsRemaining || 0);
-	if (heroStarPrice) heroStarPrice.innerText = typeof starPriceValue === "number" ? `${starPriceValue} coins` : "--";
+	if (heroStarPrice) heroStarPrice.innerText = formatMicrocoinsToCoinsDisplay(starPriceValue);
 	if (heroInflation) heroInflation.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
 	if (heroPressure) heroPressure.innerText = formatPressureValue(season.marketPressure, ended);
 	if (seasonStatus) {
@@ -1728,7 +1873,7 @@ function updateSeasonCard(season) {
 			? "Season ended — read-only."
 			: `${formatRemaining(season.secondsRemaining || 0)} remaining`;
 	}
-	if (priceEl) priceEl.innerText = typeof starPriceValue === "number" ? `${starPriceValue} coins` : "--";
+	if (priceEl) priceEl.innerText = formatMicrocoinsToCoinsDisplay(starPriceValue);
 	if (priceLabelEl) priceLabelEl.innerText = ended ? "Final star price snapshot" : "Star price";
 	if (coinsEl) coinsEl.innerText = formatCoinsInCirculationForSeason({ ...season, coinsInCirculation: coinsValue });
 	if (emissionEl) emissionEl.innerText = formatEmissionValue(season.coinEmissionPerMinute, ended);
@@ -1766,9 +1911,10 @@ function applyLiveSnapshot(payload) {
 	if (payload.authenticated && typeof payload.playerCoins === "number" && typeof payload.playerStars === "number") {
 		playerCoins = payload.playerCoins;
 		playerStars = payload.playerStars;
-		coinsDiv.innerText = `Coins: ${playerCoins}`;
+		const displayCoins = formatMicrocoinsToCoins(playerCoins);
+		coinsDiv.innerText = `Coins: ${displayCoins}`;
 		starsDiv.innerText = `Stars: ${playerStars}`;
-		statPill.innerText = `${playerCoins} coins · ${playerStars} stars`;
+		statPill.innerText = `${displayCoins} coins · ${playerStars} stars`;
 	}
 }
 
@@ -1798,7 +1944,102 @@ function disconnectLiveStream() {
 	updateLiveStatus("offline", "Offline");
 }
 
+// Bootstrap season readiness gate
+async function waitForBootstrapSeason() {
+	// If already resolved, return immediately
+	if (bootstrapGateResolved) {
+		return bootstrapSeasonReady;
+	}
+
+	// Check if season is ready by fetching /seasons endpoint
+	try {
+		const result = await apiFetchJson("/seasons", {}, 2500);
+		const data = result.data || {};
+		
+		// Check if we have season data and it's valid
+		bootstrapSeasonReady = data.seasons && data.seasons.length > 0;
+		bootstrapGateResolved = true;
+		
+		// Clear timeout if it was set
+		if (bootstrapTimeoutId) {
+			clearTimeout(bootstrapTimeoutId);
+			bootstrapTimeoutId = null;
+		}
+		
+		// Remove bootstrap message
+		if (authStatus) {
+			authStatus.innerText = "Log in to save your profile.";
+		}
+		
+		return bootstrapSeasonReady;
+	} catch (e) {
+		// If fetch fails, treat as season not ready
+		bootstrapSeasonReady = false;
+		bootstrapGateResolved = false;
+		
+		// Set timeout if not already set
+		if (!bootstrapTimeoutId) {
+			setBootstrapTimeout();
+		}
+		
+		return false;
+	}
+}
+
+// Set 15-second timeout for bootstrap
+function setBootstrapTimeout() {
+	if (bootstrapTimeoutId) return;
+	
+	bootstrapTimeoutId = setTimeout(() => {
+		bootstrapTimeoutId = null;
+		bootstrapGateResolved = true;
+		bootstrapSeasonReady = false;
+		
+		// Show timeout message
+		if (authStatus) {
+			authStatus.innerHTML = '<div style="color:#fecaca;">Season is still initializing.<br>Please refresh the page in a moment.</div>';
+		}
+		
+		// Disable login button and inputs
+		const loginBtn = document.getElementById("login-btn");
+		const usernameInput = document.getElementById("username");
+		const passwordInput = document.getElementById("password");
+		
+		if (loginBtn) loginBtn.disabled = true;
+		if (usernameInput) usernameInput.disabled = true;
+		if (passwordInput) passwordInput.disabled = true;
+	}, 15000);
+}
+
 async function loadAuth() {
+	// Show bootstrap message while waiting for season readiness
+	if (!bootstrapGateResolved) {
+		authStatus.innerText = "Preparing the season…";
+		authForms.style.display = "none";
+		logoutBtn.style.display = "none";
+		
+		// Disable all login inputs while bootstrapping
+		const usernameInput = document.getElementById("username");
+		const passwordInput = document.getElementById("password");
+		const loginBtn = document.getElementById("login-btn");
+		const signupLink = document.getElementById("signup-link");
+		
+		if (usernameInput) usernameInput.disabled = true;
+		if (passwordInput) passwordInput.disabled = true;
+		if (loginBtn) loginBtn.disabled = true;
+		
+		// Start waiting for season readiness
+		setBootstrapTimeout(); // Set the 15-second timeout
+		await waitForBootstrapSeason();
+		
+		// If still not ready after waiting, return early
+		// (the timeout will handle the UI state)
+		if (!bootstrapSeasonReady) {
+			return;
+		}
+	}
+	
+	// Now proceed with auth check only after bootstrap is ready
 	const result = await apiFetchJson("/auth/me", {}, 2500);
 	const data = result.data || { ok: false };
 	if (!data.ok) {
@@ -1818,6 +2059,16 @@ async function loadAuth() {
 		setNotificationViewport(false);
 		document.getElementById("seasons").style.display = "none";
 		document.getElementById("locked-message").innerText = "Log in to access seasons.";
+		
+		// Enable login inputs once bootstrap is complete
+		const usernameInput = document.getElementById("username");
+		const passwordInput = document.getElementById("password");
+		const loginBtn = document.getElementById("login-btn");
+		
+		if (usernameInput) usernameInput.disabled = false;
+		if (passwordInput) passwordInput.disabled = false;
+		if (loginBtn) loginBtn.disabled = false;
+		
 		connectLiveStream();
 		return;
 	}
@@ -1936,9 +2187,10 @@ async function refreshPlayer() {
 	const data = await res.json();
 	playerCoins = data.playerCoins || 0;
 	playerStars = data.playerStars || 0;
-	coinsDiv.innerText = `Coins: ${playerCoins}`;
+	const displayCoins = formatMicrocoinsToCoins(playerCoins);
+	coinsDiv.innerText = `Coins: ${displayCoins}`;
 	starsDiv.innerText = `Stars: ${playerStars}`;
-	statPill.innerText = `${playerCoins} coins · ${playerStars} stars`;
+	statPill.innerText = `${displayCoins} coins · ${playerStars} stars`;
 }
 
 async function loadProfile() {
@@ -1957,6 +2209,109 @@ async function loadProfile() {
 	profileAvatarImg.src = data.avatarUrl || "https://placehold.co/64x64?text=User";
 }
 
+function attachBuyStarHandler(buyButton, seasonCardDiv, season) {
+	if (!buyButton) return;
+	const qtyInput = seasonCardDiv.querySelector(".bulk-qty");
+	const quoteEl = seasonCardDiv.querySelector(".bulk-quote");
+	const warningEl = seasonCardDiv.querySelector(".bulk-warning");
+	const breakdownEl = seasonCardDiv.querySelector(".bulk-breakdown");
+	let lastQuote = null;
+	
+	const refreshQuote = async () => {
+		if (seasonStatusValue(currentSeasonSnapshot || season) === "ended") {
+			if (quoteEl) quoteEl.innerText = "Season ended.";
+			return;
+		}
+		if (!qtyInput) return;
+		const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
+		if (quoteEl) quoteEl.innerText = "";
+		if (warningEl) warningEl.innerText = "";
+		if (breakdownEl) breakdownEl.innerText = "";
+		const res = await apiFetch("/buy-star/quote", {
+			method: "POST",
+			body: JSON.stringify({ seasonId: season.seasonId, quantity: qty })
+		});
+		const data = await res.json();
+		if (!data.ok) {
+			lastQuote = null;
+			if (quoteEl) quoteEl.innerText = data.error || "Quote failed";
+			return;
+		}
+		lastQuote = data;
+		const perStarPrice = typeof data.finalStarPrice === "number"
+			? formatMicrocoinsToCoins(data.finalStarPrice)
+			: (data.breakdown && data.breakdown.length > 0 ? formatMicrocoinsToCoins(data.breakdown[data.breakdown.length - 1].finalPrice) : null);
+		const totalCost = formatMicrocoinsToCoins(data.totalCoinsSpent);
+		if (quoteEl) {
+			if (totalCost != null && perStarPrice != null) {
+				quoteEl.innerText = `Total cost: ${totalCost} coins · Per-star: ${perStarPrice} coins`;
+			} else if (totalCost != null) {
+				quoteEl.innerText = `Total cost: ${totalCost} coins`;
+			} else if (perStarPrice != null) {
+				quoteEl.innerText = `Per-star: ${perStarPrice} coins`;
+			} else {
+				quoteEl.innerText = "";
+			}
+		}
+		if (warningEl) warningEl.innerText = data.warning || "";
+		if (breakdownEl) breakdownEl.innerText = "";
+	};
+	
+	if (qtyInput) {
+		qtyInput.addEventListener("input", refreshQuote);
+		refreshQuote();
+	}
+
+	buyButton.addEventListener("click", async () => {
+		if (seasonStatusValue(currentSeasonSnapshot || season) === "ended") {
+			setToast("Season ended. Purchases are disabled.", "error");
+			return;
+		}
+		const qty = Math.max(1, parseInt(qtyInput?.value, 10) || 1);
+		await refreshQuote();
+		if (qty > 1) {
+			const totalCostMicro = lastQuote && typeof lastQuote.totalCoinsSpent === "number" ? lastQuote.totalCoinsSpent : null;
+			const totalCost = formatMicrocoinsToCoins(totalCostMicro);
+			const confirmMessage = totalCost != null
+				? `Confirm purchase of ${qty} stars for ${totalCost} coins?`
+				: `Confirm purchase of ${qty} stars?`;
+			if (!confirm(confirmMessage)) {
+				return;
+			}
+		}
+		const observedPriceTick = typeof (currentSeasonSnapshot || season)?.priceTick === "number"
+			? (currentSeasonSnapshot || season).priceTick
+			: null;
+		const res = await apiFetch("/buy-star", {
+			method: "POST",
+			body: JSON.stringify({ seasonId: season.seasonId, quantity: qty, priceTick: observedPriceTick })
+		});
+		const data = await res.json();
+		if (!data.ok) {
+			if (data.error === "PRICE_CHANGED") {
+				setToast("Price changed. Refreshing...", "warning");
+				await loadSeasons();
+				await refreshQuote();
+				return;
+			}
+			setToast(data.error || "Purchase failed", "error");
+			return;
+		}
+		playerCoins = data.playerCoins;
+		playerStars = data.playerStars;
+		const displayCoins = formatMicrocoinsToCoins(playerCoins);
+		coinsDiv.innerText = `Coins: ${displayCoins}`;
+		starsDiv.innerText = `Stars: ${playerStars}`;
+		statPill.innerText = `${displayCoins} coins · ${playerStars} stars`;
+		const label = data.starsPurchased && data.starsPurchased > 1
+			? `Bought ${data.starsPurchased} stars.`
+			: "Star purchased.";
+		setToast(label, "success");
+		track("buy_star", { seasonId: season.seasonId, quantity: data.starsPurchased || 1 });
+		refreshQuote();
+	});
+}
+
 async function loadSeasons() {
 	const container = document.getElementById("seasons");
 	if (!container) return;
@@ -1967,20 +2322,26 @@ async function loadSeasons() {
 		return;
 	}
 	container.innerHTML = "";
-	const alphaSeason = (data.seasons || []).find(season => season.seasonId === ALPHA_SEASON_ID);
-	if (!alphaSeason) {
+	
+	// Use the recommended season from server, or first available season (Alpha: single season only)
+	const activeSeason = data.seasons && data.seasons.length > 0
+		? (data.seasons.find(s => s.seasonId === data.recommendedSeasonId) || data.seasons[0])
+		: null;
+	
+	if (!activeSeason) {
 		container.innerHTML = "<div class='card'>Season unavailable.</div>";
 		return;
 	}
 
-	[alphaSeason].forEach(season => {
+	[activeSeason].forEach(season => {
 		const div = document.createElement("div");
 		const isJoined = Boolean(currentUser);
 		const isThisSeasonJoined = isJoined;
 		const ended = seasonStatusValue(season) === "ended";
-		const starPrice = ended && typeof season.finalStarPrice === "number"
+		const starPriceMicro = ended && typeof season.finalStarPrice === "number"
 			? season.finalStarPrice
 			: season.currentStarPrice;
+		const starPrice = formatMicrocoinsToCoins(starPriceMicro);
 		const remainingLabel = ended
 			? "Season ended — read-only."
 			: `${formatRemaining(season.secondsRemaining)} remaining`;
@@ -1996,15 +2357,15 @@ async function loadSeasons() {
 		div.innerHTML = `
 			<div class="season-card-header">
 				<div>
-					<div class="label">Season 1</div>
+					<div class="label">Active Season</div>
 					<div class="stat-value" data-season-remaining>${remainingLabel}</div>
 				</div>
-				${season.seasonId === data.recommendedSeasonId ? '<span class="badge accent">Recommended</span>' : ''}
+				${season.seasonId === data.recommendedSeasonId ? '<span class="badge accent">Active</span>' : ''}
 			</div>
 			<div class="season-card-grid">
 				<div class="metric">
 					<div class="label" data-season-price-label>${starPriceLabel}</div>
-					<div class="stat-value" data-season-price>${starPrice} coins</div>
+					<div class="stat-value" data-season-price>${starPrice !== null ? starPrice + ' coins' : '--'}</div>
 				</div>
 				<div class="metric">
 					<div class="label">Coins in circulation</div>
@@ -2040,92 +2401,7 @@ async function loadSeasons() {
 
 		const buyButton = div.querySelector(".buy-star-btn");
 		if (buyButton) {
-			const qtyInput = div.querySelector(".bulk-qty");
-			const quoteEl = div.querySelector(".bulk-quote");
-			const warningEl = div.querySelector(".bulk-warning");
-			const breakdownEl = div.querySelector(".bulk-breakdown");
-			let lastQuote = null;
-			const refreshQuote = async () => {
-				if (seasonStatusValue(currentSeasonSnapshot || season) === "ended") {
-					if (quoteEl) quoteEl.innerText = "Season ended.";
-					return;
-				}
-				if (!qtyInput) return;
-				const qty = Math.max(1, parseInt(qtyInput.value, 10) || 1);
-				if (quoteEl) quoteEl.innerText = "";
-				if (warningEl) warningEl.innerText = "";
-				if (breakdownEl) breakdownEl.innerText = "";
-				const res = await apiFetch("/buy-star/quote", {
-					method: "POST",
-					body: JSON.stringify({ seasonId: season.seasonId, quantity: qty })
-				});
-				const data = await res.json();
-				if (!data.ok) {
-					lastQuote = null;
-					if (quoteEl) quoteEl.innerText = data.error || "Quote failed";
-					return;
-				}
-				lastQuote = data;
-				const perStarPrice = typeof data.finalStarPrice === "number"
-					? data.finalStarPrice
-					: (data.breakdown && data.breakdown.length > 0 ? data.breakdown[data.breakdown.length - 1].finalPrice : null);
-				const totalCost = typeof data.totalCoinsSpent === "number" ? data.totalCoinsSpent : null;
-				if (quoteEl) {
-					if (totalCost != null && perStarPrice != null) {
-						quoteEl.innerText = `Total cost: ${totalCost} coins · Per-star: ${perStarPrice} coins`;
-					} else if (totalCost != null) {
-						quoteEl.innerText = `Total cost: ${totalCost} coins`;
-					} else if (perStarPrice != null) {
-						quoteEl.innerText = `Per-star: ${perStarPrice} coins`;
-					} else {
-						quoteEl.innerText = "";
-					}
-				}
-				if (warningEl) warningEl.innerText = data.warning || "";
-				if (breakdownEl) breakdownEl.innerText = "";
-			};
-			if (qtyInput) {
-				qtyInput.addEventListener("input", refreshQuote);
-				refreshQuote();
-			}
-
-			buyButton.addEventListener("click", async () => {
-				if (seasonStatusValue(currentSeasonSnapshot || season) === "ended") {
-					setToast("Season ended. Purchases are disabled.", "error");
-					return;
-				}
-				const qty = Math.max(1, parseInt(qtyInput?.value, 10) || 1);
-				await refreshQuote();
-				if (qty > 1) {
-					const totalCost = lastQuote && typeof lastQuote.totalCoinsSpent === "number" ? lastQuote.totalCoinsSpent : null;
-					const confirmMessage = totalCost != null
-						? `Confirm purchase of ${qty} stars for ${totalCost} coins?`
-						: `Confirm purchase of ${qty} stars?`;
-					if (!confirm(confirmMessage)) {
-						return;
-					}
-				}
-				const res = await apiFetch("/buy-star", {
-					method: "POST",
-					body: JSON.stringify({ seasonId: season.seasonId, quantity: qty })
-				});
-				const data = await res.json();
-				if (!data.ok) {
-					setToast(data.error || "Purchase failed", "error");
-					return;
-				}
-				playerCoins = data.playerCoins;
-				playerStars = data.playerStars;
-				coinsDiv.innerText = `Coins: ${playerCoins}`;
-				starsDiv.innerText = `Stars: ${playerStars}`;
-				statPill.innerText = `${playerCoins} coins · ${playerStars} stars`;
-				const label = data.starsPurchased && data.starsPurchased > 1
-					? `Bought ${data.starsPurchased} stars.`
-					: "Star purchased.";
-				setToast(label, "success");
-				track("buy_star", { seasonId: season.seasonId, quantity: data.starsPurchased || 1 });
-				refreshQuote();
-			});
+			attachBuyStarHandler(buyButton, div, season);
 		}
 
 		container.appendChild(div);
@@ -2594,6 +2870,10 @@ function initAdmin() {
 			updateDebugVisibility();
 		});
 	}
+	const bugRefreshBtn = document.getElementById("admin-bug-refresh");
+	if (bugRefreshBtn) {
+		bugRefreshBtn.addEventListener("click", () => loadAdminBugReports());
+	}
 	updateDebugVisibility();
 }
 
@@ -2609,6 +2889,7 @@ function refreshAdminView() {
 	if (adminShell) adminShell.style.display = "grid";
 	loadAdminPlayerSearch();
 	loadAdminAuditLog();
+	loadAdminBugReports();
 }
 
 function setIndicator(el, text, level) {
@@ -2786,6 +3067,58 @@ async function loadAdminAuditLog() {
 	}).join("");
 }
 
+async function loadAdminBugReports() {
+	if (!currentUser || !currentUser.isAdmin) return;
+	const results = document.getElementById("admin-bug-results");
+	const empty = document.getElementById("admin-bug-empty");
+	if (!results || !empty) return;
+	
+	const params = new URLSearchParams();
+	params.set("limit", "50");
+	params.set("offset", "0");
+	
+	const res = await apiFetch(`/admin/bugs?${params.toString()}`);
+	const data = await res.json();
+	if (!data.ok) {
+		empty.innerText = "Unable to load bug reports.";
+		empty.style.display = "block";
+		results.innerHTML = "";
+		return;
+	}
+	const items = data.items || [];
+	if (!items.length) {
+		empty.innerText = "No bug reports submitted yet.";
+		empty.style.display = "block";
+		results.innerHTML = "";
+		return;
+	}
+	empty.style.display = "none";
+	results.innerHTML = items.map((item) => {
+		const playerInfo = item.playerId ? `Player ${escapeHtml(item.playerId)}` : "Anonymous";
+		const when = item.createdAt ? `Created ${formatRelativeTime(item.createdAt)}` : "Created —";
+		const seasonLabel = item.seasonId ? `Season ${escapeHtml(item.seasonId)}` : "Season —";
+		const clientVer = item.clientVersion ? `v${escapeHtml(item.clientVersion)}` : "—";
+		return `
+			<div class="card">
+				<div class="row" style="justify-content:space-between;">
+					<div><strong>${escapeHtml(item.title)}</strong></div>
+					<span class="badge">${escapeHtml(item.category || "other")}</span>
+				</div>
+				<div class="label">${escapeHtml(item.description)}</div>
+				<div class="notice-meta" style="margin-top:0.5rem;">
+					<span class="muted">${seasonLabel}</span>
+					<span class="muted">·</span>
+					<span class="muted">${playerInfo}</span>
+					<span class="muted">·</span>
+					<span class="muted">${when}</span>
+					<span class="muted">·</span>
+					<span class="muted">Client ${clientVer}</span>
+				</div>
+			</div>
+		`;
+	}).join("");
+}
+
 async function loadAdminSeasons() {
 	if (!currentUser || !currentUser.isAdmin) return;
 	if (!adminSeasonList) return;
@@ -2800,6 +3133,7 @@ async function loadAdminSeasons() {
 		if (!seasons.length) {
 			adminSeasonList.innerHTML = "";
 			if (adminSeasonEmpty) adminSeasonEmpty.style.display = "block";
+			if (adminSeasonStatus) adminSeasonStatus.style.display = "none";
 			if (adminSeasonDetail) adminSeasonDetail.style.display = "none";
 			return;
 		}
@@ -2822,7 +3156,7 @@ async function loadAdminSeasons() {
 						<span class="${badgeClass}">${status}</span>
 					</div>
 					<div class="label" style="margin-top:0.5rem;">Day ${formatSeasonDay(season)}</div>
-					<div class="label">Base price ${economyData.baseStarPrice || "--"} · Effective ${season.currentStarPrice || "--"}</div>
+					<div class="label">Base price ${formatMicrocoinsToCoinsDisplay(economyData.baseStarPrice)} · Effective ${formatMicrocoinsToCoinsDisplay(season.currentStarPrice)}</div>
 					<div class="label">Market pressure ${marketPressure}</div>
 					<div class="label">Emission target ${emissionTarget}</div>
 				</div>
@@ -2830,6 +3164,31 @@ async function loadAdminSeasons() {
 		}).join("");
 
 		const first = seasons[0];
+		
+		// Populate Season Status block
+		if (first && adminSeasonStatus) {
+			const ended = seasonStatusValue(first) === "ended";
+			const secondsRemaining = first.secondsRemaining || 0;
+			const endTime = new Date(Date.now() + (secondsRemaining * 1000));
+			const endTimeFormatted = endTime.toLocaleString();
+			
+			if (adminSeasonStatusId) adminSeasonStatusId.innerText = formatSeasonDisplayNumber(first);
+			if (adminSeasonStatusValue) adminSeasonStatusValue.innerText = ended ? "ENDED" : "ACTIVE";
+			if (adminSeasonStatusDay) adminSeasonStatusDay.innerText = formatSeasonDay(first);
+			if (adminSeasonStatusEnds) adminSeasonStatusEnds.innerText = endTimeFormatted;
+			
+			adminSeasonStatus.style.display = "block";
+			
+			// Show status message if within 24 hours
+			if (adminSeasonStatusMessage) {
+				adminSeasonStatusMessage.innerText = "";
+				const hoursRemaining = secondsRemaining / 3600;
+				if (hoursRemaining > 0 && hoursRemaining <= 24) {
+					adminSeasonStatusMessage.innerHTML = "⚠ Season nearing completion<br>This Alpha season will automatically roll over.<br>No admin action required.";
+				}
+			}
+		}
+		
 		if (adminSeasonDetail && adminSeasonMetrics && first) {
 			const ended = seasonStatusValue(first) === "ended";
 			const marketPressure = formatPressureValue(economyData.marketPressure, ended);
@@ -2841,8 +3200,8 @@ async function loadAdminSeasons() {
 				<div class="admin-metric"><div class="label">Season ID</div><div class="stat-value">${first.seasonId}</div></div>
 				<div class="admin-metric"><div class="label">Day</div><div class="stat-value">${formatSeasonDay(first)}</div></div>
 				<div class="admin-metric"><div class="label">Status</div><div class="stat-value">${seasonStatusLabelAdmin(first)}</div></div>
-				<div class="admin-metric"><div class="label">Base price</div><div class="stat-value">${economyData.baseStarPrice ?? "--"}</div></div>
-				<div class="admin-metric"><div class="label">Effective price</div><div class="stat-value">${first.currentStarPrice ?? "--"}</div></div>
+				<div class="admin-metric"><div class="label">Base price</div><div class="stat-value">${formatMicrocoinsToCoinsDisplay(economyData.baseStarPrice)}</div></div>
+				<div class="admin-metric"><div class="label">Effective price</div><div class="stat-value">${formatMicrocoinsToCoinsDisplay(first.currentStarPrice)}</div></div>
 				<div class="admin-metric"><div class="label">Market pressure</div><div class="stat-value">${marketPressure}</div></div>
 				<div class="admin-metric"><div class="label">Emission state</div><div class="stat-value">${emissionTarget}</div></div>
 				<div class="admin-metric"><div class="label">Coins in circulation</div><div class="stat-value">${formatCoinsInCirculationForSeason(first)}</div></div>
@@ -2852,6 +3211,7 @@ async function loadAdminSeasons() {
 	} catch (e) {
 		if (adminSeasonList) adminSeasonList.innerHTML = "";
 		if (adminSeasonEmpty) adminSeasonEmpty.style.display = "block";
+		if (adminSeasonStatus) adminSeasonStatus.style.display = "none";
 		if (adminSeasonDetail) adminSeasonDetail.style.display = "none";
 	}
 }
@@ -3046,6 +3406,11 @@ async function route() {
 		}
 		return;
 	}
+	if (routeKey === "admin/initialize") {
+		if (!adminBootstrapInitialized) initAdminInitialize();
+		await refreshAdminInitializeView();
+		return;
+	}
 	if (routeKey === "moderator") {
 		if (!moderatorInitialized) initModerator();
 		await refreshModeratorView();
@@ -3067,6 +3432,12 @@ async function route() {
 function initHome() {
 	homeInitialized = true;
 	document.getElementById("login-btn").addEventListener("click", async () => {
+		// Guard: don't allow login before bootstrap is complete
+		if (!bootstrapGateResolved) {
+			setToast("System is still initializing. Please wait.", "error");
+			return;
+		}
+		
 		const username = document.getElementById("username").value;
 		const password = document.getElementById("password").value;
 		if (!username || !password) {
@@ -3241,6 +3612,94 @@ function initReset() {
 		status.innerText = "Password updated. You can log in now.";
 		location.hash = "#/home";
 	});
+}
+
+function setAdminClaimStatus(message, isError) {
+	if (!adminClaimStatus) return;
+	adminClaimStatus.innerText = message || "";
+	adminClaimStatus.style.color = isError ? "#fecaca" : "";
+}
+
+function updateAdminClaimRotation(secondsRemaining) {
+	if (!adminClaimRotation) return;
+	if (typeof secondsRemaining !== "number" || !isFinite(secondsRemaining)) {
+		adminClaimRotation.innerText = "";
+		return;
+	}
+	adminClaimRotation.innerText = secondsRemaining > 0
+		? `Code rotates in ${secondsRemaining}s.`
+		: "Code rotates soon.";
+}
+
+async function loadAdminBootstrapStatus() {
+	const result = await apiFetchJson("/admin/bootstrap/status", {}, 2500);
+	const data = result.data;
+	if (!data || typeof data.adminLocked !== "boolean") {
+		return null;
+	}
+	return data;
+}
+
+async function refreshAdminInitializeView() {
+	if (!adminInitCard) return;
+	adminInitCard.style.display = "none";
+	setAdminClaimStatus("Checking admin lock status...", false);
+	const status = await loadAdminBootstrapStatus();
+	if (!status) {
+		setAdminClaimStatus("Unable to load bootstrap status.", true);
+		return;
+	}
+	if (!status.adminLocked) {
+		location.hash = "#/admin";
+		return;
+	}
+	adminInitCard.style.display = "block";
+	setAdminClaimStatus("", false);
+	updateAdminClaimRotation(status.windowSecondsRemaining);
+}
+
+function initAdminInitialize() {
+	adminBootstrapInitialized = true;
+	if (adminClaimSubmit) {
+		adminClaimSubmit.addEventListener("click", async () => {
+			if (!adminClaimCode || !adminClaimPassword || !adminClaimConfirm) return;
+			const code = adminClaimCode.value.trim();
+			const newPassword = adminClaimPassword.value;
+			const confirmPassword = adminClaimConfirm.value;
+			if (!code) {
+				setAdminClaimStatus("Enter the owner claim code.", true);
+				return;
+			}
+			if (!newPassword || newPassword.length < 8) {
+				setAdminClaimStatus("Password must be at least 8 characters.", true);
+				return;
+			}
+			if (newPassword !== confirmPassword) {
+				setAdminClaimStatus("Passwords do not match.", true);
+				return;
+			}
+
+			setAdminClaimStatus("Submitting claim...", false);
+			try {
+				const res = await apiFetch("/admin/bootstrap/claim", {
+					method: "POST",
+					body: JSON.stringify({ code, newPassword })
+				});
+				const data = await res.json();
+				if (!data.ok) {
+					const message = data.error || "Claim failed.";
+					setAdminClaimStatus(message, true);
+					return;
+				}
+				setAdminClaimStatus("Admin unlocked. Redirecting to login...", false);
+				setTimeout(() => {
+					location.hash = "#/home";
+				}, 600);
+			} catch (e) {
+				setAdminClaimStatus("Claim failed (network error).", true);
+			}
+		});
+	}
 }
 
 function initModerator() {
@@ -3418,6 +3877,97 @@ route().catch((err) => {
 	setToast(`Error: ${message}`, "error");
 	updateDebugVisibility();
 });
+
+// Bug Report Handler
+function initBugReporting() {
+	const reportLink = document.getElementById("report-bug-link");
+	const bugView = document.getElementById("view-bug-report");
+	const bugTitle = document.getElementById("bug-title");
+	const bugDescription = document.getElementById("bug-description");
+	const bugCategory = document.getElementById("bug-category");
+	const bugClientVersion = document.getElementById("bug-client-version");
+	const bugSubmit = document.getElementById("bug-submit");
+	const bugStatus = document.getElementById("bug-status");
+	const bugCancel = document.getElementById("bug-cancel");
+
+	if (!reportLink || !bugView) return;
+
+	reportLink.addEventListener("click", (event) => {
+		event.preventDefault();
+		setView("view-bug-report");
+		if (bugTitle) bugTitle.value = "";
+		if (bugDescription) bugDescription.value = "";
+		if (bugCategory) bugCategory.value = "other";
+		if (bugClientVersion) bugClientVersion.value = "";
+		if (bugStatus) bugStatus.innerText = "";
+	});
+
+	if (bugCancel) {
+		bugCancel.addEventListener("click", () => {
+			location.hash = "#/home";
+		});
+	}
+
+	if (bugSubmit) {
+		bugSubmit.addEventListener("click", async () => {
+			const title = bugTitle?.value?.trim() || "";
+			const description = bugDescription?.value?.trim() || "";
+			const category = bugCategory?.value?.trim() || "other";
+			const clientVersion = bugClientVersion?.value?.trim() || "";
+
+			if (!title || !description) {
+				if (bugStatus) bugStatus.innerText = "Title and description are required.";
+				bugStatus.style.color = "#fecaca";
+				return;
+			}
+
+			if (bugStatus) bugStatus.innerText = "Submitting...";
+			bugStatus.style.color = "";
+
+			try {
+				const res = await apiFetch("/bugs/report", {
+					method: "POST",
+					body: JSON.stringify({
+						title,
+						description,
+						category,
+						clientVersion
+					})
+				});
+
+				const data = await res.json();
+				if (!data.ok) {
+					if (bugStatus) bugStatus.innerText = data.error || "Submission failed.";
+					bugStatus.style.color = "#fecaca";
+					return;
+				}
+
+				// Clear form on success
+				if (bugTitle) bugTitle.value = "";
+				if (bugDescription) bugDescription.value = "";
+				if (bugCategory) bugCategory.value = "other";
+				if (bugClientVersion) bugClientVersion.value = "";
+
+				if (bugStatus) {
+					bugStatus.innerText = "Thank you for your report. Redirecting...";
+					bugStatus.style.color = "#bbf7d0";
+				}
+
+				setTimeout(() => {
+					location.hash = "#/home";
+				}, 800);
+			} catch (e) {
+				if (bugStatus) {
+					bugStatus.innerText = "Submission failed (network error).";
+					bugStatus.style.color = "#fecaca";
+				}
+			}
+		});
+	}
+}
+
+initBugReporting();
 	</script>
 </body>
 </html>
+

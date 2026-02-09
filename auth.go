@@ -2,25 +2,19 @@ package main
 
 import (
 	"context"
-	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
-	"encoding/hex"
 	"errors"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	sessionTTL      = 7 * 24 * time.Hour
-	accessTokenTTL  = 30 * time.Minute
-	refreshTokenTTL = 60 * 24 * time.Hour
+	sessionTTL = 7 * 24 * time.Hour
 )
 
 type Account struct {
@@ -39,15 +33,22 @@ type Account struct {
 	MustChangePassword bool
 }
 
-func createAccount(db *sql.DB, username string, password string, displayName string, email string) (*Account, error) {
-	username = strings.TrimSpace(strings.ToLower(username))
+//
+// =======================
+// ACCOUNT CREATION
+// =======================
+//
+
+func createAccount(db *sql.DB, username, password, displayName, email string) (*Account, error) {
+	username = strings.ToLower(strings.TrimSpace(username))
 	if len(username) < 3 || len(username) > 32 {
 		return nil, errors.New("INVALID_USERNAME")
 	}
 	if len(password) < 8 || len(password) > 128 {
 		return nil, errors.New("INVALID_PASSWORD")
 	}
-	normalizedEmail, err := normalizeEmail(email)
+
+	email, err := normalizeEmail(email)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +56,7 @@ func createAccount(db *sql.DB, username string, password string, displayName str
 		displayName = username
 	}
 
-	hash, err := hashPassword(password)
+	passwordHash, err := hashPassword(password)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +70,28 @@ func createAccount(db *sql.DB, username string, password string, displayName str
 		return nil, err
 	}
 
-	_, err = db.Exec(`
+	tx, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(`
+		INSERT INTO players (
+			player_id,
+			coins,
+			stars,
+			created_at,
+			last_active_at,
+			last_coin_grant_at
+		)
+		VALUES ($1, 0, 0, NOW(), NOW(), NOW())
+	`, playerID)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = tx.Exec(`
 		INSERT INTO accounts (
 			account_id,
 			username,
@@ -82,8 +104,12 @@ func createAccount(db *sql.DB, username string, password string, displayName str
 			last_login_at
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, 'user', NOW(), NOW())
-	`, accountID, username, hash, displayName, playerID, normalizedEmail)
+	`, accountID, username, passwordHash, displayName, playerID, email)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
@@ -92,17 +118,22 @@ func createAccount(db *sql.DB, username string, password string, displayName str
 		Username:    username,
 		DisplayName: displayName,
 		PlayerID:    playerID,
-		Email:       normalizedEmail,
+		Email:       email,
 		Role:        "user",
 	}, nil
 }
 
-func authenticate(db *sql.DB, username string, password string) (*Account, error) {
-	username = strings.TrimSpace(strings.ToLower(username))
+//
+// =======================
+// AUTHENTICATION
+// =======================
+//
+
+func authenticate(db *sql.DB, username, password string) (*Account, error) {
+	username = strings.ToLower(strings.TrimSpace(username))
 
 	var account Account
-	var hash string
-	var adminKey sql.NullString
+	var passwordHash string
 	var role string
 	var mustChangePassword bool
 	var email sql.NullString
@@ -111,20 +142,52 @@ func authenticate(db *sql.DB, username string, password string) (*Account, error
 	var location sql.NullString
 	var website sql.NullString
 	var avatarURL sql.NullString
-	if err := db.QueryRow(`
-		SELECT account_id, username, display_name, player_id, password_hash, admin_key_hash, role, must_change_password, email,
-			bio, pronouns, location, website, avatar_url
+	var adminKey sql.NullString
+
+	err := db.QueryRow(`
+		SELECT account_id, username, display_name, player_id,
+		       password_hash, role, must_change_password,
+		       email, bio, pronouns, location, website, avatar_url, admin_key_hash
 		FROM accounts
 		WHERE username = $1
-	`, username).Scan(&account.AccountID, &account.Username, &account.DisplayName, &account.PlayerID, &hash, &adminKey, &role, &mustChangePassword, &email, &bio, &pronouns, &location, &website, &avatarURL); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.New("INVALID_CREDENTIALS")
-		}
+	`, username).Scan(
+		&account.AccountID,
+		&account.Username,
+		&account.DisplayName,
+		&account.PlayerID,
+		&passwordHash,
+		&role,
+		&mustChangePassword,
+		&email,
+		&bio,
+		&pronouns,
+		&location,
+		&website,
+		&avatarURL,
+		&adminKey,
+	)
+	if err == sql.ErrNoRows {
+		return nil, errors.New("INVALID_CREDENTIALS")
+	}
+	if err != nil {
 		return nil, err
 	}
+
 	if isFrozenRole(role) {
 		return nil, errors.New("ACCOUNT_FROZEN")
 	}
+
+	if !verifyPassword(passwordHash, password) {
+		return nil, errors.New("INVALID_CREDENTIALS")
+	}
+	if normalizeRole(role) == "admin" && mustChangePassword {
+		return nil, errors.New("ADMIN_BOOTSTRAP_REQUIRED")
+	}
+
+	_, _ = db.Exec(`UPDATE accounts SET last_login_at = NOW() WHERE account_id = $1`, account.AccountID)
+
+	account.Role = normalizeRole(role)
+	account.MustChangePassword = mustChangePassword
 	if email.Valid {
 		account.Email = email.String
 	}
@@ -146,21 +209,15 @@ func authenticate(db *sql.DB, username string, password string) (*Account, error
 	if adminKey.Valid {
 		account.AdminKeyHash = adminKey.String
 	}
-	account.Role = normalizeRole(role)
-	account.MustChangePassword = mustChangePassword
-
-	if !verifyPassword(hash, password) {
-		return nil, errors.New("INVALID_CREDENTIALS")
-	}
-
-	_, _ = db.Exec(`
-		UPDATE accounts
-		SET last_login_at = NOW()
-		WHERE account_id = $1
-	`, account.AccountID)
 
 	return &account, nil
 }
+
+//
+// =======================
+// SESSION MANAGEMENT
+// =======================
+//
 
 func createSession(db *sql.DB, accountID string) (string, time.Time, error) {
 	sessionID, err := randomToken(24)
@@ -181,132 +238,59 @@ func createSession(db *sql.DB, accountID string) (string, time.Time, error) {
 }
 
 func clearSession(db *sql.DB, sessionID string) {
-	_, _ = db.Exec(`
-		DELETE FROM sessions
-		WHERE session_id = $1
-	`, sessionID)
+	_, _ = db.Exec(`DELETE FROM sessions WHERE session_id = $1`, sessionID)
 }
 
 func getSessionAccount(db *sql.DB, r *http.Request) (*Account, string, error) {
-	if auth := r.Header.Get("Authorization"); strings.HasPrefix(strings.ToLower(auth), "bearer ") {
-		token := strings.TrimSpace(auth[len("bearer "):])
-		if token != "" {
-			accountID, err := verifyAccessToken(token)
-			if err != nil {
-				return nil, "", err
-			}
-			account, err := loadAccountByID(db, accountID)
-			return account, "", err
-		}
-	}
-
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		return nil, "", err
+		return nil, "", errors.New("NOT_AUTHENTICATED")
 	}
 
 	var account Account
 	var expiresAt time.Time
-	var adminKey sql.NullString
 	var role string
 	var mustChangePassword bool
-	var email sql.NullString
-	var bio sql.NullString
-	var pronouns sql.NullString
-	var location sql.NullString
-	var website sql.NullString
-	var avatarURL sql.NullString
-	if err := db.QueryRow(`
-		SELECT a.account_id, a.username, a.display_name, a.player_id, a.admin_key_hash, a.role, a.must_change_password, a.email,
-			a.bio, a.pronouns, a.location, a.website, a.avatar_url, s.expires_at
+
+	err = db.QueryRow(`
+		SELECT a.account_id, a.username, a.display_name, a.player_id,
+		       a.role, a.must_change_password, s.expires_at
 		FROM sessions s
 		JOIN accounts a ON a.account_id = s.account_id
 		WHERE s.session_id = $1
-	`, cookie.Value).Scan(&account.AccountID, &account.Username, &account.DisplayName, &account.PlayerID, &adminKey, &role, &mustChangePassword, &email, &bio, &pronouns, &location, &website, &avatarURL, &expiresAt); err != nil {
-		return nil, "", err
+	`, cookie.Value).Scan(
+		&account.AccountID,
+		&account.Username,
+		&account.DisplayName,
+		&account.PlayerID,
+		&role,
+		&mustChangePassword,
+		&expiresAt,
+	)
+	if err != nil {
+		return nil, "", errors.New("NOT_AUTHENTICATED")
 	}
-	if isFrozenRole(role) {
-		return nil, "", errors.New("ACCOUNT_FROZEN")
-	}
-	if email.Valid {
-		account.Email = email.String
-	}
-	if bio.Valid {
-		account.Bio = bio.String
-	}
-	if pronouns.Valid {
-		account.Pronouns = pronouns.String
-	}
-	if location.Valid {
-		account.Location = location.String
-	}
-	if website.Valid {
-		account.Website = website.String
-	}
-	if avatarURL.Valid {
-		account.AvatarURL = avatarURL.String
-	}
-	if adminKey.Valid {
-		account.AdminKeyHash = adminKey.String
-	}
-	account.Role = normalizeRole(role)
-	account.MustChangePassword = mustChangePassword
 
 	if time.Now().UTC().After(expiresAt) {
 		clearSession(db, cookie.Value)
 		return nil, "", errors.New("SESSION_EXPIRED")
 	}
 
+	if isFrozenRole(role) {
+		return nil, "", errors.New("ACCOUNT_FROZEN")
+	}
+
+	account.Role = normalizeRole(role)
+	account.MustChangePassword = mustChangePassword
+
 	return &account, cookie.Value, nil
 }
 
-func loadAccountByID(db *sql.DB, accountID string) (*Account, error) {
-	var account Account
-	var adminKey sql.NullString
-	var role string
-	var mustChangePassword bool
-	var email sql.NullString
-	var bio sql.NullString
-	var pronouns sql.NullString
-	var location sql.NullString
-	var website sql.NullString
-	var avatarURL sql.NullString
-	if err := db.QueryRow(`
-		SELECT account_id, username, display_name, player_id, admin_key_hash, role, must_change_password, email,
-			bio, pronouns, location, website, avatar_url
-		FROM accounts
-		WHERE account_id = $1
-	`, accountID).Scan(&account.AccountID, &account.Username, &account.DisplayName, &account.PlayerID, &adminKey, &role, &mustChangePassword, &email, &bio, &pronouns, &location, &website, &avatarURL); err != nil {
-		return nil, err
-	}
-	if isFrozenRole(role) {
-		return nil, errors.New("ACCOUNT_FROZEN")
-	}
-	if email.Valid {
-		account.Email = email.String
-	}
-	if bio.Valid {
-		account.Bio = bio.String
-	}
-	if pronouns.Valid {
-		account.Pronouns = pronouns.String
-	}
-	if location.Valid {
-		account.Location = location.String
-	}
-	if website.Valid {
-		account.Website = website.String
-	}
-	if avatarURL.Valid {
-		account.AvatarURL = avatarURL.String
-	}
-	if adminKey.Valid {
-		account.AdminKeyHash = adminKey.String
-	}
-	account.Role = normalizeRole(role)
-	account.MustChangePassword = mustChangePassword
-	return &account, nil
-}
+//
+// =======================
+// COOKIE HELPERS
+// =======================
+//
 
 func writeSessionCookie(w http.ResponseWriter, sessionID string, expiresAt time.Time) {
 	http.SetCookie(w, &http.Cookie{
@@ -324,173 +308,24 @@ func clearSessionCookie(w http.ResponseWriter) {
 		Name:     "session_id",
 		Value:    "",
 		Path:     "/",
-		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
 
-func accessTokenSecret() []byte {
-	secret := strings.TrimSpace(os.Getenv("ACCESS_TOKEN_SECRET"))
-	if secret == "" {
-		secret = "dev-insecure-access-token-secret"
-	}
-	return []byte(secret)
-}
-
-func issueAccessToken(accountID string, ttl time.Duration) (string, time.Time, error) {
-	if ttl <= 0 {
-		ttl = accessTokenTTL
-	}
-	expiresAt := time.Now().UTC().Add(ttl)
-	nonce, err := randomToken(6)
-	if err != nil {
-		return "", time.Time{}, err
-	}
-	payload := accountID + "|" + strconv.FormatInt(expiresAt.Unix(), 10) + "|" + nonce
-	encoded := base64.RawURLEncoding.EncodeToString([]byte(payload))
-
-	mac := hmac.New(sha256.New, accessTokenSecret())
-	mac.Write([]byte(encoded))
-	sig := hex.EncodeToString(mac.Sum(nil))
-
-	return encoded + "." + sig, expiresAt, nil
-}
-
-func verifyAccessToken(token string) (string, error) {
-	parts := strings.Split(token, ".")
-	if len(parts) != 2 {
-		return "", errors.New("INVALID_TOKEN")
-	}
-	encoded := parts[0]
-	sig := parts[1]
-
-	mac := hmac.New(sha256.New, accessTokenSecret())
-	mac.Write([]byte(encoded))
-	expected := hex.EncodeToString(mac.Sum(nil))
-	if subtle.ConstantTimeCompare([]byte(sig), []byte(expected)) != 1 {
-		return "", errors.New("INVALID_TOKEN")
-	}
-
-	payloadBytes, err := base64.RawURLEncoding.DecodeString(encoded)
-	if err != nil {
-		return "", errors.New("INVALID_TOKEN")
-	}
-	partsPayload := strings.Split(string(payloadBytes), "|")
-	if len(partsPayload) < 2 {
-		return "", errors.New("INVALID_TOKEN")
-	}
-	accountID := partsPayload[0]
-	exp, err := strconv.ParseInt(partsPayload[1], 10, 64)
-	if err != nil {
-		return "", errors.New("INVALID_TOKEN")
-	}
-	if time.Now().UTC().After(time.Unix(exp, 0)) {
-		return "", errors.New("TOKEN_EXPIRED")
-	}
-	return accountID, nil
-}
-
-type sqlExecer interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-}
-
-func createRefreshToken(db sqlExecer, accountID string, purpose string, userAgent string, ip string) (string, time.Time, error) {
-	if purpose == "" {
-		purpose = "auth"
-	}
-	raw, err := randomToken(32)
-	if err != nil {
-		return "", time.Time{}, err
-	}
-	hash := hashToken(raw)
-	issuedAt := time.Now().UTC()
-	expiresAt := issuedAt.Add(refreshTokenTTL)
-	_, err = db.Exec(`
-		INSERT INTO refresh_tokens (
-			account_id,
-			token_hash,
-			issued_at,
-			expires_at,
-			user_agent,
-			ip,
-			purpose
-		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-	`, accountID, hash, issuedAt, expiresAt, userAgent, ip, purpose)
-	if err != nil {
-		return "", time.Time{}, err
-	}
-	return raw, expiresAt, nil
-}
-
-type refreshTokenRecord struct {
-	AccountID string
-	ExpiresAt time.Time
-	RevokedAt sql.NullTime
-}
-
-func rotateRefreshToken(db *sql.DB, rawToken string, userAgent string, ip string) (string, time.Time, string, time.Time, error) {
-	hash := hashToken(rawToken)
-	var record refreshTokenRecord
-
-	tx, err := db.Begin()
-	if err != nil {
-		return "", time.Time{}, "", time.Time{}, err
-	}
-	defer tx.Rollback()
-
-	if err := tx.QueryRow(`
-		SELECT account_id, expires_at, revoked_at
-		FROM refresh_tokens
-		WHERE token_hash = $1
-		FOR UPDATE
-	`, hash).Scan(&record.AccountID, &record.ExpiresAt, &record.RevokedAt); err != nil {
-		if err == sql.ErrNoRows {
-			return "", time.Time{}, "", time.Time{}, errors.New("INVALID_REFRESH_TOKEN")
-		}
-		return "", time.Time{}, "", time.Time{}, err
-	}
-	if record.RevokedAt.Valid {
-		return "", time.Time{}, "", time.Time{}, errors.New("REFRESH_TOKEN_REVOKED")
-	}
-	if time.Now().UTC().After(record.ExpiresAt) {
-		return "", time.Time{}, "", time.Time{}, errors.New("REFRESH_TOKEN_EXPIRED")
-	}
-
-	_, err = tx.Exec(`
-		UPDATE refresh_tokens
-		SET revoked_at = NOW()
-		WHERE token_hash = $1
-	`, hash)
-	if err != nil {
-		return "", time.Time{}, "", time.Time{}, err
-	}
-
-	newRefresh, newRefreshExpires, err := createRefreshToken(tx, record.AccountID, "auth", userAgent, ip)
-	if err != nil {
-		return "", time.Time{}, "", time.Time{}, err
-	}
-
-	accessToken, accessExpires, err := issueAccessToken(record.AccountID, accessTokenTTL)
-	if err != nil {
-		return "", time.Time{}, "", time.Time{}, err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return "", time.Time{}, "", time.Time{}, err
-	}
-
-	return accessToken, accessExpires, newRefresh, newRefreshExpires, nil
-}
+//
+// =======================
+// UTILITIES
+// =======================
+//
 
 func randomToken(bytesLen int) (string, error) {
-	buf := make([]byte, bytesLen)
-	if _, err := rand.Read(buf); err != nil {
+	b := make([]byte, bytesLen)
+	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
-	return base64.RawURLEncoding.EncodeToString(buf), nil
+	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
 func hashPassword(password string) (string, error) {
@@ -499,30 +334,25 @@ func hashPassword(password string) (string, error) {
 		return "", err
 	}
 	sum := sha256.Sum256([]byte(salt + password))
-	hash := base64.RawURLEncoding.EncodeToString(sum[:])
-	return salt + ":" + hash, nil
+	return salt + ":" + base64.RawURLEncoding.EncodeToString(sum[:]), nil
 }
 
-func verifyPassword(stored string, password string) bool {
+func verifyPassword(stored, password string) bool {
 	parts := strings.Split(stored, ":")
 	if len(parts) != 2 {
 		return false
 	}
 	salt := parts[0]
-	encoded := parts[1]
-
+	expected := parts[1]
 	sum := sha256.Sum256([]byte(salt + password))
 	computed := base64.RawURLEncoding.EncodeToString(sum[:])
-	return subtle.ConstantTimeCompare([]byte(computed), []byte(encoded)) == 1
+	return subtle.ConstantTimeCompare([]byte(computed), []byte(expected)) == 1
 }
 
 func normalizeEmail(email string) (string, error) {
-	email = strings.TrimSpace(strings.ToLower(email))
+	email = strings.ToLower(strings.TrimSpace(email))
 	if email == "" {
 		return "", nil
-	}
-	if len(email) < 5 || len(email) > 254 {
-		return "", errors.New("INVALID_EMAIL")
 	}
 	if !strings.Contains(email, "@") {
 		return "", errors.New("INVALID_EMAIL")
@@ -530,132 +360,13 @@ func normalizeEmail(email string) (string, error) {
 	return email, nil
 }
 
-func hashToken(token string) string {
-	sum := sha256.Sum256([]byte(token))
-	return base64.RawURLEncoding.EncodeToString(sum[:])
-}
-
-func createPasswordResetToken(db *sql.DB, accountID string) (string, error) {
-	resetID, err := randomToken(16)
-	if err != nil {
-		return "", err
-	}
-	token, err := randomToken(32)
-	if err != nil {
-		return "", err
-	}
-	expiresAt := time.Now().UTC().Add(1 * time.Hour)
-	_, err = db.Exec(`
-		INSERT INTO password_resets (
-			reset_id,
-			account_id,
-			token_hash,
-			expires_at,
-			created_at
-		)
-		VALUES ($1, $2, $3, $4, NOW())
-	`, resetID, accountID, hashToken(token), expiresAt)
-	if err != nil {
-		return "", err
-	}
-	return token, nil
-}
-
-func resetPasswordWithToken(db *sql.DB, token string, newPassword string) error {
-	if len(newPassword) < 8 || len(newPassword) > 128 {
-		return errors.New("INVALID_PASSWORD")
-	}
-	if token == "" {
-		return errors.New("INVALID_TOKEN")
-	}
-	hash := hashToken(token)
-	var accountID string
-	var expiresAt time.Time
-	var usedAt sql.NullTime
-	var role string
-	var mustChangePassword bool
-	err := db.QueryRow(`
-		SELECT pr.account_id, pr.expires_at, pr.used_at, a.role, a.must_change_password
-		FROM password_resets pr
-		JOIN accounts a ON a.account_id = pr.account_id
-		WHERE pr.token_hash = $1
-		ORDER BY pr.created_at DESC
-		LIMIT 1
-	`, hash).Scan(&accountID, &expiresAt, &usedAt, &role, &mustChangePassword)
-	if err == sql.ErrNoRows {
-		return errors.New("INVALID_TOKEN")
-	}
-	if err != nil {
-		return err
-	}
-	if normalizeRole(role) == "admin" && mustChangePassword {
-		return errors.New("ADMIN_BOOTSTRAP_REQUIRED")
-	}
-	if usedAt.Valid {
-		return errors.New("TOKEN_USED")
-	}
-	if time.Now().UTC().After(expiresAt) {
-		return errors.New("TOKEN_EXPIRED")
-	}
-	passwordHash, err := hashPassword(newPassword)
-	if err != nil {
-		return err
-	}
-	_, err = db.Exec(`
-		UPDATE accounts
-		SET password_hash = $2
-		WHERE account_id = $1
-	`, accountID, passwordHash)
-	if err != nil {
-		return err
-	}
-	_, _ = db.Exec(`
-		UPDATE password_resets
-		SET used_at = NOW()
-		WHERE token_hash = $1
-	`, hash)
-	return nil
-}
-
-func lookupAccountForReset(db *sql.DB, identifier string) (*Account, error) {
-	identifier = strings.TrimSpace(strings.ToLower(identifier))
-	if identifier == "" {
-		return nil, errors.New("INVALID_REQUEST")
-	}
-	var account Account
-	var email sql.NullString
-	row := db.QueryRow(`
-		SELECT account_id, username, display_name, player_id, email
-		FROM accounts
-		WHERE username = $1 OR email = $1
-		LIMIT 1
-	`, identifier)
-	if err := row.Scan(&account.AccountID, &account.Username, &account.DisplayName, &account.PlayerID, &email); err != nil {
-		return nil, err
-	}
-	if email.Valid {
-		account.Email = email.String
-	}
-	return &account, nil
-}
-
-func generateAdminKey() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
-}
-
 func normalizeRole(role string) string {
 	role = strings.ToLower(strings.TrimSpace(role))
 	role = strings.TrimPrefix(role, "frozen:")
-	switch role {
-	case "admin", "moderator":
+	if role == "admin" || role == "moderator" {
 		return role
-	default:
-		return "user"
 	}
+	return "user"
 }
 
 func isFrozenRole(role string) bool {
@@ -663,52 +374,12 @@ func isFrozenRole(role string) bool {
 	return role == "frozen" || strings.HasPrefix(role, "frozen:")
 }
 
-func baseRoleFromRaw(role string) string {
-	role = strings.ToLower(strings.TrimSpace(role))
-	role = strings.TrimPrefix(role, "frozen:")
-	if role == "frozen" {
-		return "user"
-	}
-	return normalizeRole(role)
-}
-
 func AdminExists(ctx context.Context, db *sql.DB) bool {
-	if db == nil {
-		return true
-	}
 	var exists bool
-	if err := db.QueryRowContext(ctx, `
+	_ = db.QueryRowContext(ctx, `
 		SELECT EXISTS (
-			SELECT 1
-			FROM accounts
-			WHERE role = 'admin' OR role = 'frozen:admin'
-			LIMIT 1
+			SELECT 1 FROM accounts WHERE role = 'admin' OR role = 'frozen:admin'
 		)
-	`).Scan(&exists); err != nil {
-		return true
-	}
+	`).Scan(&exists)
 	return exists
-}
-
-func setAccountRoleByUsername(db *sql.DB, username string, role string) error {
-	role = normalizeRole(role)
-	_, err := db.Exec(`
-		UPDATE accounts
-		SET role = $2
-		WHERE username = $1
-	`, strings.ToLower(username), role)
-	return err
-}
-
-func setAdminKeyByUsername(db *sql.DB, username string, key string) error {
-	hash, err := hashPassword(key)
-	if err != nil {
-		return err
-	}
-	_, err = db.Exec(`
-		UPDATE accounts
-		SET admin_key_hash = $2
-		WHERE username = $1
-	`, strings.ToLower(username), hash)
-	return err
 }

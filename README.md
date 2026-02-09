@@ -12,6 +12,68 @@ The game runs in fixed-length seasons and resets regularly, while preserving lon
 
 ---
 
+## Game Bible — Structure and Authority
+
+This repository contains a **Game Bible**: the complete, authoritative definition of the game.
+
+The Game Bible consists of:
+
+- `README.md` (this file) — Core overview and governance
+- `README/*.md` — System-specific definitions and contracts
+- `TODO.md` — Canonical execution plan
+- `.github/instructions/AI_CONSTITUTION.txt` — Execution boundaries and constraints
+
+Game Bible requirements:
+
+- Total files ≤ 24 (one slot reserved for inspection/debug)
+- Allowed formats: `.md`, `.txt` only
+- Must be as small as possible while remaining complete
+- All terminology must be defined within the Bible
+- Humans and AI must be able to interpret all terminology without external context
+
+The Game Bible defines:
+
+- Game systems
+- Economy rules
+- Prompting constraints
+- Implementation boundaries
+
+The Game Bible is the single source of truth. Code must match canon; canon does not match code.
+
+---
+
+## UI vs Economy Philosophy — The Curtain and the Brain
+
+**UI is the curtain. Economy is the brain.**
+
+Players interact with a beautiful, simple surface. Underneath is a complex, self-regulating economy.
+
+Players may sense hidden systems but never fully see them.
+
+This philosophy guides:
+
+- **UI decisions**: Simple, elegant, and accessible
+- **Telemetry exposure**: Only information that influences player decisions
+- **Player perception**: Mystery, tension, and strategic depth without overwhelming complexity
+
+Only telemetry that influences player decisions may be shown. Examples:
+
+- Total Coins in Circulation (sum of all player wallet balances, NOT the unreleased Coin Pool)
+- Market pressure trends
+- Time remaining
+- Star price graphs
+
+Telemetry must NOT expose:
+
+- Exact internal formulas
+- Anti-cheat thresholds
+- Exploitable signals
+- Admin control granularity
+
+The goal: players feel the weight of the economy without needing to understand its machinery.
+
+---
+
 ## Alpha Scope (Current Build)
 
 Alpha is focused on the first playable economy loop:
@@ -27,7 +89,135 @@ Alpha is focused on the first playable economy loop:
 
 ---
 
-## Core Design Principles
+## Alpha UI Copy (Player-Facing)
+
+About this game (Alpha):
+
+Earn Coins, buy Stars, climb the leaderboard. Coins enter the world as people play, and Stars become harder to buy as the season moves forward. The pressure is shared: when everyone earns and spends, prices rise. Scarcity builds toward the end, and every decision matters.
+
+What is missing (intentional in Alpha):
+
+- Trading
+- Multiple seasons
+- Messaging and forums
+- Cosmetics and profiles
+- Advanced admin tools
+- Daily tasks, comeback rewards, passive drip
+
+These omissions are temporary and intentional so the core economy can be tested without distractions.
+
+What is coming (post-Alpha / Beta):
+
+We expect to explore trading, messaging and forums, persistent cosmetics and history, multiple seasons, and expanded anti-abuse systems. No timelines or guarantees. Alpha may reset and change.
+
+---
+
+## Protected Systems & Constitutional Governance
+
+This repository uses explicit constitutional rules to protect critical systems from incidental or unauthorized changes.
+
+### Protected & Immutable By Default
+
+The following systems must **not** be modified unless explicitly authorized:
+
+- **Admin bootstrap & server startup initialization**: All bootstrap token generation, validation, and sealed-bootstrap failure behavior
+- **Startup ordering & initialization sequences**: The order and dependencies of server initialization
+
+Modifications to these systems are only permitted when:
+- Explicitly named as the primary logical unit in the user authorization
+- Isolated from all other changes
+- Re-verified for startup safety after implementation
+- Confirmed to preserve all bootstrap invariants
+
+### Protected But Mutable Systems
+
+The following systems **may** be modified, but only when explicitly authorized:
+
+- **Time / Season Clock**: Day counter, season length, time milestones, seasonal transitions
+- **Economy Authority Core**: Coin emission rates, star pricing formulas, faucet rates, market pressure calibration
+
+Modifications to mutable protected systems follow strict rules:
+- Must be explicitly named as the primary goal in the authorization prompt
+- Must be isolated (only one mutable system per logical unit)
+- Incidental, opportunistic, or cross-system edits to these systems are forbidden
+- Admin bootstrap invariants must be explicitly confirmed as unaffected
+- Must be complete; partial implementations are not permitted
+
+### Governance Enforcement
+
+All code-changing responses must verify: **"STARTUP SAFETY CHECK: Admin bootstrap invariants confirmed unaffected"**
+
+If this cannot be truthfully asserted, implementation must stop immediately.
+
+---
+
+## Safe Patching & Schema Evolution
+
+Schema changes MUST be additive only during active development.
+
+Allowed:
+
+- New tables
+- New columns (nullable or defaulted)
+- New indexes
+
+Forbidden unless explicitly authorized:
+
+- Dropping columns or tables
+- Renaming columns
+- Reinterpreting existing data
+- Retroactive recomputation
+
+Old code must be able to run against new schema.  
+New code may assume new schema exists.
+
+---
+
+## Admin Bootstrap vs Schema Responsibilities
+
+Schema application occurs before runtime. Admin bootstrap:
+
+- Does NOT create tables
+- Does NOT migrate schema
+- Does NOT alter schema
+
+Bootstrap assumes schema correctness and only enforces safety invariants.
+
+Bootstrap must never depend on schema evolution logic.
+
+---
+
+## Codex Governance Rules (Non-Negotiable)
+
+Every Codex change must:
+
+- Declare STEP INTENT
+- List FILES AFFECTED explicitly
+- Pass STARTUP SAFETY CHECK
+- End with STOP & COMMIT POINT
+
+Additional constraints:
+
+- One logical unit per prompt
+- No opportunistic edits
+- No cross-system changes
+- No "while here" work
+
+Codex is an execution tool, not a design authority.
+
+---
+
+## Multi-Season Telemetry & Historical Integrity
+
+- All telemetry is season-scoped
+- Past seasons are immutable
+- Admin control changes are first-class telemetry
+- Telemetry from past seasons may inform future seasons
+- Past data is never rewritten or reinterpreted
+
+The system evolves forward by learning, never by editing history.
+
+---
 
 The game must be simple, transparent, and fair  
 All economy logic must be enforced server-side  
@@ -62,6 +252,11 @@ At season end (Alpha):
 - Clients display a single terminal state: **Ended** (no “Ending” state exposed).
 - Live economy rates (emission, inflation/pressure cadence) are hidden; UI shows a frozen/final snapshot marker instead.
 - Ended seasons expose final snapshot fields only (final star price, final coins in circulation, ended at).
+
+Alpha auto-advance:
+
+- When the active Alpha season ends by time, the server finalizes snapshots and immediately starts a new Alpha season.
+- Gameplay resumes automatically without admin intervention; the ended season remains immutable.
 
 ---
 
@@ -392,37 +587,18 @@ See the admin governance sections below. Admin creation is not a gameplay featur
 ## Admin Bootstrap (Alpha)
 
 - On first startup after a fresh DB reset, the server auto‑creates exactly one admin account (username `alpha-admin`).
+- The admin account is created locked (`must_change_password = true`).
+- The owner sets `OWNER_CLAIM_SECRET` once as a Fly secret (not a login password).
+- The owner visits `/admin/initialize` and enters the rotating owner claim code to set the first admin password.
+- All admin endpoints are blocked until the password is changed.
 - Bootstrap is sealed in the database and cannot repeat unless the DB is wiped.
-- If bootstrap was sealed but no admin exists, the server refuses to start (safety invariant).
+- If bootstrap is sealed but no admin exists, the server refuses to start (safety invariant).
 
-### Bootstrap Password Gate (DB‑only, Alpha)
+Notes:
 
-- The bootstrap admin is created with a random password and `must_change_password = true`.
-- All admin endpoints are blocked until this password is changed.
-- The initial password change is gated by a DB‑only key stored in `admin_password_gates`.
-- The gate key is single‑use and invalidated after success.
-
-**Ops workflow (psql / Fly console):**
-
-1) Read the gate key from the database:
-
-SELECT gate_key
-FROM admin_password_gates
-WHERE used_at IS NULL
-LIMIT 1;
-
-2) Set the initial admin password via API (no login required):
-
-POST /auth/bootstrap-password
-{
-	"username": "alpha-admin",
-	"newPassword": "NEW_STRONG_PASSWORD",
-	"gateKey": "GATE_KEY_FROM_DB"
-}
-
-### Legacy Manual Bootstrap (Alpha‑only fallback)
-
-`/admin/set-key` is a one‑time bootstrap endpoint intended for manual ops. It is permanently disabled once any admin exists and cannot repeat without a DB reset. This path is not used when auto‑bootstrap succeeds.
+- The claim code rotates automatically (short time windows) and is derived from `OWNER_CLAIM_SECRET`.
+- The claim code is never stored and is not logged.
+- After the claim, future admin password changes use the standard reset flow.
 
 ## Admin Management During Alpha
 
@@ -474,8 +650,6 @@ Alpha-only season extension (telemetry gaps):
 Health checks verify:
 
 - Database connectivity
-- Active season presence
-- Tick loop liveness
 
 ---
 

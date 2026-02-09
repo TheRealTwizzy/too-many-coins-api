@@ -20,6 +20,7 @@ type liveSeasonSnapshot struct {
 	CoinsInCirculation      *int64   `json:"coinsInCirculation,omitempty"`
 	CoinEmissionPerMinute   *float64 `json:"coinEmissionPerMinute,omitempty"`
 	CurrentStarPrice        *int     `json:"currentStarPrice,omitempty"`
+	PriceTick               *int64   `json:"priceTick,omitempty"`
 	NextEmissionInSeconds   *int64   `json:"nextEmissionInSeconds,omitempty"`
 	MarketPressure          *float64 `json:"marketPressure,omitempty"`
 	FinalStarPrice          *int     `json:"finalStarPrice,omitempty"`
@@ -66,6 +67,7 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 	var marketPressure *float64
 	var nextEmission *int64
 	var currentPrice *int
+	var currentPriceTick *int64
 	var liveCoins *int64
 	var finalPrice *int
 	var finalCoins *int64
@@ -77,8 +79,15 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 		marketPressure = &pressure
 		next := nextEmissionSeconds(now)
 		nextEmission = &next
-		price := ComputeStarPrice(coins, remaining)
+		// Season-authoritative star price (shared by all players)
+		price := economy.CurrentStarPrice()
+		if price == 0 {
+			// Fallback: compute if not yet set by tick
+			price = ComputeSeasonAuthorityStarPrice(coins, remaining)
+		}
 		currentPrice = &price
+		priceTick := economy.CurrentPriceTick()
+		currentPriceTick = &priceTick
 		liveCoins = &coins
 	} else {
 		var snapshotEnded time.Time
@@ -100,9 +109,10 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 		} else {
 			_ = snapshotDistributed
 		}
+		// Compute final price using ONLY season-level inputs (no active player metrics)
 		params := economy.Calibration()
 		pressure := economy.MarketPressure()
-		final := ComputeStarPriceRawWithActive(params, int(snapshotStars), snapshotCoins, activeCoins, economy.ActivePlayers(), 0, pressure)
+		final := ComputeStarPriceRaw(params, int(snapshotStars), snapshotCoins, 0, pressure)
 		finalPrice = &final
 		finalCoins = &snapshotCoins
 		endedValue := snapshotEnded.UTC().Format(time.RFC3339)
@@ -123,6 +133,7 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 			CoinsInCirculation:      liveCoins,
 			CoinEmissionPerMinute:   emission,
 			CurrentStarPrice:        currentPrice,
+			PriceTick:               currentPriceTick,
 			NextEmissionInSeconds:   nextEmission,
 			MarketPressure:          marketPressure,
 			FinalStarPrice:          finalPrice,
@@ -133,10 +144,7 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 
 	if account, _, err := getSessionAccount(db, r); err == nil && account != nil {
 		snapshot.Authenticated = true
-		if snapshot.Season.CurrentStarPrice != nil {
-			price := computePlayerStarPrice(db, account.PlayerID, coins, remaining)
-			snapshot.Season.CurrentStarPrice = &price
-		}
+		// Season-authoritative price is shared by all players (no per-player adjustment)
 		if player, err := LoadPlayer(db, account.PlayerID); err == nil && player != nil {
 			snapshot.PlayerCoins = player.Coins
 			snapshot.PlayerStars = player.Stars

@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -33,9 +34,10 @@ func mustSubFS(fsys fs.FS, dir string) fs.FS {
    ====================== */
 
 type BuyStarRequest struct {
-	SeasonID string `json:"seasonId"`
-	PlayerID string `json:"playerId"`
-	Quantity int    `json:"quantity,omitempty"`
+	SeasonID  string `json:"seasonId"`
+	PlayerID  string `json:"playerId"`
+	Quantity  int    `json:"quantity,omitempty"`
+	PriceTick *int64 `json:"priceTick"`
 }
 
 type BulkStarBreakdown struct {
@@ -145,21 +147,6 @@ type AuthResponse struct {
 	IsModerator        bool   `json:"isModerator,omitempty"`
 	Role               string `json:"role,omitempty"`
 	MustChangePassword bool   `json:"mustChangePassword,omitempty"`
-	AccessToken        string `json:"accessToken,omitempty"`
-	RefreshToken       string `json:"refreshToken,omitempty"`
-	ExpiresIn          int64  `json:"expiresIn,omitempty"`
-}
-
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refreshToken"`
-}
-
-type RefreshTokenResponse struct {
-	OK           bool   `json:"ok"`
-	Error        string `json:"error,omitempty"`
-	AccessToken  string `json:"accessToken,omitempty"`
-	RefreshToken string `json:"refreshToken,omitempty"`
-	ExpiresIn    int64  `json:"expiresIn,omitempty"`
 }
 
 type LeaderboardResponse struct {
@@ -210,12 +197,6 @@ type PasswordResetRequest struct {
 type PasswordResetConfirmRequest struct {
 	Token       string `json:"token"`
 	NewPassword string `json:"newPassword"`
-}
-
-type BootstrapPasswordRequest struct {
-	Username    string `json:"username"`
-	NewPassword string `json:"newPassword"`
-	GateKey     string `json:"gateKey"`
 }
 
 type SimpleResponse struct {
@@ -422,6 +403,17 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to open database:", err)
 	}
+
+	// Diagnostic logging: reveal actual database connection
+	u, err := url.Parse(dbURL)
+	if err == nil {
+		log.Printf(
+			"DB CONNECT → host=%s db=%s",
+			u.Host,
+			strings.TrimPrefix(u.Path, "/"),
+		)
+	}
+
 	db.SetMaxOpenConns(5)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(30 * time.Minute)
@@ -430,6 +422,7 @@ func main() {
 		log.Fatal("failed to ping database:", err)
 	}
 	log.Println("Connected to PostgreSQL")
+	BindSeasonStateDB(db)
 
 	// Schema (all environments)
 	if err := ensureSchema(db); err != nil {
@@ -455,17 +448,21 @@ func main() {
 		if err := ensureAlphaAdmin(ctx, db); err != nil {
 			log.Fatal("Alpha admin bootstrap failed:", err)
 		}
-		if err := ensureActiveSeason(ctx, db); err != nil {
-			log.Fatal("Failed to ensure active season:", err)
-		}
 	} else {
 		log.Println("Startup lock held by another instance; skipping leader-only initialization")
 	}
 	if !acquired && lockConn != nil {
 		_ = lockConn.Close()
 	}
+	// Load active season and enforce invariant: any season marked as active in global_settings
+	// MUST have a corresponding economy snapshot row in season_economy table.
+	// This ensures the API can always return complete economy data for active seasons.
+	if err := LoadSeasonState(db); err != nil {
+		log.Println("Failed to load season state:", err)
+	}
 
 	// Economy (safe for all instances; writes are idempotent)
+	// At this point, the active season's economy row is guaranteed to exist.
 	if err := economy.load(currentSeasonID(), db); err != nil {
 		log.Fatal("Failed to load economy state:", err)
 	}
@@ -542,10 +539,10 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("/auth/login", loginHandler(db))
 	mux.HandleFunc("/auth/logout", logoutHandler(db))
 	mux.HandleFunc("/auth/me", meHandler(db))
-	mux.HandleFunc("/auth/refresh", refreshTokenHandler(db))
 	mux.HandleFunc("/auth/request-reset", requestPasswordResetHandler(db))
 	mux.HandleFunc("/auth/reset-password", resetPasswordHandler(db))
-	mux.HandleFunc("/auth/bootstrap-password", bootstrapPasswordHandler(db))
+	mux.HandleFunc("/admin/bootstrap/status", adminBootstrapStatusHandler(db))
+	mux.HandleFunc("/admin/bootstrap/claim", adminBootstrapClaimHandler(db))
 
 	mux.HandleFunc("/notifications", notificationsHandler(db))
 	mux.HandleFunc("/notifications/ack", notificationsAckHandler(db))
@@ -555,14 +552,18 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("/activity", activityHandler(db))
 	mux.HandleFunc("/profile", profileHandler(db))
 	mux.HandleFunc("/telemetry", telemetryHandler(db))
+	mux.HandleFunc("/bugs/report", bugReportSubmitHandler(db))
 	mux.HandleFunc("/admin/telemetry", adminTelemetryHandler(db))
 	mux.HandleFunc("/admin/abuse-events", adminAbuseEventsHandler(db))
+	mux.HandleFunc("/admin/bugs", adminBugReportsHandler(db))
 	mux.HandleFunc("/admin/overview", adminOverviewHandler(db))
 	mux.HandleFunc("/admin/anti-cheat", adminAntiCheatHandler(db))
 	mux.HandleFunc("/admin/economy", adminEconomyHandler(db))
+	mux.HandleFunc("/admin/seasons/advance", adminSeasonAdvanceHandler(db))
+	mux.HandleFunc("/admin/seasons/recovery", adminSeasonRecoveryHandler(db))
+	mux.HandleFunc("/admin/seasons/", adminSeasonControlsHandler(db))
 	mux.HandleFunc("/admin/player-search", adminPlayerSearchHandler(db))
 	mux.HandleFunc("/admin/audit-log", adminAuditLogHandler(db))
-	mux.HandleFunc("/admin/set-key", adminKeySetHandler(db))
 	mux.HandleFunc("/admin/role", adminRoleHandler(db))
 
 	mux.HandleFunc("/admin/notifications", adminNotificationsHandler(db))

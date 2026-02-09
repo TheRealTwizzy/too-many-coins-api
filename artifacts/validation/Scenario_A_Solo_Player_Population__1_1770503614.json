@@ -1,0 +1,96 @@
+{
+  "ScenarioName": "Scenario A: Solo Player (Population = 1)",
+  "Population": 1,
+  "Duration": 21600000000000,
+  "UBIPerTick": 1,
+  "StartTime": "2026-02-07T22:33:34.6083399Z",
+  "EndTime": "2026-02-07T22:33:34.6088704Z",
+  "EconomySnapshots": [
+    {
+      "Timestamp": "2026-02-07T22:33:34.6083399Z",
+      "GlobalCoinPool": 50000011,
+      "CoinsDistributed": 1,
+      "CoinsInWallets": 1,
+      "ActivePlayers": 1,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 1,
+      "AvgCoinsActive": 1
+    },
+    {
+      "Timestamp": "2026-02-07T23:33:34.6083399Z",
+      "GlobalCoinPool": 50000706,
+      "CoinsDistributed": 61,
+      "CoinsInWallets": 61,
+      "ActivePlayers": 1,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 61,
+      "AvgCoinsActive": 61
+    },
+    {
+      "Timestamp": "2026-02-08T00:33:34.6083399Z",
+      "GlobalCoinPool": 50001400,
+      "CoinsDistributed": 121,
+      "CoinsInWallets": 121,
+      "ActivePlayers": 1,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 121,
+      "AvgCoinsActive": 121
+    },
+    {
+      "Timestamp": "2026-02-08T01:33:34.6083399Z",
+      "GlobalCoinPool": 50002094,
+      "CoinsDistributed": 181,
+      "CoinsInWallets": 181,
+      "ActivePlayers": 1,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 181,
+      "AvgCoinsActive": 181
+    },
+    {
+      "Timestamp": "2026-02-08T02:33:34.6083399Z",
+      "GlobalCoinPool": 50002774,
+      "CoinsDistributed": 241,
+      "CoinsInWallets": 241,
+      "ActivePlayers": 1,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 241,
+      "AvgCoinsActive": 241
+    },
+    {
+      "Timestamp": "2026-02-08T03:33:34.6083399Z",
+      "GlobalCoinPool": 50003425,
+      "CoinsDistributed": 301,
+      "CoinsInWallets": 301,
+      "ActivePlayers": 1,
+      "StarsPurchased": 0,
+      "MarketPressure": 1,
+      "AvgCoinsPerPlayer": 301,
+      "AvgCoinsActive": 301
+    }
+  ],
+  "PlayerSnapshots": [
+    {
+      "PlayerID": "player_1",
+      "Coins": 360,
+      "Stars": 0,
+      "DailyEarnTotal": 0,
+      "LastActive": "2026-02-07T22:33:34.6083399Z"
+    }
+  ],
+  "TimeToFirstStar": -1,
+  "CoinEarningRate": 0.001,
+  "FinalStarPrice": 10000,
+  "MaxMarketPressure": 1,
+  "PoolExhaustionCount": 0,
+  "PoolExhaustionRate": 0,
+  "IsAffordableAtEnd": false,
+  "PassesValidation": false,
+  "ValidationNotes": [
+    "FAIL: Solo player could not afford a star in allocated time"
+  ]
+}
