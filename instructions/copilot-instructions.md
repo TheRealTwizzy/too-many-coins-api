@@ -8,7 +8,7 @@ This project is governed by an AI Constitution.
 
 The AI Constitution is located at:
 
-instructions/AI_CONSTITUTION.txt
+.github/instructions/AI_CONSTITUTION.txt
 
 This file is a **constitutional authority** and MUST be read and applied
 before generating or modifying any of the following:
@@ -30,7 +30,7 @@ Scope:
   the Constitution is inert unless explicitly invoked.
 
 Hierarchy (strict):
-1. instructions/AI_CONSTITUTION.txt
+1. .github/instructions/AI_CONSTITUTION.txt
 2. User task prompt
 3. Project documentation (README.md, README/**, TODO.md)
 
