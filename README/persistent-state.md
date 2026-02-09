@@ -173,7 +173,7 @@ player_id
 
 season_id
 
-source_type (login, task, activity, comeback)
+source_type (ubi, login, activity, task, comeback, playability_safeguard)
 
 amount
 

@@ -106,11 +106,11 @@ Alpha is focused on the first playable economy loop:
 - Single active season only (no season lobby)
 - Trading is disabled (post‑alpha)
 - TSAs are disabled (post‑alpha)
-- Passive drip is disabled (post‑alpha)
 - Daily tasks and comeback rewards are disabled (post‑alpha)
 - Admin economy controls are read‑only
 - Market pressure is derived from star purchases only
 - Anti‑abuse protections are minimal but real (rate limiting + cooldowns)
+- Universal Basic Income (UBI) provides dynamic activity-based earnings (1-10x multiplier)
 
 ---
 
@@ -127,13 +127,76 @@ What is missing (intentional in Alpha):
 - Messaging and forums
 - Cosmetics and profiles
 - Advanced admin tools
-- Daily tasks, comeback rewards, passive drip
+- Daily tasks and comeback rewards
 
 These omissions are temporary and intentional so the core economy can be tested without distractions.
 
 What is coming (post-Alpha / Beta):
 
 We expect to explore trading, messaging and forums, persistent cosmetics and history, multiple seasons, and expanded anti-abuse systems. No timelines or guarantees. Alpha may reset and change.
+
+---
+
+## Feature Flags (Deployment Configuration)
+
+Feature flags allow runtime control of system behavior without code changes. All flags are read at server startup via environment variables.
+
+### Flag Reference
+
+| Flag | Environment Variable | Default | Impact When **DISABLED** |
+|------|---------------------|---------|------------------------|
+| **Faucets** | `ENABLE_FAUCETS` | `true` | Daily claim (`/claim-daily`) and activity claim (`/claim-activity`) endpoints return `FEATURE_DISABLED` error; players cannot earn coins through faucets (UBI still emits). |
+| **Sinks** | `ENABLE_SINKS` | `true` | Star purchases (`/buy-star`, `/buy-variant-star`, `/buy-boost`) and coin burning (`/burn-coins`) endpoints return `FEATURE_DISABLED` error; players cannot spend coins. |
+| **Telemetry** | `ENABLE_TELEMETRY` | `true` | Client event tracking (`/telemetry` endpoint) returns 404; admin analytics unavailable; telemetry compliance mode. |
+| **IP Throttling** | `ENABLE_IP_THROTTLING` | `true` | IP-based rate limiting and IP clustering detection disabled; abuse detection degraded; development/testing mode. |
+
+### Configuration Examples
+
+**Local Development (all features enabled):**
+```bash
+./app
+# Uses defaults: ENABLE_FAUCETS=true, etc.
+```
+
+**Testing (disable earning to test player retention mechanics):**
+```bash
+ENABLE_FAUCETS=false ./app
+# Players still receive UBI, but cannot claim daily/activity faucets
+```
+
+**Testing (disable economy to isolate UI/auth logic):**
+```bash
+ENABLE_FAUCETS=false ENABLE_SINKS=false ./app
+# No earning or spending; UI operates on fixed test balances
+```
+
+**Compliance (analytics disabled):**
+```bash
+ENABLE_TELEMETRY=false ./app
+# Server runs normally; does not collect client event telemetry
+```
+
+**Development (no rate limits for testing):**
+```bash
+ENABLE_IP_THROTTLING=false ./app
+# Auth and gameplay endpoints accept unlimited requests from same IP
+```
+
+### Flag Values
+
+Flags accept: `"true"`, `"1"`, `"yes"` → **enabled**  
+All other values (including `"false"`, `"0"`) → **disabled**
+
+### When to Use
+
+| Use Case | Flags |
+|----------|-------|
+| Local development | All enabled (defaults) |
+| Load testing | `ENABLE_TELEMETRY=false` (reduce I/O) |
+| UI testing (no economy) | `ENABLE_FAUCETS=false ENABLE_SINKS=false` |
+| Integration testing | Varies per scenario |
+| Production (Alpha) | All enabled (canonical state) |
+| Incident response | May disable `ENABLE_FAUCETS` to pause earning if exploit discovered |
 
 ---
 
@@ -383,10 +446,20 @@ Hard TSA invariants:
 
 ## Core Gameplay Loop
 
-Players earn Coins through daily login and active play faucets.  
-Passive drip is post‑alpha and disabled in the current build.  
-Daily tasks and comeback rewards are post‑alpha and disabled in the current build.  
-Alpha safeguard: on login, the server may top up very low balances to keep the game playable within minutes (draws from the emission pool, short cooldown).  
+**Coin Earning**
+
+Players earn Coins through:
+
+- **Universal Basic Income (UBI)**: Continuous drip (1-10x multiplier based on activity warmup)
+- **Daily Login**: Once per 20 hours
+- **Activity Faucet**: Periodic claims during active play
+- **Daily tasks** (post-alpha, disabled in current build)
+- **Comeback rewards** (post-alpha, disabled in current build)
+
+**Alpha safeguard**: On login, the server may top up very low balances to keep the game playable within minutes (draws from the emission pool, short cooldown).
+
+**Spending & Trading**
+
 Players spend Coins to buy Stars.  
 Players may optionally trade Coins for existing Stars under tight, time-worsening constraints (post‑alpha).  
 Post‑alpha: players may sacrifice Stars to obtain TSAs or trade TSAs player‑to‑player.  
@@ -528,7 +601,9 @@ If multiple accounts originate from the same IP:
 They are not hard-blocked; they are throttled through economic dampening, cooldowns, and trust-based enforcement.
 No whitelist requests or manual approvals are used in alpha.
 
-Players earn Coins faster while actively using the site. Passive drip is post‑alpha and disabled in the current build.
+**Activity-Based Income (Dynamic UBI)**
+
+Players earn Coins continuously through Universal Basic Income (UBI). Base rate is 1 microcoin per tick (0.001 coins), but active players earn up to 10x more through activity warmup. Sustained activity over ~30 minutes builds income to maximum. When idle, income gradually returns to base rate. This ensures all players can always play while rewarding engagement.
 
 Admin tools (alpha):
 Read‑only economy monitoring and telemetry. No direct coin/star edits.

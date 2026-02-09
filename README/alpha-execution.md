@@ -128,7 +128,7 @@ What is missing (intentional in Alpha):
 - Messaging and forums
 - Cosmetics and profiles
 - Advanced admin tools
-- Daily tasks, comeback rewards, passive drip
+- Daily tasks and comeback rewards
 
 These omissions are temporary and intentional so the core economy can be tested without distractions.
 

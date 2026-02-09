@@ -14,29 +14,9 @@
 
 # Coin Faucets
 
-## Currency Model: Integer Microcoins
+**Currency Model:** All faucet rewards use integer microcoins (1 coin = 1000 microcoins). See [coin-emission.md](coin-emission.md) for details.
 
-**Canonical Currency Unit: Microcoins (integer only)**
-
-The economy uses integer microcoins as the sole authoritative currency:
-
-- **1 Coin = 1000 microcoins**
-- All faucet rewards are expressed and stored as integer microcoins
-- All faucet logic (cooldowns, rate-limiting, caps) uses integer microcoins only
-- No floating-point faucet amounts exist at runtime
-- Coins are a **display format only** derived from microcoins: `microcoins / 1000` with exactly 3 decimal places
-
-This ensures:
-- Perfect precision in reward calculations
-- No rounding errors in daily caps or accumulation
-- Consistent earning semantics across all faucets
-- Clean audit trail for reward verification
-
----
-
-## Players Earn Coins Through Faucets
-
-Players earn coins through a limited set of server-controlled faucets.
+Players earn coins through a limited set of server-controlled faucets that draw from the global emission pool.
 
 ## Universal Basic Income (UBI) — Dynamic Activity-Based Payout
 
@@ -79,71 +59,58 @@ UBI is the foundation of the economy; all other faucets are additive.
 
 ## Faucet Types
 
-Daily Login:
+### Daily Login
 
-Available once per 20 hours per season.
+- Available once per 20 hours per season
+- Grants a small, fixed amount of coins
+- Designed to reward consistency, not grinding
+- Cooldown-based, not grinding-friendly
 
-Grants a small, fixed amount of coins (stored as microcoins, displayed with 3 decimals).
+### Activity Faucet
 
-Designed to reward consistency, not grinding.
+- Claimable periodically during active play sessions
+- Short cooldown (5 minutes default)
+- Rewards sustained engagement
+- Capped per hour and per day
 
-Daily Tasks:
+### Daily Tasks (Post-Alpha)
 
-Post‑alpha only.
+- A small set of simple tasks refreshed at daily reset
+- Tasks grant moderate coin rewards
+- Completing all tasks does not exceed the player daily earning cap
 
-A small set of simple tasks refreshed at daily reset.
+### Comeback Reward (Post-Alpha)
 
-Tasks grant moderate coin rewards (stored as microcoins).
+- Available only to players who have been inactive for a defined period
+- Grants a one-time, modest coin boost
+- Cannot exceed a fixed percentage of the daily earning cap
 
-Completing all tasks does not exceed the player daily earning cap.
+## Daily Earning Caps
 
-Active Play:
+Each player has a daily coin earning cap per season:
 
-Coins are granted at a slow, steady rate during active participation.
+- Cap decreases as the season progresses
+- Late-season caps are significantly lower than early-season caps
+- Even late-season caps allow some daily earning
+- UBI is NOT subject to daily caps (foundation income)
+- Other faucets (daily, activity) ARE subject to caps
 
-Active play rewards are capped per hour and per day.
+## Emission Pool Integration
 
-AFK or idle behavior does not generate coins.
+All faucets draw from the global emission pool:
 
-Alpha runtime default: passive drip is disabled (`drip_enabled=false`).
+- If the pool is low, faucet rewards are throttled
+- If the pool is empty, optional faucet claims are denied
+- UBI grants continue even under pool pressure (with throttling)
+- Faucet tuning balances emission with trade burn (post-alpha)
+- All grants are validated server-side and logged
 
-Comeback Reward:
+## Login Playability Safeguard (Alpha)
 
-Post‑alpha only.
+Alpha-only safety net for new/returning players:
 
-Available only to players who have been inactive for a defined period.
-
-Grants a one-time, modest coin boost.
-
-Cannot exceed a fixed percentage of the daily earning cap.
-
-Caps:
-
-Each player has a daily coin earning cap per season.
-
-The cap decreases as the season progresses.
-
-Late-season caps are significantly lower than early-season caps.
-
-Even late-season caps allow some daily earning; faucets never drop to zero.
-
-All faucet grants draw from the global emission pool.
-If the pool is low, faucet rewards are proportionally throttled and may grant a partial amount.
-If the pool is empty, the faucet claim is denied.
-
-Faucet tuning is balanced against trade burn to keep the economy liquid enough for daily action.
-Coin shortage is possible but rare.
-
-All faucet usage and coin grants are validated server-side and logged.
-
-Login Playability Safeguard (Alpha):
-
-If a player logs in with a balance too low to make near-term progress,
-the server may top them up to a minimum playable balance.
-
-This safeguard:
-
-Draws from the global emission pool
-Has a short cooldown
-Is intended to keep the game playable within minutes
-May bypass the per-day earning cap as an alpha-only safety net
+- Tops up players with extremely low balances
+- Draws from the global emission pool
+- Short cooldown to prevent abuse
+- Intended to keep the game playable within minutes
+- May bypass daily earning cap (temporary Alpha measure)
