@@ -1,3 +1,17 @@
+# Admin Tools
+
+## Scope
+- **Type:** System contract
+- **Status:** Canonical (Game Bible)
+- **Owner:** Game Bible
+
+## Change Protocol
+- Update alongside related systems and TODO entries in the same logical unit.
+- Preserve cross-file invariants defined in README.md.
+- Prefer additive clarifications; flag any breaking change explicitly.
+
+---
+
 The system must include a minimal internal admin and observability interface.
 
 Admin access is restricted to authorized accounts only.

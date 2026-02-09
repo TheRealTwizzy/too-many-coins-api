@@ -1,3 +1,17 @@
+# First Playable
+
+## Scope
+- **Type:** System contract
+- **Status:** Canonical (Game Bible)
+- **Owner:** Game Bible
+
+## Change Protocol
+- Update alongside related systems and TODO entries in the same logical unit.
+- Preserve cross-file invariants defined in README.md.
+- Prefer additive clarifications; flag any breaking change explicitly.
+
+---
+
 The first playable milestone is a stripped-down but fully real version of the game.
 
 Scope of the first playable:

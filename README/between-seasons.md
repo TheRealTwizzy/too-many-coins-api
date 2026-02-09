@@ -1,3 +1,17 @@
+# Between Seasons
+
+## Scope
+- **Type:** System contract
+- **Status:** Canonical (Game Bible)
+- **Owner:** Game Bible
+
+## Change Protocol
+- Update alongside related systems and TODO entries in the same logical unit.
+- Preserve cross-file invariants defined in README.md.
+- Prefer additive clarifications; flag any breaking change explicitly.
+
+---
+
 Between seasons, player power resets but identity and progression persist.
 
 Post‑alpha: between‑season progression is not implemented in Alpha.

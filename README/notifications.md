@@ -1,3 +1,17 @@
+# Notifications
+
+## Scope
+- **Type:** System contract
+- **Status:** Canonical (Game Bible)
+- **Owner:** Game Bible
+
+## Change Protocol
+- Update alongside related systems and TODO entries in the same logical unit.
+- Preserve cross-file invariants defined in README.md.
+- Prefer additive clarifications; flag any breaking change explicitly.
+
+---
+
 # Notifications (Alpha Scope)
 
 Notifications are informational, server-generated updates for players and admins. They do not control gameplay and are never authoritative.

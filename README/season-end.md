@@ -1,3 +1,17 @@
+# Season End
+
+## Scope
+- **Type:** System contract
+- **Status:** Canonical (Game Bible)
+- **Owner:** Game Bible
+
+## Change Protocol
+- Update alongside related systems and TODO entries in the same logical unit.
+- Preserve cross-file invariants defined in README.md.
+- Prefer additive clarifications; flag any breaking change explicitly.
+
+---
+
 At the end of a season, the economy is frozen and final standings are recorded.
 
 End-of-season resolution:

@@ -1,3 +1,17 @@
+# Server Authority
+
+## Scope
+- **Type:** System contract
+- **Status:** Canonical (Game Bible)
+- **Owner:** Game Bible
+
+## Change Protocol
+- Update alongside related systems and TODO entries in the same logical unit.
+- Preserve cross-file invariants defined in README.md.
+- Prefer additive clarifications; flag any breaking change explicitly.
+
+---
+
 The server is the sole authority over the game economy.
 The client never calculates prices, limits, caps, or outcomes.
 

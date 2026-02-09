@@ -1,3 +1,17 @@
+# Alpha Execution
+
+## Scope
+- **Type:** System contract
+- **Status:** Canonical (Game Bible)
+- **Owner:** Game Bible
+
+## Change Protocol
+- Update alongside related systems and TODO entries in the same logical unit.
+- Preserve cross-file invariants defined in README.md.
+- Prefer additive clarifications; flag any breaking change explicitly.
+
+---
+
 # Alpha Execution Plan (First Playable)
 
 This plan defines the minimum goals and metrics for the first alpha test. It aligns with the first‑playable scope and server‑authoritative economy.

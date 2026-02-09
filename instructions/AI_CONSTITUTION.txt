@@ -16,8 +16,9 @@ PRE-FLIGHT CHECKLIST GATE (MANDATORY)
 Before acting on ANY prompt requesting code, configuration, database, or runtime changes,
 Codex MUST verify the full pre-flight checklist.
 
-The canonical pre-flight checklist is maintained as a separate prompt artifact
-and MUST be satisfied before execution may proceed.
+The canonical pre-flight checklist is maintained as a separate prompt artifact:
+instructions/ai_preflight_checklist.txt
+It MUST be satisfied before execution may proceed.
 
 If any checklist item is false, unknown, or unverifiable:
 - STOP immediately
