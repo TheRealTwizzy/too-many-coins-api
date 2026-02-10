@@ -98,6 +98,96 @@ Allowed to be rough or missing in Alpha:
 
 ---
 
+## Alpha → Beta Plan (Build-Based, Detailed)
+
+This section defines the Alpha → Beta transition in terms of scope, implementation, affected systems, and player-facing changes. It is the authoritative execution plan for the transition.
+
+### Goals (What changes are going to be made)
+- Move from a single-season Alpha runtime to a Beta model with longer seasons (28 days) and early support for multiple overlapping seasons.
+- Introduce Beta-only competitive assets (TSAs) and persistent, non-economic meta currency (cosmetics/identity only).
+- Enable brokered trading (Coins ↔ Stars) with strict eligibility and tightening rules.
+- Establish season-end permanent score conversion (Stars → permanent profile statistic) and prepare for reward grants.
+- Expand player-facing UI to show trading desks, profile progression, and season lobby.
+
+### Implementation Outline (How changes will be implemented)
+- Phase config switch (`PHASE=beta`) gates Beta-only systems without changing Alpha defaults.
+- Add database tables for multi-season runtime, TSA inventory/logs, brokered trades, meta currency, and season history.
+- Extend tick loop and economy pipelines to handle per-season scheduling, TSA effects, and brokered trade pressure.
+- Add endpoints and SSE payload extensions for new trading, profile, and season lobby views.
+- Update admin observability for new logs (trades, TSA minting/burn, meta currency grants).
+
+### Systems Created or Affected
+- **Season Runtime:** multi-season scheduling, season lobby listing, season history persistence.
+- **Economy:** brokered trading, TSA mint/burn, market pressure coupling, additional logs.
+- **Profile/Progression:** permanent star score, meta currency, rewards/badges framework.
+- **Anti-Abuse:** new signals for trading abuse and TSA exploitation.
+- **Frontend:** trading desks, profile/collection, season lobby, expanded notifications.
+
+### Player Experience (What the player sees and how play changes)
+- Players can join active seasons from a lobby and see overlapping season timelines.
+- Stars remain non-tradable but convert into a permanent profile score at season end.
+- Players can sacrifice Stars to mint TSAs (rank drops immediately).
+- Brokered trading offers a system-priced Coins ↔ Stars desk with visible restrictions and costs.
+- Profile shows permanent score, cosmetics/identity meta currency, and season history.
+
+### Build Plan (What changes and when)
+
+#### Build B1 — Beta Runtime Foundation
+- **Backend:** Add `PHASE` config; extend season model for 28-day seasons; create seasons table and scheduler (Phase 2.5).
+- **Schema:** Add seasons, season_history, season_runtime_state.
+- **API/SSE:** Season lobby list + current season metadata; expose phase config.
+- **Frontend:** Add season lobby UI; show season length and overlap indicators.
+- **Systems Affected:** Time system, season core, admin season advance.
+
+#### Build B2 — Persistent Score + Profile Shell
+- **Backend:** Implement star conversion at season end (Phase 12.2); store permanent score.
+- **Schema:** Add profile_stats (permanent_score, season_count, last_season_id).
+- **API/SSE:** Add profile summary endpoint + SSE payload fields for score updates.
+- **Frontend:** Add profile screen with permanent score and season history shell.
+- **Systems Affected:** Season end, player profile, notifications.
+
+#### Build B3 — Meta Currency (Cosmetic Only)
+- **Backend:** Implement meta currency grant logic (non-economic); deny any conversion paths.
+- **Schema:** Add meta_currency_wallet and grant_log.
+- **API/SSE:** Expose meta currency balances; notifications for grants.
+- **Frontend:** Add cosmetics placeholder and meta currency display.
+- **Systems Affected:** Progression, rewards, admin visibility.
+
+#### Build B4 — Brokered Trading (Coins ↔ Stars)
+- **Backend:** Implement brokered trade engine, eligibility gates, tightening rules, burn mechanics.
+- **Schema:** Add brokered_trades + brokered_trade_events logs.
+- **API/SSE:** Trading desk endpoints, price/premium display, eligibility feedback.
+- **Frontend:** Brokered trade desk UI with warnings, eligibility feedback, and burn breakdown.
+- **Systems Affected:** Economy, market pressure, anti-abuse, notifications.
+
+#### Build B5 — TSAs (Competitive Assets)
+- **Backend:** Implement Star Sacrifice → TSA minting; TSA inventory; trading stubs.
+- **Schema:** Add tsa_inventory, tsa_mint_log, tsa_trade_log (trade API can remain disabled until B6).
+- **API/SSE:** TSA inventory endpoints; mint events; admin visibility.
+- **Frontend:** TSA inventory UI and mint flow with rank-loss confirmation.
+- **Systems Affected:** Economy pressure, season end wipe behavior.
+
+#### Build B6 — TSA Trading + Anti-Abuse Expansion
+- **Backend:** Enable TSA trading; add abuse detection for reciprocal trades and IP clustering.
+- **Schema:** Add trade_offers and trade_confirmations (if negotiation is added).
+- **API/SSE:** Trade negotiation endpoints; trade status notifications.
+- **Frontend:** Player-to-player trading UI; moderation hooks.
+- **Systems Affected:** Anti-abuse, admin observability, notifications.
+
+#### Build B7 — Beta UX Polish
+- **Backend:** Finalize notifications for trades, TSA events, and season lobby.
+- **Frontend:** Upgrade economy dashboards with brokered trade metrics and TSA status; refine copy.
+- **Systems Affected:** UI/UX, onboarding, documentation alignment.
+
+### Beta Exit Criteria (Draft)
+- Multi-season runtime stable with at least 2 overlapping seasons running safely.
+- Brokered trading live with eligibility tightening and observable burn.
+- TSA minting and trading functional with abuse detection.
+- Permanent score conversion at season end and profile view accessible.
+- Meta currency exists with no conversion paths into Coins or Stars.
+
+---
+
 ## Phase 3 — Economy Emission & Pools
 - [x] [DONE] 3.1 Emission pool and daily budget
 - [x] [DONE] 3.2 Emission time‑sliced per tick
