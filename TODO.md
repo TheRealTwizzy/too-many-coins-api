@@ -188,6 +188,530 @@ This section defines the Alpha → Beta transition in terms of scope, implementa
 
 ---
 
+## Build Breakdown — Concrete Tasks (Week-Based Schedule)
+
+All dates show target completion (end of week). Current date: Feb 10, 2026. Timeline: B1–B7 spans 7 weeks (Feb 10 – Mar 30).
+
+### B1 — Beta Runtime Foundation (Week 1: Feb 10–16)
+
+**Task B1.1:** Add PHASE config and phase gates to codebase
+- **Owner:** Backend  
+- **Due:** Feb 14  
+- **Description:** Add `PHASE` environment variable (default "alpha"; accepts "alpha", "beta", "release"). Implement phase gates throughout code to gate Beta/Release features.  
+- **Acceptance:** `PHASE=beta` compiles without errors; all phase-gated features are disabled unless Phase >= Beta.
+
+**Task B1.2:** Extend season model to support 28-day Beta seasons
+- **Owner:** Backend + DB  
+- **Due:** Feb 14  
+- **Description:** Extend schema `seasons` table with season_length_days (default 14 for Alpha; configurable to 28 for Beta). Update time system to respect season_length_days.  
+- **Acceptance:** Schema migrates cleanly; season tick loop respects configurable length.
+
+**Task B1.3:** Implement multi-season scheduler (Phase 2.5)
+- **Owner:** Backend  
+- **Due:** Feb 16  
+- **Description:** Implement basic scheduler that manages multiple active seasons in Beta. Seasons start staggered (e.g., day 1, day 15). Ensure tick loop can drive multiple seasons independently.  
+- **Acceptance:** Tick loop runs correctly for 2+ concurrent seasons; admin can list all active seasons.
+
+**Task B1.4:** Add season lobby listing API
+- **Owner:** Backend + Frontend  
+- **Due:** Feb 16  
+- **Description:** Add `/seasons` endpoint returning all active seasons with metadata (start_date, end_date, current_day, player_count). Add frontend UI to display season lobby.  
+- **Acceptance:** GET /seasons returns array of active seasons; UI shows season timelines and player counts.
+
+**Task B1.5:** Expose phase config in API and SSE
+- **Owner:** Backend + Frontend  
+- **Due:** Feb 16  
+- **Description:** Include PHASE value in /config response and SSE startup payload so frontend can conditionally render Beta/Release UI.  
+- **Acceptance:** Frontend can read PHASE from config and conditionally show/hide Beta features.
+
+---
+
+### B2 — Persistent Score + Profile Shell (Week 2: Feb 17–23)
+
+**Task B2.1:** Implement star conversion at season end
+- **Owner:** Backend + DB  
+- **Due:** Feb 19  
+- **Description:** At season end (tick boundary), convert player stars to permanent_score entry in profile_stats. Store season_id and final_star_count. Never allow mutation.  
+- **Acceptance:** Season ends; player stars are locked into permanent_score; UI shows new score in profile.
+
+**Task B2.2:** Add profile_stats table
+- **Owner:** DB  
+- **Due:** Feb 19  
+- **Description:** Create profile_stats table (player_id, total_permanent_score, season_count, last_season_id, badges_earned). Add non-spendable permanent_score column.  
+- **Acceptance:** Table exists; migration runs cleanly; can query permanent scores per player.
+
+**Task B2.3:** Implement profile summary API endpoint
+- **Owner:** Backend  
+- **Due:** Feb 21  
+- **Description:** Add GET /players/{player_id}/profile summarizing permanent_score, season_count, last_season_id, and list of best seasons (top 5 by stars).  
+- **Acceptance:** Endpoint returns profile summary with all required fields; endpoint is fast (<100ms).
+
+**Task B2.4:** Add profile view UI (shell)
+- **Owner:** Frontend  
+- **Due:** Feb 23  
+- **Description:** Add profile screen showing permanent_score, season history shell placeholder, and cosmetics section (empty for now). Clickable from player card or leaderboard.  
+- **Acceptance:** Profile screen loads; shows permanent_score and season count; layout is responsive.
+
+**Task B2.5:** Emit profile update notifications
+- **Owner:** Backend  
+- **Due:** Feb 23  
+- **Description:** When season ends, emit notification to player: "Season ended! You earned +X Stars. Total permanent score: Y." Include link to profile.  
+- **Acceptance:** Notification system captures permanent_score event; client receives and displays notification.
+
+---
+
+### B3 — Meta Currency (Cosmetic Only) (Week 3: Feb 24 – Mar 2)
+
+**Task B3.1:** Design meta currency rules doc
+- **Owner:** Design  
+- **Due:** Feb 25  
+- **Description:** Write rules: meta currency is seasonal-persistent, non-tradable, non-convertible to Coins/Stars, used only for cosmetics. Cannot affect economy. Publish in canon.  
+- **Acceptance:** Rules doc published in README/; no enforcement gaps identified in review.
+
+**Task B3.2:** Add meta_currency_wallet table
+- **Owner:** DB  
+- **Due:** Feb 25  
+- **Description:** Create meta_currency_wallet (player_id, season_id, balance) and meta_currency_grant_log (player_id, season_id, grant_amount, grant_reason, created_at, admin_note).  
+- **Acceptance:** Tables exist; migration runs cleanly; can query balance and log per player/season.
+
+**Task B3.3:** Implement meta currency grant logic
+- **Owner:** Backend  
+- **Due:** Feb 27  
+- **Description:** Add internal grants system: season-end reward grants, event grants, return-player bonuses. All grants logged immutably. Enforce: no conversion paths, no spending (cosmetic-only placeholder).  
+- **Acceptance:** Grant system persists to DB; cannot grant Coins/Stars; grants are read-only to player (cannot spend).
+
+**Task B3.4:** Add meta currency to API and SSE
+- **Owner:** Backend  
+- **Due:** Feb 28  
+- **Description:** Include meta_currency_balance in /seasons response and SSE payloads. Add GET /players/{player_id}/meta-currency. Clearly label as "non-tradable cosmetic currency."  
+- **Acceptance:** API returns meta currency balance; frontend displays balance clearly labeled as cosmetic-only.
+
+**Task B3.5:** Add cosmetics placeholder to frontend profile
+- **Owner:** Frontend  
+- **Due:** Mar 2  
+- **Description:** Display meta currency balance on profile; add placeholder "Cosmetics Shop" button (links to empty shop for now). Clarify in UI: "Meta currency is cosmetic-only and cannot be traded or spent on game power."  
+- **Acceptance:** Profile shows meta currency; cosmetics shop placeholder is visible; warning text is clear.
+
+---
+
+### B4 — Brokered Trading (Coins ↔ Stars) (Week 4: Mar 3–9)
+
+**Task B4.1:** Design brokered trading rules and eligibility gates
+- **Owner:** Design + Backend  
+- **Due:** Mar 4  
+- **Description:** Document eligibility gates (active players, recent spend, star/coin ratios, inflation exposure), tightening curve over season, burn rates, and price premiums. Publish in canon (README/trading or SPEC.md).  
+- **Acceptance:** Rules doc complete; no edge cases left unspecified; implementation checklist prepared.
+
+**Task B4.2:** Add brokered_trades table and event logging
+- **Owner:** DB  
+- **Due:** Mar 4  
+- **Description:** Create brokered_trades (trade_id, seller_id, buyer_id, season_id, coin_amount, star_amount, burn_amount, premium_snapshot, created_at) and brokered_trade_events (event_id, trade_id, event_type, snapshot_data, created_at).  
+- **Acceptance:** Tables exist and are append-only; migration runs cleanly.
+
+**Task B4.3:** Implement brokered trade engine (pricing + eligibility)
+- **Owner:** Backend  
+- **Due:** Mar 6  
+- **Description:** Implement trade eligibility check (active players, spend history, ratio bands, inflation exposure). Compute trade premium and burn rate based on season day. Price Coins ↔ Stars using market pressure + premium + burn.  
+- **Acceptance:** Engine computes correct prices; eligibility gates work; burn amounts are logged; tightening curve is correct.
+
+**Task B4.4:** Add brokered trade endpoints
+- **Owner:** Backend  
+- **Due:** Mar 7  
+- **Description:** Add POST /trades/preview (check eligibility + show quote), POST /trades/execute (execute if eligible), GET /trades/history (list past trades). All endpoints return rich feedback (reasons for ineligibility, burn breakdown, premium explanation).  
+- **Acceptance:** Endpoints return correct data; ineligible trades are rejected with clear reasons; eligible trades execute atomically.
+
+**Task B4.5:** Add brokered trading desk UI
+- **Owner:** Frontend  
+- **Due:** Mar 9  
+- **Description:** Add trading desk screen showing Coins ↔ Stars desk. Display eligibility status (green/yellow/red with reasons), preview quote with burn breakdown, premium explanation, and warnings ("Coins are burned"; "You may not be eligible later in season").  
+- **Acceptance:** UI shows eligibility feedback; preview shows burn and premium clearly; confirmations have explicit warnings.
+
+---
+
+### B5 — TSAs (Competitive Assets) (Week 5: Mar 10–16)
+
+**Task B5.1:** Design TSA mint and inventory rules
+- **Owner:** Design + Backend  
+- **Due:** Mar 11  
+- **Description:** Document TSA minting via Star Sacrifice (irreversible, immediate rank drop, logged). Define TSA utility and market pressure contribution. Publish in canon.  
+- **Acceptance:** Rules doc complete; no minting loopholes identified; rank drop calculation verified.
+
+**Task B5.2:** Add TSA inventory tables and logs
+- **Owner:** DB  
+- **Due:** Mar 11  
+- **Description:** Create tsa_inventory (player_id, season_id, tsa_type, quantity), tsa_mint_log (mint_id, player_id, season_id, tsa_type, quantity, stars_destroyed, active_players_snapshot, created_at), and tsa_event_log for tracking all TSA events.  
+- **Acceptance:** Tables exist; migration runs cleanly; can query inventory per player/season.
+
+**Task B5.3:** Implement Star Sacrifice → TSA minting
+- **Owner:** Backend  
+- **Due:** Mar 13  
+- **Description:** Implement minting flow: player sacrifices X Stars, receives Y TSAs (formula: stars_destroyed = TSA_type_cost), rank drops proportionally (stars -= X), mint is logged immutably, market pressure increases. Ensure no refunds.  
+- **Acceptance:** Mint succeeds; stars are deducted and logged as destroyed; TSAs appear in inventory; rank drops correctly; pressure increases.
+
+**Task B5.4:** Add TSA inventory endpoint and SSE fields
+- **Owner:** Backend  
+- **Due:** Mar 14  
+- **Description:** Add GET /players/{player_id}/tsa-inventory and include tsa_inventory in /seasons response. Expose TSA types and quantities in SSE on economy updates.  
+- **Acceptance:** API returns TSA inventory; SSE includes TSA data; frontend can display inventory.
+
+**Task B5.5:** Add TSA mint flow and inventory to frontend
+- **Owner:** Frontend  
+- **Due:** Mar 16  
+- **Description:** Add TSA Sacrifice UI (confirm stars destruction, show resulting TSA quantity, show rank drop). Display inventory in profile or dedicated TSA screen. Warn: "Sacrifice is irreversible; your rank will drop immediately."  
+- **Acceptance:** Mint flow works end-to-end; inventory displays correctly; warnings are clear and prominent.
+
+---
+
+### B6 — TSA Trading + Anti-Abuse Expansion (Week 6: Mar 17–23)
+
+**Task B6.1:** Implement player-to-player TSA trading
+- **Owner:** Backend + DB  
+- **Due:** Mar 18  
+- **Description:** Add trade_offers table (offer_id, seller_id, buyer_id, offer_items, consideration, status, created_at, expires_at). Implement offer negotiation endpoints (POST /trades/offer, PUT /trades/offer/{offer_id}/accept, DELETE /trades/offer/{offer_id}/reject). Enforce atomicity and logging.  
+- **Acceptance:** Offers can be created, accepted, rejected; trades are atomic; all trades are logged immutably.
+
+**Task B6.2:** Add trade abuse detection (reciprocal trades, IP clustering)
+- **Owner:** Backend  
+- **Due:** Mar 19  
+- **Description:** Implement abuse signals for TSA trades: reciprocal trades (A sells to B who immediately sells back), IP clustering (multiple accounts on same IP trading heavily), suspicious trade ratios. Log signals to abuse_events; increase throttle/pressure on suspicious accounts.  
+- **Acceptance:** Signals fire correctly; throttling applies; admin can see flags in observability.
+
+**Task B6.3:** Add trade endpoints and notifications
+- **Owner:** Backend  
+- **Due:** Mar 21  
+- **Description:** Add GET /trades/offers/received, GET /trades/offers/sent, GET /trades/history. Emit notifications: "New trade offer received", "Offer accepted/rejected", "Trade completed". Include offer details and links.  
+- **Acceptance:** Endpoints return correct data; notifications fire on all transition; client displays notifications with links.
+
+**Task B6.4:** Add player-to-player trading UI
+- **Owner:** Frontend  
+- **Due:** Mar 23  
+- **Description:** Add trading interface: view received/sent offers, create new offer, accept/reject/counter. Display trade history. Show warnings for any detected abuse flags (if visible to player).  
+- **Acceptance:** Trading UI is functional; offers can be negotiated; history is visible; warnings display (if applicable).
+
+---
+
+### B7 — Beta UX Polish (Week 7: Mar 24–30)
+
+**Task B7.1:** Audit and finalize all notifications
+- **Owner:** Backend + Frontend  
+- **Due:** Mar 26  
+- **Description:** Audit all notification types (trades, TSA events, season lobby, permanent score). Ensure clear copy, links to relevant screens, and consistent presentation. Remove any duplicate or unclear notifications.  
+- **Acceptance:** All notifications are canonical; no duplicates or unclear messaging; all link to correct screens.
+
+**Task B7.2:** Upgrade economy dashboard with Beta metrics
+- **Owner:** Frontend  
+- **Due:** Mar 28  
+- **Description:** Add brokered trade metrics to economy dashboard (trade volume, burn rate, premium trend). Add TSA metrics (mint volume, trading volume). Update copy to explain new systems.  
+- **Acceptance:** Dashboard shows all Beta metrics; explanatory text is clear; layout is responsive.
+
+**Task B7.3:** Cross-reference canon and code for alignment
+- **Owner:** Design + Backend  
+- **Due:** Mar 29  
+- **Description:** Audit README canon against B1–B6 implementations. Update README sections for persistent-state.md, SPEC.md, and README.md if any drift identified. Document all changes.  
+- **Acceptance:** Canon and code aligned; all divergences documented; no hidden assumptions remain.
+
+---
+
+## Canon Alignment (Task-to-README Mapping)
+
+This section maps each build task to the canonical requirements it implements. All tasks must preserve the invariants in README.md.
+
+### Invariants (Immutable, Non-Negotiable)
+- **README.md, Layer 1:** No currency may ever convert into Coins or Stars, directly or indirectly.
+- **README.md, Layer 1:** Stars are the only direct leaderboard unit.
+- **README.md, Layer 1:** Past seasons are immutable and never rewritten.
+- **README.md, Layer 1:** Economy logic is server-authoritative.
+
+### Build → Canon Mapping
+
+| Task | README Section | Canon Requirement | Invariant Impact |
+|------|------|------|------|
+| B1.1 | SPEC.md § Seasons | Phase-bound seasons with staggered/overlapping runtime (Beta: 28 days, 2–3 seasons) | None (phase gating only) |
+| B1.2 | SPEC.md § Seasons | Season length configurable; Alpha 14 days, Beta 28 days | None (phased config) |
+| B1.3 | Phase 2.5 | Multi-season scheduler with independent tick loops | None (extends Phase 2) |
+| B1.4 | SPEC.md § Join rules | Players join active seasons anytime; lobby lists all active seasons | None (informational) |
+| B1.5 | SPEC.md § Spec intro | Phase config exposed to client for feature gating | None (frontend gating) |
+| B2.1 | Phase 12.2a | At season end, Stars convert to permanent, non-spendable profile statistic | **Invariant**: Stars remain non-tradable and immutable once converted |
+| B2.2 | persistent-state.md § profile_stats | Persistent profile entities (total_permanent_score, season_count, last_season_id) | None (new tables) |
+| B2.3 | README.md § Between Seasons | Players observe season history and permanent progression through profile | None (read-only) |
+| B2.4 | README.md § UI Philosophy | Profile screen shows permanent identity without revealing internal economy formulas | None (UI only) |
+| B2.5 | notifications.md | Emit permanent score milestone notifications | None (audit trail) |
+| B3.1 | persistent-state.md § Currency model | Persistent meta currency (cosmetic/identity only; non-tradable; non-convertible) | **Invariant**: Meta currency cannot convert into Coins/Stars |
+| B3.2 | persistent-state.md § persistent entities | Add meta_currency_wallet and grant_log tables | None (new tables) |
+| B3.3 | phase 12 (post-alpha) | Reward grants (badges, titles, cosmetic bonuses) | **Invariant**: Grants cannot mint Coins/Stars; cosmetic-only |
+| B3.4 | README.md § System Authority | Meta currency exposed in API; clearly labeled non-economic | None (informational) |
+| B3.5 | README.md § UI Philosophy | Cosmetics shop visible but non-functional in Beta; clear labeling on currency purpose | None (UI placeholder) |
+| B4.1 | SPEC.md § Trading | Brokered Coins ↔ Stars trading (system-priced, premium, burn, eligibility gates) | **Invariant**: Brokered trades never create Coins or Stars; preserve liquidity |
+| B4.2 | persistent-state.md § Trades log | Append-only brokered_trades and brokered_trade_events tables | None (audit trail) |
+| B4.3 | SPEC.md § Trading Rules | Eligibility gates, tightening curve, burn mechanics, premium scaling | **Invariant**: Trades always contribute to market pressure (never relieve) |
+| B4.4 | http-api-reference.md (future) | REST endpoints for trade preview, execute, history | None (API surface) |
+| B4.5 | README.md § UI Philosophy | Trading desk with clear warnings (burns, ineligibility, premium) | None (UI only) |
+| B5.1 | SPEC.md § Hard TSA invariants | TSAs are seasonal, system-minted only, never convert into Coins/Stars | **Invariant**: Stars sacrificed are permanently destroyed; TSA supply is observable |
+| B5.2 | persistent-state.md § TSA Mint Log | Append-only tsa_inventory and tsa_mint_log tables | None (audit trail) |
+| B5.3 | phase 12 (post-alpha) | Star Sacrifice → TSA minting (irreversible, rank drop, logged) | **Invariant**: Stars destroyed; no refunds; minting is immutable |
+| B5.4 | SPEC.md § TSA trading (Beta-only) | TSA inventory exposed in API/SSE | None (informational) |
+| B5.5 | README.md § UI Philosophy | Mint flow with clear warnings (irreversible, rank drop) | None (UI only, but warnings are mandatory) |
+| B6.1 | SPEC.md § TSA trading (Beta-only) | Player-to-player TSA trading (negotiated; server enforces legality, caps, logging) | **Invariant**: Trades are immutable; supply is preserved; no Coin/Star generation |
+| B6.2 | anti-abuse.md | New abuse signals for trading (reciprocal trades, IP clustering, suspicious ratios) | None (detection only) |
+| B6.3 | notifications.md | Trade offer and completion notifications | None (audit trail) |
+| B6.4 | README.md § UI Philosophy | Trading interface with abuse warnings (if visible to player) | None (UI only) |
+| B7.1 | notifications.md | Audit all notification types for clarity and correctness | None (quality assurance) |
+| B7.2 | README.md § Economy Dashboard | Add Beta metrics (trade volume, burn, premium, TSA activity) | None (informational) |
+| B7.3 | README.md § Game Bible | Cross-audit canon and code; document and resolve all drift | None (process) |
+| B7.4 | README.md § Bible Requirements | E2E test suite for all B1–B7 features and invariants | None (validation) |
+
+---
+
+## Acceptance Tests (Per Build)
+
+Each build defines explicit acceptance criteria. This section details comprehensive test coverage.
+
+### B1 — Beta Runtime Foundation
+
+**Test B1.1: PHASE config gates Beta features**
+- When `PHASE=alpha`, all Beta routes return 404 or error.
+- When `PHASE=beta`, Beta routes respond normally.
+- When `PHASE=release`, all routes respond normally.
+- **Expected:** Feature gating works correctly; no cross-contamination.
+
+**Test B1.2: Season length respects config**
+- Alpha season runs 14 days; Beta season runs 28 days.
+- Advancing time confirms duration is respected.
+- Season end fires at correct tick.
+- **Expected:** Season length is configurable and respected; no early/late ends.
+
+**Test B1.3: Multi-season scheduler runs independent tick loops**
+- Create season A (day 1) and season B (day 15, overlapping).
+- Advance time 1 tick; both seasons tick independently.
+- Economy state diverges correctly per season.
+- **Expected:** Ticks are independent; economy state is per-season; no leakage.
+
+**Test B1.4: Season lobby lists all active seasons**
+- Create 2 active seasons and 1 ended season.
+- GET /seasons returns 2 seasons (excludes ended).
+- Metadata includes start_date, end_date, current_day, player_count.
+- **Expected:** Lobby is correct and complete; ended seasons excluded.
+
+**Test B1.5: Frontend reads PHASE config**
+- Frontend requests /config; receives `{"phase":"beta"}`.
+- Frontend conditionally renders Beta-only UI (e.g., TSA menu).
+- Compare rendered state to phase value.
+- **Expected:** UI matches phase; no feature leakage.
+
+---
+
+### B2 — Persistent Score + Profile Shell
+
+**Test B2.1: Stars convert to permanent score at season end**
+- Player earns 100 stars mid-season.
+- Season ends (tick boundary).
+- permanent_score entry created with season_id and final_star_count.
+- Player's profile shows permanent_score (100).
+- **Expected:** Conversion is atomic and immutable; no star loss.
+
+**Test B2.2: Permanent score is read-only**
+- Player attempts to spend permanent_score (via API manipulation).
+- Request rejected; permanent_score unchanged.
+- Only through Star Sacrifice (B5) can permanent_score be affected indirectly (rank drop).
+- **Expected:** Permanent score is immutable; no direct edits possible.
+
+**Test B2.3: Profile endpoint returns all required fields**
+- GET /players/{player_id}/profile returns permanent_score, season_count, last_season_id, top_5_seasons.
+- Response includes all fields; no missing data.
+- Endpoint latency < 100ms.
+- **Expected:** Profile data is complete and fast.
+
+**Test B2.4: Profile UI renders without errors**
+- Load profile page for player with permanent_score.
+- All fields render correctly; layout is responsive (mobile, tablet, desktop).
+- Clicking season in history does not error.
+- **Expected:** UI is robust and accessible.
+
+**Test B2.5: Permanent score notification fires**
+- Season ends; player receives notification within 1 second.
+- Notification includes "+X Stars earned" and "Total permanent score: Y".
+- Clicking notification navigates to profile.
+- **Expected:** Notification is timely and actionable.
+
+---
+
+### B3 — Meta Currency (Cosmetic Only)
+
+**Test B3.1: Meta currency cannot convert to Coins or Stars**
+- Player has 100 meta currency.
+- Attempts to trade metal currency for Coins (API endpoint manipulation).
+- Request rejected; balance unchanged.
+- Attempt to spend meta currency on star purchase.
+- Request rejected.
+- **Expected:** No conversion paths exist; invariant is enforced.
+
+**Test B3.2: Meta currency grant is logged immutably**
+- Admin grants 50 meta currency to player.
+- grant_log entry created (player_id, season_id, 50, "admin_grant", timestamp, admin_note).
+- Player cannot delete or modify log entry.
+- **Expected:** Log is append-only; cannot be tampered with.
+
+**Test B3.3: Cosmetics shop is non-functional in Beta**
+- Player navigates to cosmetics shop.
+- Shop displays but all purchase buttons are disabled or hidden.
+- UI explains: "Cosmetics coming soon."
+- **Expected:** Shop is placeholder; no unintended purchases.
+
+**Test B3.4: Meta currency appears in API with correct label**
+- GET /seasons returns `{"meta_currency_balance":50,"meta_currency_label":"Cosmetic Currency (Non-Tradable)"}`.
+- Frontend displays label clearly.
+- **Expected:** Frontend accurately represents currency purpose.
+
+---
+
+### B4 — Brokered Trading
+
+**Test B4.1: Eligibility gates work correctly**
+- Player A (recent spender, active) can trade.
+- Player B (new player, no spend history) cannot trade.
+- Player C (throttled due to abuse) cannot trade.
+- **Expected:** Gates are enforced; ineligibility is clear.
+
+**Test B4.2: Trade preview shows correct quote and burn**
+- Player requests trade preview: sell 10 stars for coins.
+- Response includes: coins_offered, coin_burned, premium_percentage, reason_for_ineligibility (if applicable).
+- Burn amount is > 0 and < coins_offered.
+- **Expected:** Quote is transparent and accurate.
+
+**Test B4.3: Tightening curve works over season**
+- Mid-season (day 7/28): trade burn 10%, premium 5%.
+- Late season (day 25/28): trade burn 40%, premium 25%.
+- Verify burn% and premium% increase monotonically.
+- **Expected:** Curve is progressive and predictable.
+
+**Test B4.4: Trade execution is atomic**
+- Player executes trade (10 stars for 500 coins, 50 burned, 475 received).
+- Transaction fails midway (e.g., DB error).
+- State rollback verified; player has original 10 stars, trade_id not created.
+- Retry succeeds; trade_id unique, state updated correctly.
+- **Expected:** Trades are all-or-nothing; no partial states.
+
+**Test B4.5: Brokered testing contributes to market pressure**
+- Before trade: market_pressure = 50.
+- Player executes trade; pressure increases to 51 (+1 for trade contribution).
+- Multiple trades: pressure increases monotonically.
+- **Expected:** Pressure always increases after trades; never decreases.
+
+**Test B4.6: Trading desk UI shows eligibility feedback**
+- Eligible player sees: green checkmark; quote shown.
+- Ineligible player sees: red X; reason for ineligibility (e.g., "Insufficient spend history").
+- Late-season player sees: yellow warning; "Burn rate is high; confirm?".
+- **Expected:** Feedback is clear and actionable.
+
+---
+
+### B5 — TSAs (Competitive Assets)
+
+**Test B5.1: Star Sacrifice → TSA minting works**
+- Player with 100 stars sacrifices 20 stars.
+- 20 stars deducted from star_balance.
+- 20 stars logged as destroyed in tsa_mint_log.
+- TSA inventory updated (+20 TSAs or appropriate quantity based on 1:1 or other formula).
+- **Expected:** Sacrifice is irreversible; no refunds; TSA created.
+
+**Test B5.2: Rank drops after sacrifice**
+- Player rank (leaderboard position) before: 10.
+- Sacrifice stars; rank after: > 10 (lower rank = further down leaderboard).
+- Rank drop magnitude = stars_sacrificed / total_season_stars (approximately).
+- **Expected:** Rank drop is proportional and immediate.
+
+**Test B5.3: TSA inventory endpoint returns correct data**
+- GET /players/{player_id}/tsa-inventory returns `{"TSA_TYPE_A": 20}`.
+- SSE on economy tick includes TSA inventory state.
+- Frontend can display inventory without errors.
+- **Expected:** Inventory is readable and complete.
+
+**Test B5.4: Mint UI shows warnings clearly**
+- Player clicks "Sacrifice Stars for TSAs".
+- Modal warns: "Sacrifice is IRREVERSIBLE. Your rank will drop immediately. Do you want to continue?"
+- After confirmation, sacrifice completes; warning acknowledged.
+- **Expected:** Player makes informed decision; no accidental sacrifices.
+
+**Test B5.5: Season end wipes TSA inventory**
+- Player ends season with 20 TSAs.
+- Season transitions to ended.
+- TSA inventory is zeroed or archived (not carried to next season).
+- Next season start: player has 0 TSAs.
+- **Expected:** TSAs do not carry between seasons; each season starts fresh.
+
+---
+
+### B6 — TSA Trading + Anti-Abuse
+
+**Test B6.1: Player-to-player TSA trade offer created**
+- Player A offers: 5 TSAs to Player B.
+- Player B offers: 100 coins back.
+- Trade offer created (offer_id, seller_A, buyer_B, items, consideration, status=pending).
+- Both players notified.
+- **Expected:** Offer is recorded; notifications sent.
+
+**Test B6.2: Trade offer accepted and executed**
+- Player B receives offer; views details.
+- Clicks "Accept".
+- Trade executes atomically: A loses 5 TSAs, B gains 5 TSAs; B loses 100 coins, A gains 100 coins.
+- Both players notified: "Trade completed."
+- trade_offers.status = accepted; trade_id created in tsa_trade_log.
+- **Expected:** Trade is atomic; notifications reflect final state.
+
+**Test B6.3: Reciprocal trade detection works**
+- Player A sells 5 TSAs to B for 100 coins.
+- Player B immediately offers to sell 5 TSAs back to A for 100 coins (or similar).
+- Abuse signal fired for "reciprocal_trade".
+- Both players' abuse_events incremented; throttle applied if threshold met.
+- **Expected:** Pattern detected; dampening applied.
+
+**Test B6.4: IP clustering detection works**
+- 3 accounts on same IP trade heavily (e.g., 10+ trades/hour).
+- Abuse signal fired for "ip_clustering_trading".
+- Accounts are throttled; trade costs increase or limits tighten.
+- **Expected:** Abuse is detected; dampening applied.
+
+**Test B6.5: Trade history endpoint returns complete logs**
+- GET /trades/history returns all trades for player (sent offers, received offers, completed trades).
+- Data includes timestamps, counterparty IDs, items, and status.
+- Admin can query /admin/trades/history?player_id=X for audit.
+- **Expected:** History is complete and queryable; admin visibility intact.
+
+---
+
+### B7 — Beta UX Polish
+
+**Test B7.1: All notification types are present and clear**
+- Trigger each notification type: trade offer, trade completion, TSA mint, permanent score milestone, season end.
+- Verify each notification has clear copy, relevant link, and timestamp.
+- No duplicate notifications in same second.
+- **Expected:** Notifications are canonical and non-duplicative.
+
+**Test B7.2: Economy dashboard includes Beta metrics**
+- Load economy dashboard.
+- Verify display of: trade volume (today, week), burn rate (trend), premium (current, trend), TSA minting volume.
+- All metrics update in real-time (SSE).
+- Explanatory tooltips explain each metric.
+- **Expected:** Dashboard is informative and up-to-date.
+
+**Test B7.3: Canon and code aligned (no drift)**
+- Audit README sections (SPEC.md, persistent-state.md, SPEC.md) vs. B1–B6 implementations.
+- Document any discrepancies.
+- Update README or code to resolve drift.
+- Final verification: canon and code agree byte-for-byte on core rules (no cherry-picking).
+- **Expected:** Drift is zero; future audits will be faster.
+
+**Test B7.4: E2E test suite passes 100%**
+- Run full test suite covering B1–B7.
+- All tests pass.
+- Coverage includes happy path, edge cases, error cases, and anti-patterns.
+- Suite completes in < 5 minutes.
+- **Expected:** Beta is production-ready; regression tests are fast and reliable.
+
+---
+
+---
+
 ## Phase 3 — Economy Emission & Pools
 - [x] [DONE] 3.1 Emission pool and daily budget
 - [x] [DONE] 3.2 Emission time‑sliced per tick
