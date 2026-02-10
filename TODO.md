@@ -205,7 +205,6 @@ Anti-cheat is **gradual, invisible, and corrective**, not punitive.
 
 ---
 
-<<<<<<< HEAD
 ## Phase 9 — Admin & Observability (Read‑Only in Alpha; Sentinels, Not Gods)
 
 ### Admin Role Philosophy: Sentinels, Not Gods
@@ -229,11 +228,7 @@ Anti-cheat is **gradual, invisible, and corrective**, not punitive.
 
 ### Implementation Status
 
-- [x] [DONE] 9.1 Alpha admin bootstrap (owner claim code, one‑shot, DB‑sealed)
-=======
-## Phase 9 — Admin & Observability (Read‑Only in Alpha)
 - [x] [DONE] 9.1 Alpha admin bootstrap (ENV‑seeded, one‑shot, DB‑sealed)
->>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 - [x] [DONE] 9.2 Moderator role support
 - [x] [DONE] 9.3 Economy monitoring endpoints (read-only)
 - [x] [DONE] 9.4 Notifications system
@@ -247,8 +242,6 @@ Anti-cheat is **gradual, invisible, and corrective**, not punitive.
 - [ ] [POST-ALPHA] 9.9b Targeted notifications to individual players
 - [ ] [POST-ALPHA] 9.10 Trading visibility (premium, burn rate, eligibility tightness, trade logs)
 - [ ] [POST-ALPHA] 9.11 Enhanced player inspection (coin earning history, throttle status detail, IP clustering views)
-
-Alpha admin bootstrap finalized: owner claim code, one‑shot, DB‑sealed. No gate keys.
 
 Alpha admin bootstrap finalized: ENV‑seeded, one‑shot, DB‑sealed. No gate keys.
 

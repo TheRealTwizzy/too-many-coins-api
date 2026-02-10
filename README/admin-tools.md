@@ -68,6 +68,24 @@ This separation ensures **clean audit trails** and prevents **conflicts of inter
 
 ---
 
+## Moderator Role & Capability Matrix
+
+Moderators are scoped to **profile hygiene and report triage** only. No economy control, no enforcement actions.
+
+| Capability | Moderator | Admin | Notes |
+|------------|-----------|-------|------|
+| View player profile fields | Yes | Yes | Read-only for economy fields |
+| Edit profile fields (bio/pronouns/location/website/avatar) | Yes | Yes | Cosmetic only |
+| View bug reports | Yes | Yes | Read-only in Alpha |
+| Tag/triage reports | Yes | Yes | Labels only; no deletion |
+| Freeze/unfreeze accounts | No | Yes | Admin-only with audit log |
+| Change roles (player/mod/admin) | No | Yes | Admin-only |
+| Economy controls (season pause, emission) | No | Yes | Admin-only |
+
+**Audit trail:** All moderator actions must be logged in `admin_audit_log` with `action_type` values prefixed by `moderator_` (implementation pending).
+
+---
+
 ## Telemetry Rules — Player-Facing Subset Only
 
 Only telemetry that influences **player decisions** may be shown to players.
@@ -110,6 +128,12 @@ Admin telemetry is **never exposed to players**.
 ---
 
 ## Required admin capabilities are split by phase. Alpha is read‑only.
+
+Alpha bootstrap (ENV-seeded):
+
+- First admin is created at startup using `ADMIN_BOOTSTRAP_PASSWORD`.
+- Admin logs in once and sets a permanent password.
+- Claim-code flow is disabled by default; enable only if explicitly required.
 
 Alpha (read‑only, current build):
 
@@ -209,6 +233,11 @@ Temporarily disable trading per season if needed.
 
 All admin actions are logged and auditable.
 
+Whitelist (Alpha):
+
+- Whitelist is deprecated in Alpha and disabled by default.
+- Admin UI may display a post‑alpha placeholder only.
+
 ---
 
 ## Admin Action Audit Trail
@@ -220,7 +249,7 @@ All administrative actions are logged to an **append-only, immutable audit log**
 | Action Type | Scope Type | When Triggered | Details Captured |
 |------------|-----------|----------------|-----------------|
 | **auto_admin_bootstrap** | `account` | Server startup creates first admin | `{"username": "alpha-admin", "autoCreated": true}` |
-| **admin_bootstrap_claim** | `account` | Owner claims bootstrap with code | `{"username": "...", "claimedAt": "..."}` |
+| **admin_bootstrap_claim** | `account` | Deprecated; claim flow disabled by default | `{"username": "...", "claimedAt": "..."}` |
 | **role_update** | `account` | Admin changes user role | `{"username": "...", "oldRole": "player", "newRole": "admin"}` |
 | **profile_freeze** | `account` | Admin freezes account | `{"username": "...", "reason": "..."}` |
 | **profile_unfreeze** | `account` | Admin unfreezes account | `{"username": "...", "reason": "..."}` |

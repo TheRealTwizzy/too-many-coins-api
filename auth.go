@@ -155,11 +155,7 @@ func authenticate(db *sql.DB, username, password string) (*Account, error) {
 		&account.AccountID,
 		&account.Username,
 		&account.DisplayName,
-<<<<<<< HEAD
 		&playerID,
-=======
-		&account.PlayerID,
->>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 		&passwordHash,
 		&role,
 		&mustChangePassword,
@@ -185,17 +181,10 @@ func authenticate(db *sql.DB, username, password string) (*Account, error) {
 	if !verifyPassword(passwordHash, password) {
 		return nil, errors.New("INVALID_CREDENTIALS")
 	}
-<<<<<<< HEAD
-	if normalizeRole(role) == "admin" && mustChangePassword {
-		return nil, errors.New("ADMIN_BOOTSTRAP_REQUIRED")
-	}
-=======
->>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 
 	_, _ = db.Exec(`UPDATE accounts SET last_login_at = NOW() WHERE account_id = $1`, account.AccountID)
 
 	account.Role = normalizeRole(role)
-<<<<<<< HEAD
 	if account.Role == "admin" {
 		account.PlayerID = ""
 	} else if playerID.Valid {
@@ -203,8 +192,6 @@ func authenticate(db *sql.DB, username, password string) (*Account, error) {
 	} else {
 		return nil, errors.New("PLAYER_MISSING")
 	}
-=======
->>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 	account.MustChangePassword = mustChangePassword
 	if email.Valid {
 		account.Email = email.String
@@ -281,11 +268,7 @@ func getSessionAccount(db *sql.DB, r *http.Request) (*Account, string, error) {
 		&account.AccountID,
 		&account.Username,
 		&account.DisplayName,
-<<<<<<< HEAD
 		&playerID,
-=======
-		&account.PlayerID,
->>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 		&role,
 		&mustChangePassword,
 		&expiresAt,
@@ -304,7 +287,6 @@ func getSessionAccount(db *sql.DB, r *http.Request) (*Account, string, error) {
 	}
 
 	account.Role = normalizeRole(role)
-<<<<<<< HEAD
 	if account.Role == "admin" {
 		account.PlayerID = ""
 	} else if playerID.Valid {
@@ -312,8 +294,6 @@ func getSessionAccount(db *sql.DB, r *http.Request) (*Account, string, error) {
 	} else {
 		return nil, "", errors.New("PLAYER_MISSING")
 	}
-=======
->>>>>>> a7f569c (Refactor authentication flow and database schema for Phase 0)
 	account.MustChangePassword = mustChangePassword
 
 	return &account, cookie.Value, nil

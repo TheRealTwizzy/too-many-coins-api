@@ -99,35 +99,25 @@ This document identifies implemented features, systems, and mechanics that are e
 
 ---
 
-### 6. Admin Audit Log Action Types (Missing Taxonomy)
-**Status:** Implemented in `admin_handlers.go`, **NO** taxonomy documented
+### 6. Admin Audit Log Action Types (Taxonomy Documented)
+**Status:** Documented in README/admin-tools.md
 **Issue:**
-- Audit log stores `action_type` and `scope_type` but values not enumerated
-- Code shows examples but no complete list
-- No documentation of what action types exist
-- Admin governance docs don't reference this
+- Taxonomy is now listed in admin-tools, but may diverge from implementation as new actions are added.
 
 **What's Missing:**
-- Complete enumeration of all action_type values
-- Complete enumeration of all scope_type values
-- Meaning and implications of each action
 - Audit log retention policy
+- Ongoing process to keep taxonomy synced with code
 
 ---
 
-### 7. Anti-Cheat Event Types (Not in Game Bible)
-**Status:** Implemented in `abuse.go`, **NOT** documented
+### 7. Anti-Cheat Event Types (Documented)
+**Status:** Documented in README/anti-abuse.md
 **Issue:**
-- Detects event types: `activity_regular_interval`, `tick_reaction_burst`, `ip_cluster_activity`
-- Anti-abuse.md doesn't list these
-- Thresholds and response logic not documented
-- False positive behavior unexplained
+- Thresholds and response logic are now centralized, but require periodic validation against code.
 
 **What's Missing:**
-- All event type definitions
-- Detection thresholds
-- Response behavior for each event
-- How detection relates to throttling
+- False-positive handling policy
+- Operator runbook for overrides
 
 ---
 
@@ -225,18 +215,13 @@ This document identifies implemented features, systems, and mechanics that are e
 
 ---
 
-### 14. Moderator Role & Capabilities (Incomplete)
-**Status:** Handler exists (`moderatorProfileHandler`), governance incomplete
+### 14. Moderator Role & Capabilities (Documented)
+**Status:** Documented in README/admin-tools.md
 **Issue:**
-- `/moderator/profile` endpoint exists
-- What moderators can do not clearly scoped
-- Difference from admin not explained
+- Capability matrix defined; audit logging for moderator actions still pending implementation.
 
 **What's Missing:**
-- Moderator vs Admin capability matrix
-- What moderators can inspect
-- What moderators cannot do
-- Audit trail for moderator actions
+- Finalized action_type list for moderator audit logs
 
 ---
 

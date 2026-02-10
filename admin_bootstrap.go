@@ -77,6 +77,12 @@ func adminBootstrapStatusHandler(db *sql.DB) http.HandlerFunc {
 
 func adminBootstrapClaimHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if strings.TrimSpace(os.Getenv("ENABLE_OWNER_CLAIM")) != "true" {
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "FEATURE_DISABLED"})
+			return
+		}
+
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return

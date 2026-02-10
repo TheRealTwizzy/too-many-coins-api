@@ -59,7 +59,6 @@ All endpoints return JSON with a consistent structure:
 | `ACCOUNT_FROZEN` | 200 | Login | Account suspended; cannot log in |
 | `UNAUTHORIZED` | 401 | General | Session missing or expired; request new login |
 | `FORBIDDEN` | 403 | Auth | Valid session but lacks permission (non-admin accessing admin endpoint) |
-| `ADMIN_BOOTSTRAP_REQUIRED` | 403 | Admin | Owner bootstrap not yet claimed; use `/admin/bootstrap/claim` first |
 | `INVALID_REQUEST` | 400 | General | Malformed JSON or missing required fields |
 | `INVALID_PLAYER_ID` | 200 | Player | PlayerID not valid UUID format |
 | `INVALID_AMOUNT` | 200 | Economy | Coin/star amount invalid (≤0 or out of range) |
@@ -489,6 +488,19 @@ Complete password reset using reset token.
 
 ---
 
+#### `POST /auth/change-password`
+
+Change password for the current authenticated account.
+
+| Property | Value |
+|----------|-------|
+| Authentication | Session cookie |
+| Request | `{ "currentPassword": "...", "newPassword": "..." }` |
+| Response | `{ "ok": true }` |
+| Error Codes | `INVALID_REQUEST`, `INVALID_PASSWORD`, `INVALID_CREDENTIALS` |
+
+---
+
 ### ADMIN ENDPOINTS
 
 **Authentication:** All require valid admin session.
@@ -501,21 +513,8 @@ Check admin bootstrap status.
 |----------|-------|
 | Authentication | Admin |
 | Request | (none) |
-| Response | `{ "ok": true, "bootstrapSealed": true, "adminExists": true, "passwordChanged": true }` |
-| Error Codes | `ADMIN_BOOTSTRAP_REQUIRED` |
-
----
-
-#### `POST /admin/bootstrap/claim`
-
-Claim admin ownership with rotating claim code.
-
-| Property | Value |
-|----------|-------|
-| Authentication | None (pre-bootstrap) |
-| Request | `{ "claimCode": "XXXXXX" }` |
-| Response | `{ "ok": true, "message": "Bootstrap claimed; set password at /admin/initialize" }` |
-| Error Codes | `INVALID_REQUEST` |
+| Response | `{ "adminLocked": false, "windowSecondsRemaining": 0 }` |
+| Notes | Env-seeded bootstrap. Claim-code flow is disabled by default. |
 
 ---
 

@@ -127,10 +127,10 @@ func playerHandler(db *sql.DB) http.HandlerFunc {
 		ubiMultiplier := float64(currentUBI) / float64(baseUBI)
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"playerCoins":      player.Coins,
-			"playerStars":      player.Stars,
-			"activityWarmup":   warmupLevel,
-			"ubiMultiplier":    ubiMultiplier,
+			"playerCoins":       player.Coins,
+			"playerStars":       player.Stars,
+			"activityWarmup":    warmupLevel,
+			"ubiMultiplier":     ubiMultiplier,
 			"currentUBIPerTick": currentUBI,
 		})
 	}
@@ -1218,6 +1218,62 @@ func resetPasswordHandler(db *sql.DB) http.HandlerFunc {
 				json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
 				return
 			}
+		}
+		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
+	}
+}
+
+func changePasswordHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		account, ok := requireSession(db, w, r)
+		if !ok {
+			return
+		}
+		var req ChangePasswordRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+		currentPassword := strings.TrimSpace(req.CurrentPassword)
+		newPassword := strings.TrimSpace(req.NewPassword)
+		if currentPassword == "" {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+		if len(newPassword) < 8 || len(newPassword) > 128 {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_PASSWORD"})
+			return
+		}
+
+		var passwordHash string
+		if err := db.QueryRow(`
+			SELECT password_hash
+			FROM accounts
+			WHERE account_id = $1
+		`, account.AccountID).Scan(&passwordHash); err != nil {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if !verifyPassword(passwordHash, currentPassword) {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INVALID_CREDENTIALS"})
+			return
+		}
+		newHash, err := hashPassword(newPassword)
+		if err != nil {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		if _, err := db.Exec(`
+			UPDATE accounts
+			SET password_hash = $2, must_change_password = FALSE
+			WHERE account_id = $1
+		`, account.AccountID, newHash); err != nil {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
 		}
 		json.NewEncoder(w).Encode(SimpleResponse{OK: true})
 	}

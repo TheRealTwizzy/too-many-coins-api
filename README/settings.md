@@ -40,6 +40,26 @@ PHASE=alpha
 
 ---
 
+### Admin Bootstrap (Alpha)
+
+| Variable | Type | Default | Purpose | Required |
+|----------|------|---------|---------|----------|
+| `ADMIN_BOOTSTRAP_PASSWORD` | string | — | Initial password for the auto-created admin | ✅ **Required** (Alpha) |
+| `ENABLE_OWNER_CLAIM` | bool | `false` | Enable claim-code bootstrap flow | Optional |
+| `OWNER_CLAIM_SECRET` | string | — | Secret used to generate claim codes | Required only if claim flow is enabled |
+
+**Notes:**
+- Admin bootstrap is env-seeded by default. Claim-code flow is disabled unless `ENABLE_OWNER_CLAIM=true`.
+- The bootstrap admin must change the password on first login.
+
+**Example:**
+```bash
+ADMIN_BOOTSTRAP_PASSWORD=change-me-now
+ENABLE_OWNER_CLAIM=false
+```
+
+---
+
 ### Feature Flags
 
 **Defined in:** [feature_flags.go](../feature_flags.go#L5-L21)

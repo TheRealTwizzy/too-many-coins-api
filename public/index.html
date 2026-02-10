@@ -879,6 +879,11 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 								<input id="profile-avatar" placeholder="Avatar URL" />
 								<textarea id="profile-bio" rows="3" placeholder="Bio"></textarea>
 								<input id="profile-email" placeholder="Email (for password reset)" />
+								<div class="label" style="margin-top:0.5rem;">Change password</div>
+								<input id="profile-current-password" type="password" placeholder="Current password" />
+								<input id="profile-new-password" type="password" placeholder="New password" />
+								<input id="profile-confirm-password" type="password" placeholder="Confirm new password" />
+								<button id="profile-password-save">Update password</button>
 								<button id="profile-save">Save</button>
 								<div class="notification-settings">
 									<div class="label">Notification settings</div>
@@ -1075,17 +1080,14 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 			<div class="section-stack" style="max-width: 560px;">
 				<div class="card hero-card">
 					<div class="label">Admin initialization</div>
-					<h2 style="margin:0.35rem 0 0;">Claim the admin account.</h2>
-					<div class="muted">Owner-only. Uses the rotating claim code.</div>
+					<h2 style="margin:0.35rem 0 0;">Bootstrap via environment.</h2>
+					<div class="muted">Set ADMIN_BOOTSTRAP_PASSWORD and log in once to set a permanent password.</div>
 				</div>
 				<div class="card" id="admin-init-card">
 					<div class="stack">
-						<input id="admin-claim-code" placeholder="Owner claim code" />
-						<input id="admin-claim-password" type="password" placeholder="New admin password" />
-						<input id="admin-claim-confirm" type="password" placeholder="Confirm password" />
-						<button class="primary" id="admin-claim-submit" type="button">Set admin password</button>
-						<div id="admin-claim-status" class="label"></div>
-						<div id="admin-claim-rotation" class="muted"></div>
+						<div class="label">Bootstrap flow</div>
+						<div class="muted">Owner claim codes are disabled. Use environment bootstrap instead.</div>
+						<div id="admin-init-status" class="label"></div>
 						<div class="label"><a href="#/home">Back to login</a></div>
 					</div>
 				</div>
@@ -1294,10 +1296,10 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 						</section>
 
 						<section id="admin-whitelist" class="admin-section">
-							<h3>Whitelist Management</h3>
+							<h3>Whitelist (Post-Alpha)</h3>
 							<div class="card">
-								<div class="label">Batch review only</div>
-								<div class="muted">Requests grouped by IP hash. Approvals happen in waves.</div>
+								<div class="label">Deprecated in Alpha</div>
+								<div class="muted">Alpha uses throttles only. This panel is a post-alpha placeholder.</div>
 								<div id="admin-whitelist-queue" class="admin-empty" style="margin-top:0.75rem;">Whitelist queue is offline.</div>
 							</div>
 						</section>
@@ -1495,6 +1497,10 @@ const profileWebsite = document.getElementById("profile-website");
 const profileAvatar = document.getElementById("profile-avatar");
 const profileAvatarImg = document.getElementById("profile-avatar-img");
 const profileBio = document.getElementById("profile-bio");
+const profileCurrentPassword = document.getElementById("profile-current-password");
+const profileNewPassword = document.getElementById("profile-new-password");
+const profileConfirmPassword = document.getElementById("profile-confirm-password");
+const profilePasswordSave = document.getElementById("profile-password-save");
 const seasonSnapshot = document.getElementById("season-snapshot");
 const profileSave = document.getElementById("profile-save");
 const playerPanels = document.getElementById("player-panels");
@@ -1553,13 +1559,8 @@ const adminSeasonDetail = document.getElementById("admin-season-detail");
 const adminSeasonMetrics = document.getElementById("admin-season-metrics");
 const debugStatus = document.getElementById("debug-status");
 const adminDebugToggle = document.getElementById("admin-debug-toggle");
-const adminClaimCode = document.getElementById("admin-claim-code");
-const adminClaimPassword = document.getElementById("admin-claim-password");
-const adminClaimConfirm = document.getElementById("admin-claim-confirm");
-const adminClaimSubmit = document.getElementById("admin-claim-submit");
-const adminClaimStatus = document.getElementById("admin-claim-status");
-const adminClaimRotation = document.getElementById("admin-claim-rotation");
 const adminInitCard = document.getElementById("admin-init-card");
+const adminInitStatus = document.getElementById("admin-init-status");
 
 if (window.__INLINE_DEBUG__ && debugStatus) {
 	debugStatus.innerText = "App script running.";
@@ -3506,6 +3507,9 @@ function initHome() {
 			await refreshPlayer();
 			await loadSeasons();
 			setToast("Logged in.", "success");
+			if (data.isAdmin && data.mustChangePassword) {
+				setToast("Admin: change your password now.", "warning");
+			}
 			if (!document.hidden) {
 				startActiveLoops();
 			}
@@ -3548,6 +3552,39 @@ function initHome() {
 		}
 		setToast("Profile updated.", "success");
 	});
+
+	if (profilePasswordSave) {
+		profilePasswordSave.addEventListener("click", async () => {
+			const currentPassword = profileCurrentPassword ? profileCurrentPassword.value : "";
+			const newPassword = profileNewPassword ? profileNewPassword.value : "";
+			const confirmPassword = profileConfirmPassword ? profileConfirmPassword.value : "";
+			if (!currentPassword || !newPassword) {
+				setToast("Enter current and new password.", "error");
+				return;
+			}
+			if (newPassword.length < 8) {
+				setToast("New password must be at least 8 characters.", "error");
+				return;
+			}
+			if (newPassword !== confirmPassword) {
+				setToast("New passwords do not match.", "error");
+				return;
+			}
+			const res = await apiFetch("/auth/change-password", {
+				method: "POST",
+				body: JSON.stringify({ currentPassword, newPassword })
+			});
+			const data = await res.json();
+			if (!data.ok) {
+				setToast(data.error || "Password update failed", "error");
+				return;
+			}
+			if (profileCurrentPassword) profileCurrentPassword.value = "";
+			if (profileNewPassword) profileNewPassword.value = "";
+			if (profileConfirmPassword) profileConfirmPassword.value = "";
+			setToast("Password updated.", "success");
+		});
+	}
 
 	document.getElementById("claim-daily").addEventListener("click", async () => {
 		if (seasonStatusValue(currentSeasonSnapshot) === "ended") {
@@ -3651,21 +3688,10 @@ function initReset() {
 	});
 }
 
-function setAdminClaimStatus(message, isError) {
-	if (!adminClaimStatus) return;
-	adminClaimStatus.innerText = message || "";
-	adminClaimStatus.style.color = isError ? "#fecaca" : "";
-}
-
-function updateAdminClaimRotation(secondsRemaining) {
-	if (!adminClaimRotation) return;
-	if (typeof secondsRemaining !== "number" || !isFinite(secondsRemaining)) {
-		adminClaimRotation.innerText = "";
-		return;
-	}
-	adminClaimRotation.innerText = secondsRemaining > 0
-		? `Code rotates in ${secondsRemaining}s.`
-		: "Code rotates soon.";
+function setAdminInitStatus(message, isError) {
+	if (!adminInitStatus) return;
+	adminInitStatus.innerText = message || "";
+	adminInitStatus.style.color = isError ? "#fecaca" : "";
 }
 
 async function loadAdminBootstrapStatus() {
@@ -3680,10 +3706,10 @@ async function loadAdminBootstrapStatus() {
 async function refreshAdminInitializeView() {
 	if (!adminInitCard) return;
 	adminInitCard.style.display = "none";
-	setAdminClaimStatus("Checking admin lock status...", false);
+	setAdminInitStatus("Checking admin lock status...", false);
 	const status = await loadAdminBootstrapStatus();
 	if (!status) {
-		setAdminClaimStatus("Unable to load bootstrap status.", true);
+		setAdminInitStatus("Unable to load bootstrap status.", true);
 		return;
 	}
 	if (!status.adminLocked) {
@@ -3691,52 +3717,12 @@ async function refreshAdminInitializeView() {
 		return;
 	}
 	adminInitCard.style.display = "block";
-	setAdminClaimStatus("", false);
-	updateAdminClaimRotation(status.windowSecondsRemaining);
+	setAdminInitStatus("Bootstrap uses ADMIN_BOOTSTRAP_PASSWORD. Log in and change the password.", false);
 }
 
 function initAdminInitialize() {
 	adminBootstrapInitialized = true;
-	if (adminClaimSubmit) {
-		adminClaimSubmit.addEventListener("click", async () => {
-			if (!adminClaimCode || !adminClaimPassword || !adminClaimConfirm) return;
-			const code = adminClaimCode.value.trim();
-			const newPassword = adminClaimPassword.value;
-			const confirmPassword = adminClaimConfirm.value;
-			if (!code) {
-				setAdminClaimStatus("Enter the owner claim code.", true);
-				return;
-			}
-			if (!newPassword || newPassword.length < 8) {
-				setAdminClaimStatus("Password must be at least 8 characters.", true);
-				return;
-			}
-			if (newPassword !== confirmPassword) {
-				setAdminClaimStatus("Passwords do not match.", true);
-				return;
-			}
-
-			setAdminClaimStatus("Submitting claim...", false);
-			try {
-				const res = await apiFetch("/admin/bootstrap/claim", {
-					method: "POST",
-					body: JSON.stringify({ code, newPassword })
-				});
-				const data = await res.json();
-				if (!data.ok) {
-					const message = data.error || "Claim failed.";
-					setAdminClaimStatus(message, true);
-					return;
-				}
-				setAdminClaimStatus("Admin unlocked. Redirecting to login...", false);
-				setTimeout(() => {
-					location.hash = "#/home";
-				}, 600);
-			} catch (e) {
-				setAdminClaimStatus("Claim failed (network error).", true);
-			}
-		});
-	}
+	setAdminInitStatus("Bootstrap is env-only in Alpha. Claim codes are disabled.", false);
 }
 
 function initModerator() {
