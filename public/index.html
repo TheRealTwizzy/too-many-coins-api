@@ -1123,6 +1123,7 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 						<nav class="admin-nav" id="admin-nav">
 							<button type="button" data-target="admin-overview">Overview</button>
 							<button type="button" data-target="admin-seasons">Seasons</button>
+							<button type="button" data-target="admin-telemetry">Telemetry</button>
 							<button type="button" data-target="admin-anti-cheat">Anti-Cheat</button>
 							<button type="button" data-target="admin-players">Players</button>
 							<button type="button" data-target="admin-abuse-monitor">Abuse Monitor</button>
@@ -1233,6 +1234,53 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 									</div>
 								</div>
 							</div>
+						</section>
+
+						<section id="admin-telemetry" class="admin-section">
+							<h3>Economic Telemetry</h3>
+							<div class="card">
+								<div class="label">Star price trends (24h)</div>
+								<canvas id="telemetry-price-chart" style="max-height: 300px; margin-top: 0.75rem;"></canvas>
+								<div class="muted" style="margin-top: 0.75rem;">Shows weighted average star prices by hour from star purchases.</div>
+							</div>
+							<div class="card">
+								<div class="label">Market pressure (24h)</div>
+								<canvas id="telemetry-pressure-chart" style="max-height: 300px; margin-top: 0.75rem;"></canvas>
+								<div class="muted" style="margin-top: 0.75rem;">Current market pressure factor affecting coin emission.</div>
+							</div>
+							<div class="card">
+								<div class="label">Coin circulation metrics</div>
+								<div class="admin-grid" style="margin-top:0.75rem;">
+									<div class="admin-metric">
+										<div class="label">Coins in circulation</div>
+										<div class="stat-value" id="telemetry-coins-circ">--</div>
+									</div>
+									<div class="admin-metric">
+										<div class="label">Active coins</div>
+										<div class="stat-value" id="telemetry-coins-active">--</div>
+									</div>
+									<div class="admin-metric">
+										<div class="label">Emission pool remaining</div>
+										<div class="stat-value" id="telemetry-emission-pool">--</div>
+									</div>
+									<div class="admin-metric">
+										<div class="label">Daily emission target</div>
+										<div class="stat-value" id="telemetry-daily-target">--</div>
+									</div>
+								</div>
+								<div class="muted" style="margin-top: 0.75rem;">Coins in circulation reflects total player wallets. Emission pool is unreleased coins.</div>
+							</div>
+							<div class="card">
+								<div class="label">Coin flows (24h)</div>
+								<canvas id="telemetry-flows-chart" style="max-height: 300px; margin-top: 0.75rem;"></canvas>
+								<div class="muted" style="margin-top: 0.75rem;">Shows earned vs. spent coins by hour.</div>
+							</div>
+							<div class="card">
+								<div class="label">Daily cap utilization (24h)</div>
+								<canvas id="telemetry-cap-chart" style="max-height: 300px; margin-top: 0.75rem;"></canvas>
+								<div class="muted" style="margin-top: 0.75rem;">Shows daily cap usage as percentage of available cap.</div>
+							</div>
+							<div class="muted" style="margin-top:0.75rem;">All telemetry is read-only and updates periodically. No client-side authority over economy state.</div>
 						</section>
 
 						<section id="admin-anti-cheat" class="admin-section">
@@ -1462,6 +1510,9 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 		Made by AI · <a href="#" id="report-bug-link" style="color:#c5cae9; text-decoration:none; cursor:pointer;">Report a bug</a>
 	</div>
 	<div id="debug-status" class="toast" style="display:none; position:fixed; left:1rem; bottom:1rem; z-index:40; max-width:420px;"></div>
+	
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+	
 	<script>
 		(() => {
 			const query = location.search || "";
@@ -2866,6 +2917,10 @@ function initAdmin() {
 			const section = document.getElementById(targetId);
 			if (section) {
 				section.scrollIntoView({ behavior: "smooth", block: "start" });
+				// Load telemetry data when telemetry section is clicked
+				if (targetId === "admin-telemetry") {
+					loadAdminTelemetry();
+				}
 			}
 			buttons.forEach(btn => btn.classList.toggle("active", btn === button));
 		});
@@ -3370,15 +3425,242 @@ async function loadAdminOverview() {
 	}
 }
 
+async function loadAdminTelemetry() {
+	if (!currentUser || !currentUser.isAdmin) return;
+	try {
+		// Load coin metrics
+		const metricsRes = await apiFetch("/admin/telemetry/coin-metrics");
+		const metricsData = await metricsRes.json();
+		if (metricsData.ok) {
+			const coinsCircEl = document.getElementById("telemetry-coins-circ");
+			const coinsActiveEl = document.getElementById("telemetry-coins-active");
+			const emissionPoolEl = document.getElementById("telemetry-emission-pool");
+			const dailyTargetEl = document.getElementById("telemetry-daily-target");
+			if (coinsCircEl) coinsCircEl.innerText = `${metricsData.coinsInCirculation}`;
+			if (coinsActiveEl) coinsActiveEl.innerText = `${metricsData.activeCoins}`;
+			if (emissionPoolEl) emissionPoolEl.innerText = `${metricsData.emissionPoolRemaining}`;
+			if (dailyTargetEl) dailyTargetEl.innerText = `${metricsData.dailyEmissionTarget}`;
+		}
+
+		// Load and render price trend
+		const priceRes = await apiFetch("/admin/telemetry/price-trend");
+		const priceData = await priceRes.json();
+		if (priceData.ok && Array.isArray(priceData.data)) {
+			renderTelemetryChart("telemetry-price-chart", priceData.data, "Star Price", "line", "#3b82f6");
+		}
+
+		// Load and render pressure trend
+		const pressureRes = await apiFetch("/admin/telemetry/pressure-trend");
+		const pressureData = await pressureRes.json();
+		if (pressureData.ok && Array.isArray(pressureData.data)) {
+			renderTelemetryChart("telemetry-pressure-chart", pressureData.data, "Market Pressure", "line", "#f59e0b");
+		}
+
+		// Load and render coin flows
+		const flowsRes = await apiFetch("/admin/telemetry/flow-aggregates");
+		const flowsData = await flowsRes.json();
+		if (flowsData.ok && Array.isArray(flowsData.data)) {
+			renderFlowChart("telemetry-flows-chart", flowsData.data);
+		}
+
+		// Load and render cap tracking
+		const capRes = await apiFetch("/admin/telemetry/cap-tracking");
+		const capData = await capRes.json();
+		if (capData.ok && Array.isArray(capData.data)) {
+			renderCapChart("telemetry-cap-chart", capData.data);
+		}
+	} catch (e) {
+		console.error("Failed to load telemetry:", e);
+	}
+}
+
+function renderTelemetryChart(canvasId, data, label, type, color) {
+	const canvas = document.getElementById(canvasId);
+	if (!canvas) return;
+
+	// Parse timestamps and extract values
+	const labels = data.map(d => {
+		const ts = new Date(d.timestamp);
+		return ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+	});
+	const values = data.map(d => typeof d.value === "number" ? d.value : parseFloat(d.value));
+
+	// Destroy existing chart if it exists
+	if (canvas.telemetryChart) {
+		canvas.telemetryChart.destroy();
+	}
+
+	// Create new chart
+	canvas.telemetryChart = new Chart(canvas, {
+		type: type,
+		data: {
+			labels: labels,
+			datasets: [{
+				label: label,
+				data: values,
+				borderColor: color,
+				backgroundColor: color + "22",
+				fill: true,
+				tension: 0.3,
+				borderWidth: 2,
+				pointRadius: 3,
+				pointBackgroundColor: color
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			interaction: { mode: 'index', intersect: false },
+			plugins: {
+				legend: { display: true, labels: { color: "#eaeaf0", padding: 10 } },
+				filler: { drawTime: "beforeDatasetsDraw" }
+			},
+			scales: {
+				y: {
+					beginAtZero: true,
+					grid: { color: "#2a2f55" },
+					ticks: { color: "#9aa3c4" }
+				},
+				x: {
+					grid: { color: "#2a2f55" },
+					ticks: { color: "#9aa3c4" }
+				}
+			}
+		}
+	});
+}
+
+function renderFlowChart(canvasId, data) {
+	const canvas = document.getElementById(canvasId);
+	if (!canvas) return;
+
+	const labels = data.map(d => {
+		const ts = new Date(d.timestamp);
+		return ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+	});
+	const earned = data.map(d => d.coinsEarned);
+	const spent = data.map(d => d.coinsSpent);
+
+	if (canvas.telemetryChart) {
+		canvas.telemetryChart.destroy();
+	}
+
+	canvas.telemetryChart = new Chart(canvas, {
+		type: "line",
+		data: {
+			labels: labels,
+			datasets: [
+				{
+					label: "Coins Earned",
+					data: earned,
+					borderColor: "#22c55e",
+					backgroundColor: "#22c55e22",
+					fill: true,
+					tension: 0.3,
+					borderWidth: 2,
+					pointRadius: 3,
+					pointBackgroundColor: "#22c55e"
+				},
+				{
+					label: "Coins Spent",
+					data: spent,
+					borderColor: "#ef4444",
+					backgroundColor: "#ef444422",
+					fill: false,
+					tension: 0.3,
+					borderWidth: 2,
+					pointRadius: 3,
+					pointBackgroundColor: "#ef4444"
+				}
+			]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			interaction: { mode: 'index', intersect: false },
+			plugins: {
+				legend: { display: true, labels: { color: "#eaeaf0", padding: 10 } }
+			},
+			scales: {
+				y: {
+					beginAtZero: true,
+					grid: { color: "#2a2f55" },
+					ticks: { color: "#9aa3c4" }
+				},
+				x: {
+					grid: { color: "#2a2f55" },
+					ticks: { color: "#9aa3c4" }
+				}
+			}
+		}
+	});
+}
+
+function renderCapChart(canvasId, data) {
+	const canvas = document.getElementById(canvasId);
+	if (!canvas) return;
+
+	const labels = data.map(d => {
+		const ts = new Date(d.timestamp);
+		return ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+	});
+	const utilization = data.map(d => Math.min(100, d.capUtilization * 100));
+
+	if (canvas.telemetryChart) {
+		canvas.telemetryChart.destroy();
+	}
+
+	canvas.telemetryChart = new Chart(canvas, {
+		type: "line",
+		data: {
+			labels: labels,
+			datasets: [{
+				label: "Cap Utilization (%)",
+				data: utilization,
+				borderColor: "#6366f1",
+				backgroundColor: "#6366f122",
+				fill: true,
+				tension: 0.3,
+				borderWidth: 2,
+				pointRadius: 3,
+				pointBackgroundColor: "#6366f1"
+			}]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			interaction: { mode: 'index', intersect: false },
+			plugins: {
+				legend: { display: true, labels: { color: "#eaeaf0", padding: 10 } }
+			},
+			scales: {
+				y: {
+					beginAtZero: true,
+					max: 100,
+					grid: { color: "#2a2f55" },
+					ticks: { color: "#9aa3c4", callback: (val) => val + "%" }
+				},
+				x: {
+					grid: { color: "#2a2f55" },
+					ticks: { color: "#9aa3c4" }
+				}
+			}
+		}
+	});
+}
+
 function startAdminLoops() {
 	if (adminOverviewTimer) return;
 	loadAdminOverview();
 	loadAdminSeasons();
 	loadAdminAbuseEvents();
 	loadAdminAntiCheat();
+	loadAdminTelemetry();
 	adminOverviewTimer = setInterval(loadAdminOverview, 10000);
 	adminAbuseTimer = setInterval(loadAdminAbuseEvents, 12000);
 	adminAntiCheatTimer = setInterval(loadAdminAntiCheat, 15000);
+	// Update telemetry every 30 seconds
+	window.adminTelemetryTimer = setInterval(loadAdminTelemetry, 30000);
 }
 
 function stopAdminLoops() {
@@ -3388,6 +3670,8 @@ function stopAdminLoops() {
 	adminAbuseTimer = null;
 	if (adminAntiCheatTimer) clearInterval(adminAntiCheatTimer);
 	adminAntiCheatTimer = null;
+	if (window.adminTelemetryTimer) clearInterval(window.adminTelemetryTimer);
+	window.adminTelemetryTimer = null;
 }
 
 function getRouteInfo() {

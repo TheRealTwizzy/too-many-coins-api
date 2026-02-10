@@ -49,6 +49,61 @@ type AdminEconomyUpdateRequest struct {
 	TelemetryEnabled    *bool `json:"telemetryEnabled,omitempty"`
 }
 
+// Economic Telemetry Response Types
+type AdminEconomicTimeSeriesPoint struct {
+	Timestamp time.Time   `json:"timestamp"`
+	Value     interface{} `json:"value"`
+}
+
+type AdminPriceTrendResponse struct {
+	OK    bool                           `json:"ok"`
+	Error string                         `json:"error,omitempty"`
+	Data  []AdminEconomicTimeSeriesPoint `json:"data,omitempty"`
+}
+
+type AdminPressureTrendResponse struct {
+	OK    bool                           `json:"ok"`
+	Error string                         `json:"error,omitempty"`
+	Data  []AdminEconomicTimeSeriesPoint `json:"data,omitempty"`
+}
+
+type AdminCoinMetricsResponse struct {
+	OK                    bool      `json:"ok"`
+	Error                 string    `json:"error,omitempty"`
+	CoinsInCirculation    int64     `json:"coinsInCirculation"`
+	ActiveCoins           int64     `json:"activeCoins"`
+	EmissionPoolRemaining int64     `json:"emissionPoolRemaining"`
+	DailyEmissionTarget   int       `json:"dailyEmissionTarget"`
+	Timestamp             time.Time `json:"timestamp"`
+}
+
+type AdminFlowAggregatePoint struct {
+	Timestamp      time.Time `json:"timestamp"`
+	CoinsEarned    int64     `json:"coinsEarned"`
+	CoinsSpent     int64     `json:"coinsSpent"`
+	NetFlow        int64     `json:"netFlow"`
+	StarsPurchased int64     `json:"starsPurchased"`
+}
+
+type AdminFlowAggregatesResponse struct {
+	OK    bool                      `json:"ok"`
+	Error string                    `json:"error,omitempty"`
+	Data  []AdminFlowAggregatePoint `json:"data,omitempty"`
+}
+
+type AdminCapTrackingPoint struct {
+	Timestamp      time.Time `json:"timestamp"`
+	DailyEarned    int64     `json:"dailyEarned"`
+	DailyCap       int       `json:"dailyCap"`
+	CapUtilization float64   `json:"capUtilization"`
+}
+
+type AdminCapTrackingResponse struct {
+	OK    bool                    `json:"ok"`
+	Error string                  `json:"error,omitempty"`
+	Data  []AdminCapTrackingPoint `json:"data,omitempty"`
+}
+
 type AdminStarPurchaseLogItem struct {
 	ID           int64     `json:"id"`
 	AccountID    string    `json:"accountId"`
@@ -2388,6 +2443,219 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: true, Username: username})
 			return
 		}
+	}
+}
+
+// Economic Telemetry Endpoints
+
+func adminPriceTrendHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+
+		data := []AdminEconomicTimeSeriesPoint{}
+		now := time.Now().UTC()
+
+		// Query hourly star prices from player telemetry events
+		rows, err := db.Query(`
+			SELECT date_trunc('hour', created_at) AS hour, 
+				   AVG((payload->>'finalStarPrice')::BIGINT) AS price
+			FROM player_telemetry
+			WHERE event_type = 'star_purchase_success'
+			AND created_at >= NOW() - INTERVAL '24 hours'
+			GROUP BY hour
+			ORDER BY hour ASC
+		`)
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminPriceTrendResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var timestamp time.Time
+			var price sql.NullInt64
+			if err := rows.Scan(&timestamp, &price); err != nil {
+				continue
+			}
+			priceVal := int64(0)
+			if price.Valid {
+				priceVal = price.Int64
+			}
+			data = append(data, AdminEconomicTimeSeriesPoint{
+				Timestamp: timestamp,
+				Value:     priceVal,
+			})
+		}
+
+		// Fill in current price if we have recent data
+		if len(data) == 0 || data[len(data)-1].Timestamp.Before(now.Add(-1*time.Hour)) {
+			currentPrice := economy.CurrentStarPrice()
+			data = append(data, AdminEconomicTimeSeriesPoint{
+				Timestamp: now,
+				Value:     int64(currentPrice),
+			})
+		}
+
+		json.NewEncoder(w).Encode(AdminPriceTrendResponse{OK: true, Data: data})
+	}
+}
+
+func adminPressureTrendHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+
+		data := []AdminEconomicTimeSeriesPoint{}
+		now := time.Now().UTC()
+
+		// For now, market pressure is computed live. We can enhance this later with snapshots.
+		// Create a simple trend by computing pressure at intervals within the 24h window.
+		currentPressure := economy.MarketPressure()
+
+		// Add data points for the last 24 hours (hourly)
+		for i := 24; i >= 0; i-- {
+			timestamp := now.Add(-time.Duration(i) * time.Hour)
+			// In a full implementation, query historical pressure snapshots
+			// For now, show current pressure (static view)
+			data = append(data, AdminEconomicTimeSeriesPoint{
+				Timestamp: timestamp,
+				Value:     currentPressure,
+			})
+		}
+
+		json.NewEncoder(w).Encode(AdminPressureTrendResponse{OK: true, Data: data})
+	}
+}
+
+func adminCoinMetricsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+
+		coinsInCirc := economy.CoinsInCirculation()
+		activeCoins := economy.ActiveCoinsInCirculation()
+		available := economy.AvailableCoins()
+		dailyTarget := economy.DailyEmissionTarget()
+
+		json.NewEncoder(w).Encode(AdminCoinMetricsResponse{
+			OK:                    true,
+			CoinsInCirculation:    int64(coinsInCirc),
+			ActiveCoins:           int64(activeCoins),
+			EmissionPoolRemaining: int64(available),
+			DailyEmissionTarget:   dailyTarget,
+			Timestamp:             time.Now().UTC(),
+		})
+	}
+}
+
+func adminFlowAggregatesHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+
+		data := []AdminFlowAggregatePoint{}
+
+		// Query coin earning and spending by hour for the last 24 hours
+		rows, err := db.Query(`
+			SELECT 
+				COALESCE(date_trunc('hour', c.created_at), date_trunc('hour', s.created_at)) AS hour,
+				COALESCE(SUM(CASE WHEN c.id IS NOT NULL THEN c.amount ELSE 0 END), 0) AS earned,
+				COALESCE(SUM(CASE WHEN s.id IS NOT NULL THEN s.price_paid ELSE 0 END), 0) AS spent,
+				COALESCE(COUNT(DISTINCT s.id), 0) AS star_count
+			FROM (
+				SELECT created_at, player_id, amount FROM coin_earning_log
+				WHERE created_at >= NOW() - INTERVAL '24 hours'
+			) c
+			FULL OUTER JOIN (
+				SELECT created_at, player_id, price_paid FROM star_purchase_log
+				WHERE created_at >= NOW() - INTERVAL '24 hours'
+			) s ON date_trunc('hour', c.created_at) = date_trunc('hour', s.created_at)
+			GROUP BY hour
+			ORDER BY hour ASC
+		`)
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminFlowAggregatesResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var hour time.Time
+			var earned, spent, starCount int64
+			if err := rows.Scan(&hour, &earned, &spent, &starCount); err != nil {
+				continue
+			}
+			data = append(data, AdminFlowAggregatePoint{
+				Timestamp:      hour,
+				CoinsEarned:    earned,
+				CoinsSpent:     spent,
+				NetFlow:        earned - spent,
+				StarsPurchased: starCount,
+			})
+		}
+
+		json.NewEncoder(w).Encode(AdminFlowAggregatesResponse{OK: true, Data: data})
+	}
+}
+
+func adminCapTrackingHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := requireAdmin(db, w, r); !ok {
+			return
+		}
+
+		data := []AdminCapTrackingPoint{}
+
+		// Query daily earning caps by player/hour for the last 24 hours
+		rows, err := db.Query(`
+			SELECT date_trunc('hour', created_at) AS hour,
+				   COUNT(DISTINCT player_id) AS active_count,
+				   SUM(amount) AS total_earned
+			FROM coin_earning_log
+			WHERE created_at >= NOW() - INTERVAL '24 hours'
+			GROUP BY hour
+			ORDER BY hour ASC
+		`)
+		if err != nil {
+			json.NewEncoder(w).Encode(AdminCapTrackingResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		defer rows.Close()
+
+		params := economy.Calibration()
+		dailyCapEarly := int64(params.DailyCapEarly)
+		dailyCapLate := int64(params.DailyCapLate)
+		avgCap := (dailyCapEarly + dailyCapLate) / 2
+
+		for rows.Next() {
+			var hour time.Time
+			var activeCount int64
+			var totalEarned sql.NullInt64
+			if err := rows.Scan(&hour, &activeCount, &totalEarned); err != nil {
+				continue
+			}
+			earned := int64(0)
+			if totalEarned.Valid {
+				earned = totalEarned.Int64
+			}
+			utilization := 0.0
+			if avgCap > 0 {
+				utilization = float64(earned) / float64(avgCap)
+			}
+			data = append(data, AdminCapTrackingPoint{
+				Timestamp:      hour,
+				DailyEarned:    earned,
+				DailyCap:       int(avgCap),
+				CapUtilization: utilization,
+			})
+		}
+
+		json.NewEncoder(w).Encode(AdminCapTrackingResponse{OK: true, Data: data})
 	}
 }
 
