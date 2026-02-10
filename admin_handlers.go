@@ -904,6 +904,262 @@ func adminSeasonRecoveryHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+// =========================
+// Reset Handlers
+// =========================
+
+type AdminResetRequest struct {
+	Confirm string `json:"confirm"`
+	Details string `json:"details,omitempty"`
+}
+
+type AdminResetResponse struct {
+	OK           bool   `json:"ok"`
+	Error        string `json:"error,omitempty"`
+	Type         string `json:"type,omitempty"`
+	RowsAffected int    `json:"rowsAffected,omitempty"`
+	Message      string `json:"message,omitempty"`
+}
+
+func adminResetTelemetryHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		adminAccount, ok := requireAdmin(db, w, r)
+		if !ok {
+			return
+		}
+
+		var req AdminResetRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+
+		// Require explicit confirmation text
+		if strings.TrimSpace(req.Confirm) != "RESET_TELEMETRY" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INVALID_CONFIRMATION"})
+			return
+		}
+
+		// TRUNCATE player_telemetry
+		result, err := db.Exec(`TRUNCATE TABLE player_telemetry RESTART IDENTITY`)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		rowsAffected, _ := result.RowsAffected()
+
+		// Log to admin audit log
+		_ = logAdminAction(db, adminAccount.AccountID, "reset_telemetry", "telemetry", "all", "admin-reset", map[string]interface{}{
+			"details": req.Details,
+		})
+
+		json.NewEncoder(w).Encode(AdminResetResponse{
+			OK:           true,
+			Type:         "telemetry",
+			RowsAffected: int(rowsAffected),
+			Message:      "Telemetry data cleared successfully",
+		})
+	}
+}
+
+func adminResetSeasonalStatsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		adminAccount, ok := requireAdmin(db, w, r)
+		if !ok {
+			return
+		}
+
+		var req AdminResetRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+
+		// Require explicit confirmation text
+		if strings.TrimSpace(req.Confirm) != "RESET_SEASONAL_STATS" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INVALID_CONFIRMATION"})
+			return
+		}
+
+		// Get current season ID
+		seasonID := ""
+		if err := db.QueryRow(`
+			SELECT value FROM global_settings WHERE key = $1
+		`, globalSettingActiveSeasonID).Scan(&seasonID); err != nil && err != sql.ErrNoRows {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		if seasonID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "NO_ACTIVE_SEASON"})
+			return
+		}
+
+		tx, err := db.BeginTx(r.Context(), nil)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		defer tx.Rollback()
+
+		// Delete coin_earning_log entries for this season
+		result1, err := tx.ExecContext(r.Context(), `
+			DELETE FROM coin_earning_log WHERE season_id = $1
+		`, seasonID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		rows1, _ := result1.RowsAffected()
+
+		// Delete star_purchase_log entries for this season
+		result2, err := tx.ExecContext(r.Context(), `
+			DELETE FROM star_purchase_log WHERE season_id = $1
+		`, seasonID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		rows2, _ := result2.RowsAffected()
+
+		if err := tx.Commit(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		totalRows := rows1 + rows2
+
+		// Log to admin audit log
+		_ = logAdminAction(db, adminAccount.AccountID, "reset_seasonal_stats", "season", seasonID, "admin-reset", map[string]interface{}{
+			"coinEarningLogDeleted":  rows1,
+			"starPurchaseLogDeleted": rows2,
+			"details":                req.Details,
+		})
+
+		json.NewEncoder(w).Encode(AdminResetResponse{
+			OK:           true,
+			Type:         "seasonal_stats",
+			RowsAffected: int(totalRows),
+			Message:      fmt.Sprintf("Seasonal player stats cleared successfully (%d earning log entries, %d purchase log entries)", rows1, rows2),
+		})
+	}
+}
+
+func adminResetSeasonHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		adminAccount, ok := requireAdmin(db, w, r)
+		if !ok {
+			return
+		}
+
+		if CurrentPhase() != PhaseAlpha {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INVALID_PHASE"})
+			return
+		}
+
+		var req AdminResetRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INVALID_REQUEST"})
+			return
+		}
+
+		// Require explicit confirmation text
+		if strings.TrimSpace(req.Confirm) != "RESET_SEASON" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INVALID_CONFIRMATION"})
+			return
+		}
+
+		// Get current season ID
+		seasonID := ""
+		if err := db.QueryRow(`
+			SELECT value FROM global_settings WHERE key = $1
+		`, globalSettingActiveSeasonID).Scan(&seasonID); err != nil && err != sql.ErrNoRows {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		if seasonID == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "NO_ACTIVE_SEASON"})
+			return
+		}
+
+		tx, err := db.BeginTx(r.Context(), nil)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		defer tx.Rollback()
+
+		// Reset season_economy for current season
+		result, err := tx.ExecContext(r.Context(), `
+			UPDATE season_economy
+			SET global_coin_pool = 0,
+				global_stars_purchased = 0,
+				coins_distributed = 0,
+				emission_remainder = 0.0,
+				market_pressure = 1.0,
+				price_floor = 0,
+				current_star_price_micro = 0,
+				last_updated = NOW()
+			WHERE season_id = $1
+		`, seasonID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+		rowsAffected, _ := result.RowsAffected()
+
+		if err := tx.Commit(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(AdminResetResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		// Log to admin audit log
+		_ = logAdminAction(db, adminAccount.AccountID, "reset_season", "season", seasonID, "admin-reset", map[string]interface{}{
+			"details": req.Details,
+		})
+
+		json.NewEncoder(w).Encode(AdminResetResponse{
+			OK:           true,
+			Type:         "season",
+			RowsAffected: int(rowsAffected),
+			Message:      "Season economy state cleared successfully",
+		})
+	}
+}
+
 func adminAbuseEventsHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

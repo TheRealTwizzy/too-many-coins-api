@@ -1369,29 +1369,8 @@ UI ACCEPTANCE CHECKLIST — SEASON MANAGER
 						<section id="admin-emergency" class="admin-section">
 							<h3>EMERGENCY OVERRIDES (ALPHA)</h3>
 							<div class="card">
-								<div class="label">Data Reset Operations</div>
-								<div class="muted">Risk-first resets. Each requires explicit confirmation.</div>
-								<div class="admin-control-strip" style="margin-top:0.75rem;" data-admin-controls>
-									<div class="row">
-										<button type="button" class="danger" id="admin-reset-telemetry">Reset Telemetry</button>
-										<div class="muted">Clears all player telemetry events from the database.</div>
-									</div>
-									<div id="admin-reset-telemetry-status" class="label" style="margin-top:0.5rem;"></div>
-									<div class="row" style="margin-top:0.75rem;">
-										<button type="button" class="danger" id="admin-reset-seasonal-stats">Reset Seasonal Stats</button>
-										<div class="muted">Clears earning and purchase logs for the active season.</div>
-									</div>
-									<div id="admin-reset-seasonal-stats-status" class="label" style="margin-top:0.5rem;"></div>
-									<div class="row" style="margin-top:0.75rem;">
-										<button type="button" class="danger" id="admin-reset-season">Reset Season Economy</button>
-										<div class="muted">Resets all season economy state (coins, prices, pressure).</div>
-									</div>
-									<div id="admin-reset-season-status" class="label" style="margin-top:0.5rem;"></div>
-								</div>
-							</div>
-							<div class="card">
-								<div class="label">Legacy Emergency Controls</div>
-								<div class="muted">"I understand this affects all players."</div>
+								<div class="label">Acknowledgement required</div>
+								<div class="muted">“I understand this affects all players.”</div>
 								<div class="admin-control-strip" style="margin-top:0.75rem; display:none;" data-admin-controls>
 									<div class="row">
 										<button type="button" class="danger" disabled>Pause all purchases</button>
@@ -2988,82 +2967,7 @@ function initAdmin() {
 	if (bugRefreshBtn) {
 		bugRefreshBtn.addEventListener("click", () => loadAdminBugReports());
 	}
-
-	// Reset button handlers
-	const resetTelemetryBtn = document.getElementById("admin-reset-telemetry");
-	if (resetTelemetryBtn) {
-		resetTelemetryBtn.addEventListener("click", () => {
-			handleAdminReset("telemetry", "RESET_TELEMETRY", "Reset all telemetry data?");
-		});
-	}
-
-	const resetSeasonalStatsBtn = document.getElementById("admin-reset-seasonal-stats");
-	if (resetSeasonalStatsBtn) {
-		resetSeasonalStatsBtn.addEventListener("click", () => {
-			handleAdminReset("seasonal_stats", "RESET_SEASONAL_STATS", "Reset all seasonal player stats?");
-		});
-	}
-
-	const resetSeasonBtn = document.getElementById("admin-reset-season");
-	if (resetSeasonBtn) {
-		resetSeasonBtn.addEventListener("click", () => {
-			handleAdminReset("season", "RESET_SEASON", "Reset season economy state?");
-		});
-	}
-
 	updateDebugVisibility();
-}
-
-async function handleAdminReset(type, confirmationText, confirmMessage) {
-	if (!confirm(confirmMessage + "\n\nThis action cannot be undone.")) {
-		return;
-	}
-
-	const details = prompt("Optional: Enter reason for this reset", "Admin reset");
-	if (details === null) {
-		return;
-	}
-
-	const statusEl = document.getElementById(`admin-reset-${type}-status`);
-	const btnEl = document.getElementById(`admin-reset-${type === "seasonal_stats" ? "seasonal-stats" : type}`);
-	
-	if (btnEl) btnEl.disabled = true;
-	if (statusEl) statusEl.innerText = "Processing...";
-
-	try {
-		const endpoint = `/admin/reset/${type === "seasonal_stats" ? "seasonal-stats" : type}`;
-		const res = await apiFetch(endpoint, {
-			method: "POST",
-			body: JSON.stringify({
-				confirm: confirmationText,
-				details: details || ""
-			})
-		});
-
-		const data = await res.json();
-		
-		if (data.ok) {
-			if (statusEl) {
-				statusEl.innerText = `✓ ${data.message || "Reset completed"} (${data.rowsAffected} records)`;
-				statusEl.style.color = "#22c55e";
-			}
-			setToast(`${type.replace("_", " ")} reset completed.`, "success");
-		} else {
-			if (statusEl) {
-				statusEl.innerText = `✗ Error: ${data.error || "Reset failed"}`;
-				statusEl.style.color = "#fecaca";
-			}
-			setToast(`Reset failed: ${data.error || "Unknown error"}`, "error");
-		}
-	} catch (e) {
-		if (statusEl) {
-			statusEl.innerText = "✗ Network error";
-			statusEl.style.color = "#fecaca";
-		}
-		setToast("Network error during reset", "error");
-	} finally {
-		if (btnEl) btnEl.disabled = false;
-	}
 }
 
 function refreshAdminView() {
