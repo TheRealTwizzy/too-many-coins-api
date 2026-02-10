@@ -1,25 +1,23 @@
-app = "too-many-coins-api"
+# fly.toml app configuration file generated for too-many-coins-api on 2026-02-10T00:24:43Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-primary_region = "ord"
+app = 'too-many-coins-api'
+primary_region = 'iad'
 
 [build]
-  dockerfile = "Dockerfile"
 
-
-
-[[services]]
+[http_service]
   internal_port = 8080
-  protocol = "tcp"
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
 
-  [[services.ports]]
-    port = 80
-    handlers = ["http"]
-
-  [[services.ports]]
-    port = 443
-    handlers = ["tls", "http"]
-
-  [services.concurrency]
-    type = "requests"
-    soft_limit = 200
-    hard_limit = 250
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 1024
