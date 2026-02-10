@@ -26,16 +26,40 @@ CREATE TABLE IF NOT EXISTS season_economy (
 );
 
 -- =========================
+-- POST-ALPHA / BETA
+-- Seasons catalog (multi-season runtime)
+-- =========================
+CREATE TABLE IF NOT EXISTS seasons (
+    season_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'upcoming',
+    start_at TIMESTAMPTZ NOT NULL,
+    end_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ended_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_seasons_status
+    ON seasons (status);
+
+CREATE INDEX IF NOT EXISTS idx_seasons_start_at
+    ON seasons (start_at);
+
+-- =========================
 -- PHASE 0 REQUIRED
 -- Player core state (authoritative balances + activity)
 -- =========================
 CREATE TABLE IF NOT EXISTS players (
     player_id TEXT PRIMARY KEY,
+    season_id TEXT,
     coins BIGINT NOT NULL,
     stars BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     last_active_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_players_season_id
+    ON players (season_id);
 
 -- =========================
 -- PHASE 0 REQUIRED
@@ -327,6 +351,9 @@ CREATE TABLE IF NOT EXISTS coin_earning_log (
     created_at TIMESTAMPTZ NOT NULL
 );
 
+CREATE INDEX IF NOT EXISTS idx_coin_earning_log_season_id
+    ON coin_earning_log (season_id);
+
 CREATE TABLE IF NOT EXISTS star_purchase_log (
     id BIGSERIAL PRIMARY KEY,
     account_id TEXT,
@@ -341,6 +368,9 @@ CREATE TABLE IF NOT EXISTS star_purchase_log (
     stars_after BIGINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_star_purchase_log_season_id
+    ON star_purchase_log (season_id);
 
 CREATE TABLE IF NOT EXISTS season_calibration (
     season_id TEXT PRIMARY KEY,
