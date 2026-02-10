@@ -77,12 +77,20 @@ func playerHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-	// Admins cannot earn coins
-	if account.Role == "admin" {
-		json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FORBIDDEN"})
-		return
-	}
+		// Admins cannot earn coins
+		if account.Role == "admin" {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FORBIDDEN"})
+			return
+		}
 
+		playerID := account.PlayerID
+		if !isValidPlayerID(playerID) {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INVALID_PLAYER_ID"})
+			return
+		}
+
+		player, err := LoadOrCreatePlayer(db, playerID)
+		if err != nil {
 			log.Println("Failed to load/create player:", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
