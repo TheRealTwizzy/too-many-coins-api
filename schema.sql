@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     display_name TEXT NOT NULL,
-    player_id TEXT NOT NULL,
+    player_id TEXT,
     role TEXT NOT NULL DEFAULT 'user',
     created_at TIMESTAMPTZ NOT NULL,
     last_login_at TIMESTAMPTZ NOT NULL
@@ -62,6 +62,15 @@ ALTER TABLE accounts ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user';
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS trust_status TEXT NOT NULL DEFAULT 'normal';
 ALTER TABLE accounts ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Admin accounts are not players; admin roles must not carry player state.
+ALTER TABLE accounts ALTER COLUMN player_id DROP NOT NULL;
+ALTER TABLE accounts DROP CONSTRAINT IF EXISTS accounts_admin_player_check;
+ALTER TABLE accounts ADD CONSTRAINT accounts_admin_player_check
+    CHECK (
+        (role IN ('admin', 'frozen:admin') AND player_id IS NULL)
+        OR (role NOT IN ('admin', 'frozen:admin') AND player_id IS NOT NULL)
+    );
 
 -- =========================
 -- PHASE 0 REQUIRED

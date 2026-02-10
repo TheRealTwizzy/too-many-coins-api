@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"math"
 	"strings"
@@ -92,6 +93,9 @@ func LoadOrCreatePlayer(
 	db *sql.DB,
 	playerID string,
 ) (*Player, error) {
+	if strings.TrimSpace(playerID) == "" {
+		return nil, errors.New("INVALID_PLAYER_ID")
+	}
 
 	var p Player
 
@@ -137,6 +141,9 @@ func LoadOrCreatePlayer(
 }
 
 func LoadPlayer(db *sql.DB, playerID string) (*Player, error) {
+	if strings.TrimSpace(playerID) == "" {
+		return nil, nil
+	}
 	var p Player
 
 	err := db.QueryRow(`

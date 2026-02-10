@@ -1140,8 +1140,12 @@ func adminPlayerSearchHandler(db *sql.DB) http.HandlerFunc {
 		items := []AdminPlayerSearchItem{}
 		for rows.Next() {
 			var item AdminPlayerSearchItem
-			if err := rows.Scan(&item.Username, &item.DisplayName, &item.PlayerID, &item.AccountID, &item.TrustStatus, &item.FlagCount); err != nil {
+			var playerID sql.NullString
+			if err := rows.Scan(&item.Username, &item.DisplayName, &playerID, &item.AccountID, &item.TrustStatus, &item.FlagCount); err != nil {
 				continue
+			}
+			if playerID.Valid {
+				item.PlayerID = playerID.String
 			}
 			item.SeasonID = currentSeasonID()
 			items = append(items, item)
@@ -1269,15 +1273,87 @@ func adminRoleHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(AdminRoleResponse{OK: false, Error: "INVALID_REQUEST"})
 			return
 		}
-		if err := setAccountRoleByUsername(db, req.Username, req.Role); err != nil {
+		ctx := r.Context()
+		username := strings.ToLower(strings.TrimSpace(req.Username))
+		role := normalizeRole(req.Role)
+		tx, err := db.BeginTx(ctx, nil)
+		if err != nil {
 			json.NewEncoder(w).Encode(AdminRoleResponse{OK: false, Error: "INTERNAL_ERROR"})
 			return
 		}
-		if normalizeRole(req.Role) == "admin" {
+		defer tx.Rollback()
+
+		var accountID string
+		var currentRole string
+		var playerID sql.NullString
+		if err := tx.QueryRowContext(ctx, `
+			SELECT account_id, role, player_id
+			FROM accounts
+			WHERE username = $1
+			FOR UPDATE
+		`, username).Scan(&accountID, &currentRole, &playerID); err != nil {
+			json.NewEncoder(w).Encode(AdminRoleResponse{OK: false, Error: "PLAYER_NOT_FOUND"})
+			return
+		}
+
+		if role == "admin" {
+			if playerID.Valid && strings.TrimSpace(playerID.String) != "" {
+				if err := scrubAdminPlayerArtifactsTx(ctx, tx, accountID, playerID.String); err != nil {
+					json.NewEncoder(w).Encode(AdminRoleResponse{OK: false, Error: "INTERNAL_ERROR"})
+					return
+				}
+			}
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE accounts
+				SET role = 'admin', player_id = NULL
+				WHERE account_id = $1
+			`, accountID); err != nil {
+				json.NewEncoder(w).Encode(AdminRoleResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+		} else {
+			if !playerID.Valid || strings.TrimSpace(playerID.String) == "" {
+				newPlayerID, err := randomToken(16)
+				if err != nil {
+					json.NewEncoder(w).Encode(AdminRoleResponse{OK: false, Error: "INTERNAL_ERROR"})
+					return
+				}
+				if _, err := tx.ExecContext(ctx, `
+					INSERT INTO players (
+						player_id,
+						coins,
+						stars,
+						created_at,
+						last_active_at,
+						last_coin_grant_at
+					)
+					VALUES ($1, 0, 0, NOW(), NOW(), NOW())
+				`, newPlayerID); err != nil {
+					json.NewEncoder(w).Encode(AdminRoleResponse{OK: false, Error: "INTERNAL_ERROR"})
+					return
+				}
+				playerID = sql.NullString{String: newPlayerID, Valid: true}
+			}
+			if _, err := tx.ExecContext(ctx, `
+				UPDATE accounts
+				SET role = $2, player_id = $3
+				WHERE account_id = $1
+			`, accountID, role, playerID.String); err != nil {
+				json.NewEncoder(w).Encode(AdminRoleResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			json.NewEncoder(w).Encode(AdminRoleResponse{OK: false, Error: "INTERNAL_ERROR"})
+			return
+		}
+
+		if role == "admin" {
 			var existing sql.NullString
 			if err := db.QueryRow(`
 				SELECT admin_key_hash FROM accounts WHERE username = $1
-			`, strings.ToLower(strings.TrimSpace(req.Username))).Scan(&existing); err == nil {
+			`, username).Scan(&existing); err == nil {
 				if !existing.Valid || existing.String == "" {
 					generated, err := generateAdminKey()
 					if err == nil {
@@ -1291,14 +1367,14 @@ func adminRoleHandler(db *sql.DB) http.HandlerFunc {
 			Category:      NotificationCategoryAdmin,
 			Type:          "role_updated",
 			Priority:      NotificationPriorityNormal,
-			Message:       "Role updated for @" + strings.ToLower(strings.TrimSpace(req.Username)) + ": " + normalizeRole(req.Role),
+			Message:       "Role updated for @" + username + ": " + role,
 			Payload: map[string]interface{}{
-				"username": strings.ToLower(strings.TrimSpace(req.Username)),
-				"role":     normalizeRole(req.Role),
+				"username": username,
+				"role":     role,
 			},
 		})
-		_ = logAdminAction(db, adminAccount.AccountID, "role_update", "account", strings.ToLower(strings.TrimSpace(req.Username)), "", map[string]interface{}{
-			"role": normalizeRole(req.Role),
+		_ = logAdminAction(db, adminAccount.AccountID, "role_update", "account", username, "", map[string]interface{}{
+			"role": role,
 		})
 		json.NewEncoder(w).Encode(AdminRoleResponse{OK: true})
 	}
@@ -1352,7 +1428,7 @@ func moderatorProfileHandler(db *sql.DB) http.HandlerFunc {
 			var website sql.NullString
 			var avatarURL sql.NullString
 			var role string
-			var playerID string
+			var playerID sql.NullString
 			err := db.QueryRow(`
 				SELECT display_name, email, bio, pronouns, location, website, avatar_url, role, player_id
 				FROM accounts
@@ -1377,7 +1453,9 @@ func moderatorProfileHandler(db *sql.DB) http.HandlerFunc {
 				DisplayName: displayName,
 				Role:        baseRoleFromRaw(role),
 				Frozen:      isFrozenRole(role),
-				PlayerID:    playerID,
+			}
+			if playerID.Valid {
+				resp.PlayerID = playerID.String
 			}
 			if email.Valid {
 				resp.Email = email.String
@@ -2166,7 +2244,7 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		var accountID string
-		var playerID string
+		var playerID sql.NullString
 		var role string
 		if err := db.QueryRow(`
 			SELECT account_id, player_id, role
@@ -2175,6 +2253,10 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 		`, username).Scan(&accountID, &playerID, &role); err != nil {
 			json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "NOT_FOUND"})
 			return
+		}
+		playerIDValue := ""
+		if playerID.Valid {
+			playerIDValue = playerID.String
 		}
 
 		switch action {
@@ -2202,7 +2284,7 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 			})
 			_ = logAdminAction(db, adminAccount.AccountID, "profile_freeze", "account", accountID, "", map[string]interface{}{
 				"username":     username,
-				"playerId":     playerID,
+				"playerId":     playerIDValue,
 				"previousRole": role,
 			})
 			json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: true, Username: username, Role: baseRoleFromRaw(frozenRole), Frozen: true})
@@ -2230,7 +2312,7 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 			})
 			_ = logAdminAction(db, adminAccount.AccountID, "profile_unfreeze", "account", accountID, "", map[string]interface{}{
 				"username":     username,
-				"playerId":     playerID,
+				"playerId":     playerIDValue,
 				"previousRole": role,
 			})
 			json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: true, Username: username, Role: baseRole, Frozen: false})
@@ -2256,30 +2338,32 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
 				return
 			}
-			if _, err := tx.Exec(`DELETE FROM player_boosts WHERE player_id = $1`, playerID); err != nil {
-				tx.Rollback()
-				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-			if _, err := tx.Exec(`DELETE FROM player_star_variants WHERE player_id = $1`, playerID); err != nil {
-				tx.Rollback()
-				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-			if _, err := tx.Exec(`DELETE FROM player_faucet_claims WHERE player_id = $1`, playerID); err != nil {
-				tx.Rollback()
-				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-			if _, err := tx.Exec(`DELETE FROM player_ip_associations WHERE player_id = $1`, playerID); err != nil {
-				tx.Rollback()
-				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
-			}
-			if _, err := tx.Exec(`DELETE FROM players WHERE player_id = $1`, playerID); err != nil {
-				tx.Rollback()
-				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
-				return
+			if playerIDValue != "" {
+				if _, err := tx.Exec(`DELETE FROM player_boosts WHERE player_id = $1`, playerIDValue); err != nil {
+					tx.Rollback()
+					json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
+					return
+				}
+				if _, err := tx.Exec(`DELETE FROM player_star_variants WHERE player_id = $1`, playerIDValue); err != nil {
+					tx.Rollback()
+					json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
+					return
+				}
+				if _, err := tx.Exec(`DELETE FROM player_faucet_claims WHERE player_id = $1`, playerIDValue); err != nil {
+					tx.Rollback()
+					json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
+					return
+				}
+				if _, err := tx.Exec(`DELETE FROM player_ip_associations WHERE player_id = $1`, playerIDValue); err != nil {
+					tx.Rollback()
+					json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
+					return
+				}
+				if _, err := tx.Exec(`DELETE FROM players WHERE player_id = $1`, playerIDValue); err != nil {
+					tx.Rollback()
+					json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
+					return
+				}
 			}
 			if err := tx.Commit(); err != nil {
 				json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: false, Error: "INTERNAL_ERROR"})
@@ -2298,7 +2382,7 @@ func adminProfileActionHandler(db *sql.DB) http.HandlerFunc {
 			})
 			_ = logAdminAction(db, adminAccount.AccountID, "profile_delete", "account", accountID, "", map[string]interface{}{
 				"username":     username,
-				"playerId":     playerID,
+				"playerId":     playerIDValue,
 				"previousRole": role,
 			})
 			json.NewEncoder(w).Encode(AdminProfileActionResponse{OK: true, Username: username})

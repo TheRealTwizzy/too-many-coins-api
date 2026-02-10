@@ -12,6 +12,8 @@ CREATE TABLE accounts (
     created_at TIMESTAMPTZ NOT NULL
 );
 
+-- Admin accounts are not players; do not create player rows for admin roles.
+
 CREATE TABLE sessions (
     session_id TEXT PRIMARY KEY,
     account_id TEXT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,

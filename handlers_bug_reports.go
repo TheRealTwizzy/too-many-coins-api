@@ -25,7 +25,9 @@ func bugReportSubmitHandler(db *sql.DB) http.HandlerFunc {
 		acct, _, err := getSessionAccount(db, r)
 		if err == nil && acct != nil {
 			account = acct
-			playerID = &acct.PlayerID
+			if acct.Role != "admin" {
+				playerID = &acct.PlayerID
+			}
 		}
 
 		ip := getClientIP(r)
@@ -98,7 +100,7 @@ func bugReportSubmitHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		// Log event for audit trail
-		if account != nil {
+		if account != nil && account.Role != "admin" {
 			emitServerTelemetry(db, &account.AccountID, account.PlayerID, "bug_report_submitted", map[string]interface{}{
 				"report_id": reportID,
 				"category":  req.Category,

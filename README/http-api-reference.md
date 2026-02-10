@@ -174,6 +174,8 @@ Fetch current player's profile, economy state, and activity warmup.
 | Response | `{ "ok": true, "player": { "playerId": "uuid", "coins": 1000, "stars": 50, "displayName": "Player1", "activityWarmup": 0.75, "ubiMultiplier": 7.75, "currentUBIPerTick": 7 } }` |
 | Error Codes | `INVALID_PLAYER_ID`, `PLAYER_NOT_REGISTERED`, `INTERNAL_ERROR` |
 
+**Admin accounts:** Admins are not players. Requests from admin sessions return `FORBIDDEN` and do not expose player state.
+
 ---
 
 #### `GET /auth/me`
@@ -186,6 +188,8 @@ Get current authenticated user's account info.
 | Request | (none) |
 | Response | `{ "ok": true, "account": { "username": "player1", "email": "...", "playerId": "uuid", "isAdmin": false, "isModerator": false } }` |
 | Error Codes | `UNAUTHORIZED` |
+
+**Admin accounts:** `playerId` is omitted. Admins have no player state.
 
 ---
 

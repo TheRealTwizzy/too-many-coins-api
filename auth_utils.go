@@ -84,6 +84,7 @@ func lookupAccountForReset(db *sql.DB, identifier string) (*Account, error) {
 
 	var account Account
 	var email sql.NullString
+	var playerID sql.NullString
 
 	err := db.QueryRow(`
 		SELECT account_id, username, display_name, player_id, email
@@ -94,7 +95,7 @@ func lookupAccountForReset(db *sql.DB, identifier string) (*Account, error) {
 		&account.AccountID,
 		&account.Username,
 		&account.DisplayName,
-		&account.PlayerID,
+		&playerID,
 		&email,
 	)
 	if err != nil {
@@ -103,6 +104,9 @@ func lookupAccountForReset(db *sql.DB, identifier string) (*Account, error) {
 
 	if email.Valid {
 		account.Email = email.String
+	}
+	if playerID.Valid {
+		account.PlayerID = playerID.String
 	}
 
 	return &account, nil

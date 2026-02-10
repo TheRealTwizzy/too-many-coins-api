@@ -77,7 +77,7 @@ func playerHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Admins cannot earn coins
+		// DESIGN: Admins are not players. They do not participate in gameplay.
 		if account.Role == "admin" {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FORBIDDEN"})
 			return
@@ -345,7 +345,7 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Admins cannot participate in player activities
+		// DESIGN: Admins are not players. They do not participate in gameplay.
 		if account.Role == "admin" {
 			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "FORBIDDEN"})
 			return
@@ -668,7 +668,7 @@ func buyStarQuoteHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Admins cannot participate in player activities
+		// DESIGN: Admins are not players. They do not participate in gameplay.
 		if account.Role == "admin" {
 			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "FORBIDDEN"})
 			return
@@ -847,7 +847,7 @@ func buyVariantStarHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Admins cannot participate in player activities
+		// DESIGN: Admins are not players. They do not participate in gameplay.
 		if account.Role == "admin" {
 			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "FORBIDDEN"})
 			return
@@ -991,7 +991,7 @@ func buyBoostHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Admins cannot participate in player activities
+		// DESIGN: Admins are not players. They do not participate in gameplay.
 		if account.Role == "admin" {
 			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "FORBIDDEN"})
 			return
@@ -1085,7 +1085,7 @@ func burnCoinsHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Admins cannot participate in player activities
+		// DESIGN: Admins are not players. They do not participate in gameplay.
 		if account.Role == "admin" {
 			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "FORBIDDEN"})
 			return
@@ -1492,6 +1492,10 @@ func activityHandler(db *sql.DB) http.HandlerFunc {
 		if !ok {
 			return
 		}
+		if account.Role == "admin" {
+			json.NewEncoder(w).Encode(SimpleResponse{OK: false, Error: "FORBIDDEN"})
+			return
+		}
 		_, err := db.Exec(`
 			UPDATE players
 			SET last_active_at = NOW()
@@ -1617,16 +1621,22 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 				json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "ADMIN_BOOTSTRAP_REQUIRED"})
 				return
 			}
+			if err.Error() == "PLAYER_MISSING" {
+				json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
 			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INVALID_CREDENTIALS"})
 			return
 		}
 
-		if _, err := LoadOrCreatePlayer(db, account.PlayerID); err != nil {
-			json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
-			return
+		if account.Role != "admin" {
+			if _, err := LoadOrCreatePlayer(db, account.PlayerID); err != nil {
+				json.NewEncoder(w).Encode(AuthResponse{OK: false, Error: "INTERNAL_ERROR"})
+				return
+			}
+			EnsurePlayableBalanceOnLogin(db, account.PlayerID, &account.AccountID)
+			verifyDailyPlayability(db, account.PlayerID, &account.AccountID)
 		}
-		EnsurePlayableBalanceOnLogin(db, account.PlayerID, &account.AccountID)
-		verifyDailyPlayability(db, account.PlayerID, &account.AccountID)
 
 		sessionID, expiresAt, err := createSession(db, account.AccountID)
 		if err != nil {
@@ -1671,8 +1681,10 @@ func meHandler(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(w).Encode(AuthResponse{OK: false})
 			return
 		}
-		EnsurePlayableBalanceOnLogin(db, account.PlayerID, &account.AccountID)
-		verifyDailyPlayability(db, account.PlayerID, &account.AccountID)
+		if account.Role != "admin" {
+			EnsurePlayableBalanceOnLogin(db, account.PlayerID, &account.AccountID)
+			verifyDailyPlayability(db, account.PlayerID, &account.AccountID)
+		}
 		json.NewEncoder(w).Encode(AuthResponse{
 			OK:                 true,
 			Username:           account.Username,
@@ -1960,7 +1972,7 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Admins cannot earn coins
+		// DESIGN: Admins are not players. They do not participate in gameplay.
 		if account.Role == "admin" {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FORBIDDEN"})
 			return

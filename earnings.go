@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -256,6 +257,9 @@ func GrantCoinsNoCap(db *sql.DB, playerID string, amount int, now time.Time, sou
 func EnsurePlayableBalanceOnLogin(db *sql.DB, playerID string, accountID *string) {
 	now := time.Now().UTC()
 	if isSeasonEnded(now) {
+		return
+	}
+	if strings.TrimSpace(playerID) == "" {
 		return
 	}
 	cooldown := loginSafeguardCooldown

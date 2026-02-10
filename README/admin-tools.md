@@ -42,8 +42,29 @@ Admins must NOT:
 - Override anti-cheat without justification
 - Edit past season data
 - Interfere with normal economic flow
+- **Participate in gameplay** (admins are not players)
 
 **The economy is designed to self-regulate.** Admin intervention must be rare, deliberate, and auditable.
+
+---
+
+## Admins Are Not Players
+
+**Fundamental Design Principle:** Admins are system operators, not players. They do not participate in normal gameplay.
+
+Admins cannot:
+- Earn coins from faucets, drips, or activities
+- Purchase stars
+- Buy variants or boosts
+- Burn coins
+- Compete on leaderboards
+- Participate in seasonal events
+
+Admin accounts keep **no player records**:
+- `accounts.player_id` is `NULL` for admins
+- No rows in player history tables (coins, stars, telemetry, purchases)
+
+This separation ensures **clean audit trails** and prevents **conflicts of interest** in economy management.
 
 ---
 

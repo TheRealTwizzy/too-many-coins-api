@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -63,8 +64,9 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 	var adminAccountID string
 	var adminUsername string
 	var adminMustChange bool
+	var adminPlayerID sql.NullString
 	rows, err := tx.QueryContext(ctx, `
-		SELECT account_id, username, must_change_password
+		SELECT account_id, username, must_change_password, player_id
 		FROM accounts
 		WHERE role IN ('admin', 'frozen:admin')
 		ORDER BY created_at ASC
@@ -77,7 +79,7 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 	for rows.Next() {
 		adminCount++
 		if adminCount == 1 {
-			if err := rows.Scan(&adminAccountID, &adminUsername, &adminMustChange); err != nil {
+			if err := rows.Scan(&adminAccountID, &adminUsername, &adminMustChange, &adminPlayerID); err != nil {
 				_ = rows.Close()
 				return err
 			}
@@ -88,6 +90,11 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 		return errors.New("multiple admin accounts exist; refuse to start")
 	}
 	if adminCount == 1 {
+		if adminPlayerID.Valid && strings.TrimSpace(adminPlayerID.String) != "" {
+			if err := scrubAdminPlayerArtifactsTx(ctx, tx, adminAccountID, adminPlayerID.String); err != nil {
+				return err
+			}
+		}
 		if bootstrapComplete && adminMustChange {
 			return errors.New("bootstrap sealed but admin still locked; refuse to start")
 		}
@@ -131,10 +138,6 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	playerID, err := randomToken(16)
-	if err != nil {
-		return err
-	}
 	bootstrapPassword, err := randomToken(32)
 	if err != nil {
 		return err
@@ -145,27 +148,19 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 	}
 
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO players (player_id, coins, stars, created_at, last_active_at)
-		VALUES ($1, 0, 0, NOW(), NOW())
-	`, playerID); err != nil {
-		return err
-	}
-
-	if _, err := tx.ExecContext(ctx, `
 		INSERT INTO accounts (
 			account_id,
 			username,
 			password_hash,
 			display_name,
-			player_id,
 			email,
 			role,
 			must_change_password,
 			created_at,
 			last_login_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, 'admin', TRUE, NOW(), NOW())
-	`, accountID, username, passwordHash, displayName, playerID, email); err != nil {
+		VALUES ($1, $2, $3, $4, $5, 'admin', TRUE, NOW(), NOW())
+	`, accountID, username, passwordHash, displayName, email); err != nil {
 		return err
 	}
 
@@ -198,6 +193,69 @@ func ensureAlphaAdmin(ctx context.Context, db *sql.DB) error {
 
 	log.Println("Alpha admin bootstrap: created alpha-admin (locked)")
 	return nil
+}
+
+func scrubAdminPlayerArtifactsTx(ctx context.Context, tx *sql.Tx, accountID string, playerID string) error {
+	if strings.TrimSpace(playerID) == "" {
+		return nil
+	}
+	deleteIfExists := func(table string, column string) error {
+		var reg sql.NullString
+		if err := tx.QueryRowContext(ctx, `SELECT to_regclass($1)`, table).Scan(&reg); err != nil {
+			return err
+		}
+		if !reg.Valid {
+			return nil
+		}
+		_, err := tx.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s WHERE %s = $1", table, column), playerID)
+		return err
+	}
+
+	if err := deleteIfExists("coin_earning_log", "player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("star_purchase_log", "player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("player_faucet_claims", "player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("player_star_variants", "player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("player_boosts", "player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("player_ip_associations", "player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("player_telemetry", "player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("bug_reports", "player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("tsa_cinder_sigils", "owner_player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("tsa_mint_log", "buyer_player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("tsa_trade_log", "seller_player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("tsa_trade_log", "buyer_player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("tsa_activation_log", "player_id"); err != nil {
+		return err
+	}
+	if err := deleteIfExists("players", "player_id"); err != nil {
+		return err
+	}
+
+	_, err := tx.ExecContext(ctx, `UPDATE accounts SET player_id = NULL WHERE account_id = $1`, accountID)
+	return err
 }
 
 func ensureActiveSeason(ctx context.Context, db *sql.DB) error {

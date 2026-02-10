@@ -136,6 +136,7 @@ func authenticate(db *sql.DB, username, password string) (*Account, error) {
 	var passwordHash string
 	var role string
 	var mustChangePassword bool
+	var playerID sql.NullString
 	var email sql.NullString
 	var bio sql.NullString
 	var pronouns sql.NullString
@@ -154,7 +155,7 @@ func authenticate(db *sql.DB, username, password string) (*Account, error) {
 		&account.AccountID,
 		&account.Username,
 		&account.DisplayName,
-		&account.PlayerID,
+		&playerID,
 		&passwordHash,
 		&role,
 		&mustChangePassword,
@@ -187,6 +188,13 @@ func authenticate(db *sql.DB, username, password string) (*Account, error) {
 	_, _ = db.Exec(`UPDATE accounts SET last_login_at = NOW() WHERE account_id = $1`, account.AccountID)
 
 	account.Role = normalizeRole(role)
+	if account.Role == "admin" {
+		account.PlayerID = ""
+	} else if playerID.Valid {
+		account.PlayerID = playerID.String
+	} else {
+		return nil, errors.New("PLAYER_MISSING")
+	}
 	account.MustChangePassword = mustChangePassword
 	if email.Valid {
 		account.Email = email.String
@@ -250,6 +258,7 @@ func getSessionAccount(db *sql.DB, r *http.Request) (*Account, string, error) {
 	var account Account
 	var expiresAt time.Time
 	var role string
+	var playerID sql.NullString
 	var mustChangePassword bool
 
 	err = db.QueryRow(`
@@ -262,7 +271,7 @@ func getSessionAccount(db *sql.DB, r *http.Request) (*Account, string, error) {
 		&account.AccountID,
 		&account.Username,
 		&account.DisplayName,
-		&account.PlayerID,
+		&playerID,
 		&role,
 		&mustChangePassword,
 		&expiresAt,
@@ -281,6 +290,13 @@ func getSessionAccount(db *sql.DB, r *http.Request) (*Account, string, error) {
 	}
 
 	account.Role = normalizeRole(role)
+	if account.Role == "admin" {
+		account.PlayerID = ""
+	} else if playerID.Valid {
+		account.PlayerID = playerID.String
+	} else {
+		return nil, "", errors.New("PLAYER_MISSING")
+	}
 	account.MustChangePassword = mustChangePassword
 
 	return &account, cookie.Value, nil

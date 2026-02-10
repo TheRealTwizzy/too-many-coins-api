@@ -144,10 +144,12 @@ func buildLiveSnapshot(db *sql.DB, r *http.Request) liveSnapshot {
 
 	if account, _, err := getSessionAccount(db, r); err == nil && account != nil {
 		snapshot.Authenticated = true
-		// Season-authoritative price is shared by all players (no per-player adjustment)
-		if player, err := LoadPlayer(db, account.PlayerID); err == nil && player != nil {
-			snapshot.PlayerCoins = player.Coins
-			snapshot.PlayerStars = player.Stars
+		if account.Role != "admin" {
+			// Season-authoritative price is shared by all players (no per-player adjustment)
+			if player, err := LoadPlayer(db, account.PlayerID); err == nil && player != nil {
+				snapshot.PlayerCoins = player.Coins
+				snapshot.PlayerStars = player.Stars
+			}
 		}
 	}
 
