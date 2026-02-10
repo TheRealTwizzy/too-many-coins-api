@@ -624,8 +624,10 @@ func runPassiveDrip(db *sql.DB) {
 	activityWindow := ActiveActivityWindow()
 
 	rows, err := db.Query(`
-		SELECT player_id, last_active_at, last_coin_grant_at, drip_multiplier, drip_paused
-		FROM players
+		SELECT p.player_id, p.last_active_at, p.last_coin_grant_at, p.drip_multiplier, p.drip_paused
+		FROM players p
+		JOIN accounts a ON a.player_id = p.player_id
+		WHERE a.role != 'admin'
 	`)
 	if err != nil {
 		log.Println("drip query failed:", err)

@@ -156,12 +156,14 @@ func DistributeUniversalBasicIncome(db *sql.DB, now time.Time) (ubiCount int, ub
 		return 0, 0, false
 	}
 
-	// Query all players with their activity state
+	// Query all NON-ADMIN players with their activity state
 	rows, err := db.Query(`
-		SELECT player_id, last_active_at, activity_warmup_level, 
-		       activity_warmup_updated_at, recent_activity_seconds
-		FROM players
-		ORDER BY player_id
+		SELECT p.player_id, p.last_active_at, p.activity_warmup_level, 
+		       p.activity_warmup_updated_at, p.recent_activity_seconds
+		FROM players p
+		JOIN accounts a ON a.player_id = p.player_id
+		WHERE a.role != 'admin'
+		ORDER BY p.player_id
 	`)
 	if err != nil {
 		return 0, 0, false

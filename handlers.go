@@ -76,10 +76,13 @@ func playerHandler(db *sql.DB) http.HandlerFunc {
 		if !ok {
 			return
 		}
-		playerID := account.PlayerID
 
-		player, err := LoadOrCreatePlayer(db, playerID)
-		if err != nil {
+	// Admins cannot earn coins
+	if account.Role == "admin" {
+		json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FORBIDDEN"})
+		return
+	}
+
 			log.Println("Failed to load/create player:", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -331,6 +334,12 @@ func buyStarHandler(db *sql.DB) http.HandlerFunc {
 
 		account, ok := requireSession(db, w, r)
 		if !ok {
+			return
+		}
+
+		// Admins cannot participate in player activities
+		if account.Role == "admin" {
+			json.NewEncoder(w).Encode(BuyStarResponse{OK: false, Error: "FORBIDDEN"})
 			return
 		}
 
@@ -651,6 +660,12 @@ func buyStarQuoteHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// Admins cannot participate in player activities
+		if account.Role == "admin" {
+			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "FORBIDDEN"})
+			return
+		}
+
 		var req BuyStarRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			json.NewEncoder(w).Encode(BuyStarQuoteResponse{OK: false, Error: "INVALID_REQUEST"})
@@ -824,6 +839,12 @@ func buyVariantStarHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// Admins cannot participate in player activities
+		if account.Role == "admin" {
+			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "FORBIDDEN"})
+			return
+		}
+
 		var req BuyVariantStarRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			json.NewEncoder(w).Encode(BuyVariantStarResponse{OK: false, Error: "INVALID_REQUEST"})
@@ -962,6 +983,12 @@ func buyBoostHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// Admins cannot participate in player activities
+		if account.Role == "admin" {
+			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "FORBIDDEN"})
+			return
+		}
+
 		var req BuyBoostRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			json.NewEncoder(w).Encode(BuyBoostResponse{OK: false, Error: "INVALID_REQUEST"})
@@ -1047,6 +1074,12 @@ func burnCoinsHandler(db *sql.DB) http.HandlerFunc {
 
 		account, ok := requireSession(db, w, r)
 		if !ok {
+			return
+		}
+
+		// Admins cannot participate in player activities
+		if account.Role == "admin" {
+			json.NewEncoder(w).Encode(BurnCoinsResponse{OK: false, Error: "FORBIDDEN"})
 			return
 		}
 
@@ -1918,6 +1951,13 @@ func activityClaimHandler(db *sql.DB) http.HandlerFunc {
 		if !ok {
 			return
 		}
+
+		// Admins cannot earn coins
+		if account.Role == "admin" {
+			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "FORBIDDEN"})
+			return
+		}
+
 		playerID := account.PlayerID
 		if !isValidPlayerID(playerID) {
 			json.NewEncoder(w).Encode(FaucetClaimResponse{OK: false, Error: "INVALID_PLAYER_ID"})
