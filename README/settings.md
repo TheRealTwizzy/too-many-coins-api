@@ -421,9 +421,101 @@ None currently pending.
 
 ---
 
+## Rate Limits & Throttling Reference
+
+Comprehensive taxonomy of **global rate limits**, **IP throttling**, **anti-spam timeouts**, and **abuse enforcement multipliers**.
+
+### Authentication Rate Limits
+
+| Action | Limit | Window | Scope | Error Code |
+|--------|-------|--------|-------|------------|
+| **Signup** | 5 requests | 600 seconds (10 min) | Per IP | `RATE_LIMIT_SIGNUP` |
+| **Login** | 12 requests | 600 seconds (10 min) | Per IP | `RATE_LIMIT_LOGIN` |
+| **General Auth** | 10 requests | 600 seconds (10 min) | Per IP | `RATE_LIMIT_AUTH` |
+
+**Endpoints Affected:** `/auth/signup`, `/auth/login`, `/auth/request-reset`, `/auth/reset-password`
+
+### Faucet Cooldowns
+
+| Faucet | Base Cooldown | Effective Range | Scaling Factors |
+|--------|---------------|-----------------|-----------------|
+| **Daily Login** | 20 hours | 10-34 hours | Seasonal (0.5x-1.7x) |
+| **Activity** | 360 seconds (6 min) | 300-720 seconds | Seasonal, account age, abuse jitter, market pressure |
+
+**Activity Cooldown Modifiers:**
+1. Seasonal Scaling: 0.5x–1.7x (early vs late season)
+2. Account Age Multiplier: 1.0x–1.6x (old vs new accounts)
+3. Abuse Enforcement Jitter: +0–50% (severity-dependent randomization)
+4. Market Pressure: Extended during high pressure (≥1.7)
+
+### UBI Warmup Constants
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| **Warmup Duration** | 1800 seconds (30 min) | Time to reach 10x multiplier |
+| **Max Multiplier** | 10.0x | Maximum UBI income multiplier |
+| **Decay Rate** | 0.002 per tick | Warmup decay when idle (60-second ticks) |
+| **Base UBI** | 1 microcoin per tick | Minimum baseline income |
+
+### Bot Rate Limiting
+
+| Limit | Value | Purpose |
+|-------|-------|---------|
+| **Min Star Interval** | 90 seconds | Minimum time between bot star purchases |
+| **Jitter Min** | 3000 ms (3 seconds) | Minimum jitter between bot actions |
+| **Jitter Max** | 12000 ms (12 seconds) | Maximum jitter between bot actions |
+
+**Purpose:** Prevents synchronized bot requests from creating artificial pressure spikes.
+
+### Abuse Enforcement Multipliers
+
+#### Severity Tier Thresholds
+
+| Severity | Score Range | Price | Max Bulk | Earn | Cooldown Jitter | Decay Rate |
+|----------|-------------|-------|----------|------|-----------------|------------|
+| **0** | 0-9.99 | 1.0x | — | 1.0x | 0% | 1.0/hour (fast) |
+| **1** | 10-24.99 | 1.05x (+5%) | 4 stars | 0.9x (-10%) | +10% | 0.6/hour (fast) |
+| **2** | 25-44.99 | 1.15x (+15%) | 3 stars | 0.75x (-25%) | +25% | 0.3/hour (slow, 72h persistence) |
+| **3** | 45+ | 1.3x (+30%) | 2 stars | 0.6x (-40%) | +50% | 0.15/hour (very slow, 7d persistence) |
+
+**Maximum Jitter Cap:** 5 minutes (300 seconds) — Prevents cooldowns from becoming unreasonably long.
+
+### System Tick Intervals
+
+| Tick Type | Interval | Purpose |
+|-----------|----------|---------|
+| **Emission Tick** | 60 seconds | Economy emission, UBI distribution, market pressure updates |
+| **Season Controls Cache TTL** | 60 seconds | Cache refresh for emergency season controls |
+
+### Passive Income Intervals
+
+| State | Interval | Amount | Condition |
+|-------|----------|--------|-----------|
+| **Active Drip** | 60 seconds | 2 coins | Player active within 120 seconds |
+| **Idle Drip** | 240 seconds (4 min) | 1 coin | Player inactive for >120 seconds |
+
+**Note:** Passive drip **disabled by default** in Alpha.
+
+### Purchase Bulk Limits
+
+**Default:** 10 stars per purchase
+
+**Abuse-Adjusted Limits:**
+| Severity | Max Bulk Qty |
+|----------|--------------|
+| 0 | 10 stars |
+| 1 | 4 stars |
+| 2 | 3 stars |
+| 3 | 2 stars |
+
+---
+
 ## See Also
 
 - [Feature Flags](#environment-variables) — Feature flag impact matrix
 - [Admin Tools](admin-tools.md) — Admin settings API endpoints
 - [Phase 0 Contract](phase0-contract.md) — Alpha phase constraints
 - [Persistent State](persistent-state.md) — Database schema and tables
+- [Anti-Abuse](anti-abuse.md) — Abuse detection event types and enforcement
+- [Activity System](activity-system.md) — Activity window and warmup mechanics
+- [Coin Faucets](coin-faucets.md) — Faucet cooldown formulas and seasonal scaling

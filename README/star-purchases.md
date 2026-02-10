@@ -308,4 +308,99 @@ Net loss: 20 coins
 
 ## Coin Burning (Voluntary Sink)
 
-See [README/sinks.md](sinks.md) for complete burn mechanics.
+Players may voluntarily burn (destroy) coins for no immediate gameplay benefit.
+
+### Mechanics
+
+**Endpoint:** `POST /burn-coins`
+
+**Request:**
+```json
+{
+  "amount": 100
+}
+```
+- `amount` must be 1-1000 microcoins per transaction
+
+**Response:**
+```json
+{
+  "ok": true,
+  "coinsBurned": 100,
+  "playerCoins": 4900,
+  "burnedTotal": 250
+}
+```
+
+### What Happens to Burned Coins
+
+1. **Immediate deduction:** `player.coins` reduced by `amount`
+2. **Tracking:** `player.burned_coins` incremented by `amount` (permanent cumulative total)
+3. **Circulation removed:** Coins are permanently destroyed, not redistributed
+4. **No rewards:** No gameplay benefit, achievement, or currency exchange
+
+### Exchange Rate
+
+**Fixed 1:1 destruction** — No conversion or exchange; purely destructive.
+
+### Constraints
+
+| Constraint | Value | Error Code |
+|-----------|-------|-----------|
+| **Minimum** | 1 microcoin | `INVALID_AMOUNT` |
+| **Maximum** | 1000 microcoins (1 coin) | `INVALID_AMOUNT` |
+| **Balance** | Must have sufficient coins | `NOT_ENOUGH_COINS` |
+| **Season** | Must be active | `SEASON_ENDED` |
+| **Feature Flag** | Sinks must be enabled | `FEATURE_DISABLED` |
+
+### Database Schema
+
+**Field:** `players.burned_coins`
+
+```sql
+ALTER TABLE players ADD COLUMN IF NOT EXISTS 
+    burned_coins BIGINT NOT NULL DEFAULT 0;
+```
+
+**Update Pattern:**
+```sql
+UPDATE players 
+SET coins = coins - $1, 
+    burned_coins = burned_coins + $1
+WHERE player_id = $2 
+  AND coins >= $1;
+```
+
+### Design Intent
+
+**Why Burn Coins?**
+
+Burning provides **no immediate gameplay benefit**, but serves several design purposes:
+
+1. **Counter-Inflationary Tool** — Removes coins from active circulation
+2. **Prestige Signaling** — Cumulative burn total visible on profile (flex mechanic)
+3. **Future Unlocks** — May gate cosmetics, titles, badges (post-alpha)
+4. **Strategic Denial** — Prevent accidental spending; reduce market pressure
+
+### Economy Impact
+
+**Per-Player:**
+- `burned_coins` field in `players` table (lifetime cumulative)
+- Returned in `/player` API response as `burnedTotal`
+
+**Global:**
+- ⚠️ **NOT TRACKED** — No aggregate "total coins burned" metric in `season_economy`
+- Circulation metric updates on next emission/faucet cycle
+
+**Strategic Implications:**
+- Pure coin sink with no return
+- May slow star price inflation if many players burn
+- Future utility uncertain (post-alpha features TBD)
+
+---
+
+## See Also
+
+- [Coin Emission](coin-emission.md) — Coin supply and circulation mechanics
+- [Market Pressure](market-pressure.md) — Price dynamics and demand signals
+- [Anti-Abuse](anti-abuse.md) — Purchase restrictions and enforcement

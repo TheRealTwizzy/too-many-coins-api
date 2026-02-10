@@ -187,3 +187,118 @@ Freeze a season in emergency cases.
 Temporarily disable trading per season if needed.
 
 All admin actions are logged and auditable.
+
+---
+
+## Admin Action Audit Trail
+
+All administrative actions are logged to an **append-only, immutable audit log** for accountability and recovery.
+
+### Action Type Taxonomy
+
+| Action Type | Scope Type | When Triggered | Details Captured |
+|------------|-----------|----------------|-----------------|
+| **auto_admin_bootstrap** | `account` | Server startup creates first admin | `{"username": "alpha-admin", "autoCreated": true}` |
+| **admin_bootstrap_claim** | `account` | Owner claims bootstrap with code | `{"username": "...", "claimedAt": "..."}` |
+| **role_update** | `account` | Admin changes user role | `{"username": "...", "oldRole": "player", "newRole": "admin"}` |
+| **profile_freeze** | `account` | Admin freezes account | `{"username": "...", "reason": "..."}` |
+| **profile_unfreeze** | `account` | Admin unfreezes account | `{"username": "...", "reason": "..."}` |
+| **profile_delete** | `account` | Admin deletes account (reserved) | `{"username": "...", "reason": "..."}` |
+| **season_control_set** | `season_control` | Admin sets season control (emergency) | `{"controlName": "pause_purchases", "value": "true", "expiresAt": "..."}` |
+| **season_advance** | `season` | Admin manually advances season | `{"oldSeasonId": "...", "newSeasonId": "...", "reason": "..."}` |
+| **season_recovery** | `season` | Admin creates recovery season (Alpha) | `{"newSeasonId": "...", "reason": "...", "confirm": "..."}` |
+| **notification_create** | `notification` | Admin sends broadcast notification | `{"category": "system", "priority": "high", "targetRole": "all", "message": "..."}` |
+| **bot_toggle** | `player` | Admin enables/disables bot | `{"playerId": "...", "isBot": true}` |
+| **bot_create** | `player` | Admin creates test bot | `{"username": "bot_1", "profile": "threshold_buyer"}` |
+| **bot_delete** | `player` | Admin deletes bot account | `{"playerId": "...", "username": "bot_1"}` |
+
+### Scope Type Taxonomy
+
+| Scope Type | Meaning | Scope ID Format |
+|-----------|---------|----------------|
+| **account** | Action affects user account | Account UUID or username |
+| **season** | Action affects season lifecycle | Season UUID |
+| **season_control** | Emergency season control switch | Season UUID |
+| **notification** | Notification creation/broadcast | Notification ID or "broadcast" |
+| **player** | Action affects player state | Player UUID |
+
+### Database Schema
+
+```sql
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+    id BIGSERIAL PRIMARY KEY,
+    admin_account_id TEXT NOT NULL,
+    action_type TEXT NOT NULL,
+    scope_type TEXT NOT NULL,
+    scope_id TEXT NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    details JSONB NOT NULL DEFAULT '{}',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_audit_log_created 
+    ON admin_audit_log (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_log_admin 
+    ON admin_audit_log (admin_account_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_log_action 
+    ON admin_audit_log (action_type, created_at DESC);
+```
+
+### Querying the Audit Log
+
+**Endpoint:** `GET /admin/audit-log`
+
+**Query Parameters:**
+- `limit` (default 50, max 200) — Number of entries to return
+- `offset` (default 0) — Pagination offset
+- `search` (optional) — Full-text search across admin username, action type, scope ID, reason
+
+**Response:**
+```json
+{
+  "ok": true,
+  "items": [
+    {
+      "id": 1234,
+      "adminAccountId": "admin-uuid",
+      "adminUsername": "alpha-admin",
+      "actionType": "role_update",
+      "scopeType": "account",
+      "scopeId": "player-uuid",
+      "reason": "Promoting moderator",
+      "details": { /* JSON */ },
+      "createdAt": "2026-02-09T12:34:56Z"
+    }
+  ],
+  "total": 1457,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+### Retention & Immutability
+
+**Append-Only Guarantee:**
+- No UPDATE queries (actions cannot be modified)
+- No DELETE queries (actions cannot be removed)
+- Monotonic IDs (sequential ID proves chronological order)
+
+**Retention Policy:**
+- **Alpha:** Indefinite (no purge, short-lived seasons)
+- **Beta:** Indefinite (compliance audit trail)
+- **Release:** 2+ years (legal/compliance requirements)
+
+### Security & Access Control
+
+| Role | Access |
+|------|--------|
+| **Admin** | Full access (all entries) |
+| **Moderator** | No access (reserved for post-alpha) |
+| **Player** | No access |
+
+**Entry Creation:**
+- Only admins can create entries (via admin actions)
+- System can create bootstrap entries (`auto_admin_bootstrap`)
+- No API for arbitrary entry creation (prevents log forgery)
+
+For complete action type details and edge cases, see the full audit log specification in the codebase.

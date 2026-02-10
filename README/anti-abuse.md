@@ -143,3 +143,52 @@ Gaps / Alpha‑known limitations:
 - No explicit per‑player star purchase rate limit beyond abuse scoring and bot interval limits.
 - CAPTCHA and verification remain post‑alpha.
 - Trade‑specific abuse detection is inactive while trading is disabled.
+
+---
+
+## Anti-Cheat Events Registry
+
+The anti-cheat system automatically detects suspicious patterns and applies graduated penalties to protect economy integrity. All enforcement is **automatic** and **immediate** with no manual review gates.
+
+### Detection Event Types
+
+| Event Type | Severity | Window | Threshold | Score Delta |
+|-----------|----------|--------|-----------|-------------|
+| **purchase_burst** | 1 | 10 min | ≥6 star purchases | `(count - 5) × 1.2` |
+| **purchase_regular_interval** | 2 | 60 min | ≥6 purchases, mean ≤180s, stddev ≤2.0 | `2.5` |
+| **activity_regular_interval** | 1 | 60 min | ≥6 claims, mean ≤240s, stddev ≤3.0 | `2.0` |
+| **tick_reaction_burst** | 1 | 30 min | ≥3 purchases within 2s of minute boundary | `count × 0.8` |
+| **ip_cluster_activity** | 2 | 10 min | ≥3 distinct players from same IP purchasing | `activePlayers × 0.7` |
+
+### Severity System
+
+| Severity | Score Range | Decay Rate (per hour) | Price | Max Bulk | Earn | Cooldown Jitter |
+|----------|------------|----------------------|-------|----------|------|-----------------|
+| **0** | 0-9.99 | 1.0 (fast) | 1.0x | — | 1.0x | 0% |
+| **1** | 10-24.99 | 0.6 (fast) | 1.05x | 4 stars | 0.9x | +10% |
+| **2** | 25-44.99 | 0.3 (slow, 72h persistence) | 1.15x | 3 stars | 0.75x | +25% |
+| **3** | 45+ | 0.15 (very slow, 7d persistence) | 1.3x | 2 stars | 0.6x | +50% |
+
+### Admin Visibility
+
+**Endpoints:**
+- `GET /admin/abuse-events` — Last 200 abuse events
+- `GET /admin/overview` — Real-time abuse statistics
+- `GET /admin/anti-cheat` — System configuration and event counts
+
+**Database:**
+```sql
+CREATE TABLE IF NOT EXISTS abuse_events (
+    id BIGSERIAL PRIMARY KEY,
+    account_id TEXT NOT NULL,
+    player_id TEXT NOT NULL,
+    season_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    severity INT NOT NULL,
+    score_delta DOUBLE PRECISION NOT NULL,
+    details JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+For complete event definitions and enforcement mechanics, see the implementation in abuse.go.
