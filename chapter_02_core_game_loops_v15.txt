@@ -1,0 +1,257 @@
+## Chapter Draft (Version 15)
+
+# CHAPTER 02 — CORE GAME LOOPS
+
+This chapter defines the gameplay loops that structure the player experience.  
+Loops are described from the player’s perspective, but include binding constraints that must be enforced by the server.
+
+This chapter is descriptive where possible. Where it defines binding constraints (MUST / MUST NOT), those constraints are enforceable by the server.
+
+---
+
+## 2.1 Primary Gameplay Loop
+
+The core loop of Too Many Coins is:
+
+1. **Enter a season** (join or re-enter an active season)
+2. **Accrue Coins through UBI**
+3. **Convert Coins into Seasonal Stars**
+4. **Decide how to spend Seasonal Stars**
+   - Save for rank
+   - Spend for power (Sigils → Boosts)
+5. **Compete for placement**
+6. **Exit the season**
+   - Early exit via Lock-In, or
+   - Natural season end (expiration)
+7. **Convert remaining Seasonal Stars into Global Stars**
+8. **Accumulate Global Stars across the year**
+9. **Yearly reset occurs**
+10. **Repeat**
+
+---
+
+## 2.2 Seasonal Participation Loop
+
+A player may economically participate in **at most one season at a time**.  
+Spectating/viewing other seasons does not change participation state (Chapter 08 / Chapter 10).
+
+Seasonal participation consists of:
+
+1. **Join**
+2. **Participate**
+   - Accrue UBI
+   - Make economic decisions (Stars, Sigils, Boosts, Trades)
+   - Compete for placement
+3. **Exit**
+   - Lock-In (early), or
+   - Natural season end
+4. **Settlement**
+   - Conversion to Global Stars
+   - Bonuses (if eligible at natural end)
+5. **Return to global context**
+   - May join a new season when desired
+
+---
+
+## 2.3 Activity + Connectivity Sub-Loop (Active / Idle / Disconnected)
+
+The system enforces activity requirements to prevent passive participation from dominating outcomes.
+
+### 2.3.1 Activity state is a closed set (binding)
+
+While economically participating, the player has exactly one **activity state**:
+
+- **Active**
+- **Idle**
+
+No other activity state exists.
+
+**Connectivity is separate.** “Offline / disconnected” is a transport condition owned by Chapter 11 and reflected in server `online_*` flags (Chapter 03). It MUST NOT be treated as an activity state and MUST NOT create a third UBI branch.
+
+### 2.3.2 Active State
+
+A participating player is considered Active when activity requirements are satisfied.  
+Active requirements are enforced by the server; clients MUST NOT infer.
+
+### 2.3.3 Active → Idle Transition Trigger
+
+If fifteen (15) minutes elapse with no qualifying Activity Decision, the player MUST transition to Idle.
+
+- Inactivity trigger contract: Chapter 11
+- Qualifying Activity Decision set: Chapter 03
+
+### 2.3.4 Idle State
+
+While Idle:
+
+- The player remains economically participating (participation does not “pause”).
+- Season-scoped economy actions are blocked behind an Idle modal until acknowledgement (Chapter 10 / Chapter 11).
+- Chat is not blocked (Chapter 08 / Chapter 10), but chat never counts as activity (Chapter 08).
+
+Clearing Idle requires `idle_modal_ack` committing (Chapter 03).
+
+### 2.3.5 Disconnected / Reconnect (Connectivity)
+
+Disconnected indicates the player is not currently connected.
+
+Disconnected does not pause:
+- Participation-time accumulation rules (Chapter 06)
+- Inactivity enforcement timer (Chapter 11)
+
+If the player reconnects while Idle is enforced, they must acknowledge Idle before resuming season-scoped economy actions.
+
+---
+
+## 2.4 Trade Lock Acquisition / Release Timing Semantics
+
+This section defines the **binding** timing semantics for trade locks (escrow/holds) and their deterministic release.
+
+Economic valuation, fee computation, and offer payload fields are defined in Chapter 05.  
+Season-scoped action acceptance/order/serialization are defined in Chapter 03.
+
+### 2.4.1 Definitions (binding)
+
+- **Trade offer**: a proposed deal identified by `(season_id, trade_id)` (Chapter 05).
+- **OPEN**: offer exists and is eligible to be accepted.
+- **TERMINAL**: offer is irreversibly ended (committed, canceled, declined, invalidated, timed out).
+- **Escrow/lock**: a server-side reservation that makes offered assets temporarily unavailable for any other spend/transfer.
+
+### 2.4.2 Lock acquisition timing (binding)
+
+1. **Initiator lock acquisition**
+   - On `trade_initiate` acceptance, the server MUST:
+     - compute and store the locked quote/fee for the offer (Chapter 05),
+     - escrow the initiator’s offered assets and the initiator’s locked fee amount,
+     - create or update the offer to `OPEN`.
+
+2. **Acceptor lock acquisition**
+   - On `trade_accept` acceptance, the server MUST:
+     - escrow the acceptor’s offered assets and the acceptor’s locked fee amount,
+     - and only if acceptor escrow succeeds, schedule the trade for commit per Chapter 03.
+   - If acceptor escrow fails (insufficient assets, insufficient Coins for fee, invalid contents, etc.), the server MUST reject `trade_accept` with no side effects:
+     - no swap occurs,
+     - no fees are burned,
+     - any temporary acceptor holds MUST be released before responding,
+     - the offer remains `OPEN` with initiator escrow still locked.
+
+3. **Pending-slot interaction (binding)**
+   - A trade acceptance occupies the Chapter 03 “one pending non-exempt action” slot for **both** parties from acceptance until the trade reaches a terminal outcome.
+
+### 2.4.3 Deterministic conflict rules (binding)
+
+Trade identity key:
+- `(season_id, trade_id)`
+
+For any tick boundary, if multiple trade actions target the same identity, the server MUST apply the first terminal transition reached in deterministic processing order, and all later conflicting transitions MUST be rejected with `reason_code=conflict_replaced` (Chapter 15).
+
+### 2.4.4 Lock release timing (binding)
+
+Locks MUST be released deterministically when the trade reaches a terminal outcome:
+
+1. **Committed**
+   - On successful trade commit:
+     - asset transfer MUST occur atomically,
+     - both parties’ fees (if any) MUST be burned atomically (Chapter 05),
+     - all escrow locks for both parties MUST be cleared as part of the same commit.
+
+2. **Canceled / Declined**
+   - If the offer is `OPEN` and reaches terminal `CANCELED` or `DECLINED`:
+     - all initiator escrow locks MUST be released immediately,
+     - no fees are burned,
+     - acceptor escrow does not exist and therefore nothing is released for acceptor.
+
+3. **Invalidated (defensive or time/phase invalidation)**
+   - If a trade that is `OPEN` or “accepted but not yet committed” becomes invalid (Chapter 03 defensive invalidation, season end, or phase constraint), the server MUST:
+     - mark the trade terminal as `INVALIDATED`,
+     - release all escrow locks that exist for either party,
+     - burn no fees unless the trade actually commits.
+
+### 2.4.5 Timeout requirement (binding)
+
+Trade offers MUST NOT be able to lock assets indefinitely.  
+Therefore, the system MUST enforce a deterministic timeout for `OPEN` offers and any non-terminal “accepted but not committed yet” trade state.
+
+Timeout duration:
+
+- `timeout_seconds = 3600`
+
+Timeout start (authoritative basis):
+
+- Timeout MUST be measured from `trade_initiate` acceptance tick:
+  - `accepted_intake_tick` (a `season_tick_index`).
+- `accepted_server_time` MAY be stored, but if present it MUST equal:
+  - `season_tick_start(season_id, accepted_intake_tick)` (Chapter 07).
+
+Deadline + execution moment (authoritative):
+
+- `deadline_tick = trade_initiate.accepted_intake_tick + timeout_seconds`.
+- On the **first tick `T` where `T >= deadline_tick`**, during the deterministic “trade maintenance” step for tick `T`, the server MUST:
+  - transition the trade to terminal `TIMED_OUT`, and
+  - release all escrow/locks held by either side, and
+  - burn no fees.
+
+Timeout scope:
+
+- The timeout MUST apply to:
+  - `OPEN`, and
+  - any non-terminal “accepted but not committed yet” trade state.
+
+Timeout telemetry:
+
+- A trade timeout event MUST be logged per Chapter 15 trade logging requirements.
+
+
+### 2.4.6 Blackout and expiration interaction (binding)
+
+Blackout begins at `blackout_start_tick` (Chapter 07) and forbids trade actions (Chapter 03 / Chapter 07).  
+Season expiration occurs at the season expiration tick `E` (Chapter 07) and ends all in-season action legality.
+
+To prevent “stuck escrow” once trade is no longer actionable:
+
+Deterministic terminalization priority (authoritative):
+
+1. Expiration invalidation on tick `E` → `INVALIDATED`
+2. Blackout entry invalidation on `blackout_start_tick` → `INVALIDATED`
+3. Timeout on `T >= deadline_tick` → `TIMED_OUT`
+4. Defensive invalidation MAY occur earlier; the first terminal transition wins
+
+Blackout entry terminalization:
+- On `blackout_entered` (effective tick = `blackout_start_tick`, the first blackout tick), the server MUST transition **any non-terminal trade** in that season to terminal `INVALIDATED`.
+- All escrow/locks held by either side MUST be released.
+- A `trade_invalidated` event (trade event family) MUST be emitted per Chapter 15 trade logging requirements.
+
+Expiration terminalization:
+- On `season_expired` / expiration tick `E`, the server MUST transition **any non-terminal trade** in that season to terminal `INVALIDATED`.
+- All escrow/locks held by either side MUST be released.
+- A `trade_invalidated` event (trade event family) MUST be emitted per Chapter 15 trade logging requirements.
+
+Notes:
+- These terminalizations apply regardless of the trade’s current non-terminal substate; “non-terminal” means “not in {COMMITTED, INVALIDATED, TIMED_OUT}”.
+- Defensive invalidation (Chapter 03) MAY also invalidate a trade earlier; the first terminal transition wins (Chapter 05 conflict rules).
+
+## 2.5 Lock-In Decision Loop (Summary)
+
+At any time before blackout (Chapter 07), a participating player may choose to Lock-In.
+
+Lock-In is an early exit that:
+- Converts remaining Seasonal Stars to Global Stars
+- Ends the player’s season participation immediately (Chapter 03)
+- Stores the latest Lock-In snapshot as authoritative for ranking surfaces (Chapter 03)
+
+Lock-In may be performed multiple times in a season; the latest successful Lock-In snapshot is authoritative for ranking surfaces (Chapter 03).
+
+---
+
+## 2.6 Risk vs Reward Dynamics
+
+Too Many Coins is built around sacrifice:
+
+- Saving Seasonal Stars increases rank and end-of-season bonus potential.
+- Spending Seasonal Stars (Sigils/Boosts/cosmetics) can increase power or identity expression but lowers rank.
+- Locking in early secures conversion but forfeits natural-end bonuses.
+
+The system MUST frame all of these outcomes as valid and non-failure (Chapter 09).
+
+---
+
+End of Chapter 02.

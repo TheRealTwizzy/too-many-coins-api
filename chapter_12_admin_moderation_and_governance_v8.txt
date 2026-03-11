@@ -1,0 +1,596 @@
+## Chapter Draft (Version 8)
+
+# Chapter 12 — Admin, Moderation, and Governance
+
+Administration and Moderation exist as **social safety barriers** only. They exist to manage **chat and player interaction**, and to enforce policy compliance on **public-facing profile fields**.
+
+**Hard constraints (non-negotiable):**
+
+1. Administrators and Moderators MUST NOT have **any control over the economy** (balances, inventories, boosts, prices, rewards, placements, outcomes).
+2. Administrators and Moderators MUST NOT have **any control over seasonal timing/pace** (season length, expiration timing, blackout windows, joins/exits legality windows, forced end/extend).
+3. Administrators and Moderators MUST NOT have access to **cosmetics ownership**, **badge/rank granting**, or **player-specific economic state** beyond what is already publicly visible in normal player-facing surfaces.
+4. Staff accounts MUST act only on:
+   - communication safety (visibility + access controls for chat/DMs), and
+   - profile policy compliance (limited field edits), and
+   - governance artifacts (reports/cases/audits/evidence).
+
+---
+
+## 12.1 Admin Authority Boundaries
+
+### 12.1.1 Roles (closed set) and composition
+
+**Roles are a closed set:**
+- `Player`
+- `Moderator`
+- `Admin`
+
+**Role is single and immutable:**
+- Each account MUST have exactly one immutable `role`.
+- `role` MUST NOT be changed in-app.
+
+**Separate identities are required:**
+- `Moderator` and `Admin` accounts MUST NOT be “also a player” on that same account.
+- `Moderator` and `Admin` accounts MUST be **hard-blocked** from season participation and any economy actions.
+
+**Role priority and capabilities:**
+- Priority order: `Admin > Moderator > Player`
+- Capabilities are the union of lower roles **except** where higher-role hard-blocks apply (e.g., staff participation block).
+
+### 12.1.2 Staff participation hard-blocks
+
+For any account where `role ∈ {Moderator, Admin}`:
+
+- Season participation MUST be forbidden (join/re-enter/participate/Lock-In/any economy-mutating verb).
+- Any economy action MUST be rejected (no “manual interventions,” no “special treatment,” no per-player edits).
+
+> **Dependency note:** The exact verb set and request gating is owned by Chapter 03. Chapter 03 MUST include a role gate that rejects economy-participation verbs for staff accounts.
+
+### 12.1.3 Staff “visibility” as a user
+
+Admins MAY:
+- view seasons
+- spectate (spectate = non-participating access)
+- view leaderboards
+- attempt to view player profiles (subject to profile access rules in Chapter 08)
+
+Moderators MAY access moderation surfaces for chat/DM review and enforcement (see 12.2), but MUST NOT browse player state beyond moderation artifacts.
+
+### 12.1.4 Admin chat presence and labeling
+
+Admins MAY write in:
+- Global chat (always labeled with badge **`[ADMIN]`**)
+- Season chat (as staff, not as participant; always labeled with badge **`[ADMIN]`**)
+
+Staff chat surface access and labeling behavior is defined in Chapter 08 (surface rules) and enforced as role-based exceptions by the server.
+
+### 12.1.5 Minimum Admin capabilities (explicit list)
+
+Admins MUST have the following capabilities (and MUST NOT have any others outside this chapter’s scope):
+
+**Reports / cases**
+- view reports
+- open/close cases
+- link/unlink reports to cases
+- escalate/resolve cases
+- assign cases to staff (optional routing)
+
+**Message moderation (global, season, and DM)**
+- remove message (soft delete tombstone)
+- restore message (undo removal)
+- timeout/mute user (chat send restriction)
+- issue warning
+- set/clear channel slow mode (public channels only)
+- set/clear link blocking (public channels only; policy toggle)
+- set/clear profanity filter enforcement (public channels only; policy toggle)
+
+**Account / profile enforcement**
+- view account profile (public-facing)
+- force-edit policy-limited profile/enforcement fields (allowlist in 12.1.8)
+- delete account profile (admin-only; redaction-only; 12.1.13)
+- ban user (admin-only; may be permanent; 12.2.10)
+
+**Audit / review**
+- view moderation audit log
+- view report evidence store
+
+### 12.1.6 Moderator capabilities and hard limits
+
+Moderators MUST have:
+- all message moderation capabilities listed above **except** `ban user` and `delete account profile`.
+
+Moderators MUST NOT:
+- participate in seasons or perform economy actions
+- change any season timing/schedules/blackout windows
+- access or alter cosmetics ownership/badges/rank granting
+- view private telemetry beyond moderation artifacts (reports/cases/evidence/audit entries)
+- view reporter identity (reporter identity is redacted)
+
+### 12.1.7 Safeguards for high-impact actions
+
+**Authentication**
+- 2FA is required to log into an `Admin` account.
+- 2FA re-auth challenge is required to perform high-impact actions:
+  - ban set/clear (12.2.10)
+  - delete account profile (12.1.13)
+
+**Approval**
+- Dual approval does not exist.
+
+**Cooldowns**
+- ban set/clear: **60 seconds cooldown per target**
+- profile delete: **5 minutes cooldown per admin action (global)**
+
+**Reasoning / documentation**
+- High-impact actions MUST require:
+  - `reason_code` (enum) + optional free-text note
+- All staff actions MUST be logged (see 12.1.9).
+
+**User notification**
+- Automatic public notice: **No** (private-by-default).
+- Automatic user notice to affected user: **Yes** for:
+  - mute/timeout
+  - ban
+  - warning
+  - profile edit / profile delete
+  - message removal that affects their authored messages (summary notice, not per-message spam)
+
+### 12.1.8 Profile force-edit scope (allowlist; authoritative)
+
+Admins and Moderators MAY force-edit player enforcement/profile fields while viewing them, but only for this policy-limited allowlist.
+
+**Moderator editable fields (requires `reason_code` unless otherwise specified):**
+- `account.enforcement.muted_until` (timestamp; max duration: 14 days; set `null` to lift)
+- `account.enforcement.suspended_until` (timestamp; max duration: 30 days; set `null` to lift)
+- `account.restrictions.chat_global_disabled` (boolean)
+- `account.restrictions.chat_season_disabled` (boolean)
+- `account.restrictions.dm_disabled` (boolean)
+- `profile.visibility` (enum: `PUBLIC | FRIENDS_ONLY | HIDDEN`)
+- `profile.display_name_override` (may only set to a neutral replacement like `"Removed"` or `null` to clear; cannot set arbitrary custom names)
+- `profile.avatar_hidden` (boolean; hides avatar everywhere public-facing)
+- `message.is_removed` (boolean; moderation soft-delete toggle; see 12.2.2)
+- `message.removal_reason_code` (required when `message.is_removed = true`)
+- `report.status` (enum: `OPEN | IN_REVIEW | RESOLVED | REJECTED`)
+- `report.resolution_code` (required when `status ∈ {RESOLVED, REJECTED}`)
+- `report.staff_note` (internal-only; append-only recommended)
+
+**Admin editable fields (requires `reason_code` unless otherwise specified):**
+- all Moderator editable fields, plus:
+- `account.enforcement.ban_expires_at` (timestamp; may be `null` = permanent ban)
+- `account.enforcement.ban_scope` (enum: `ACCOUNT_ONLY | ACCOUNT_AND_CHAT`)
+- `report.assignee_staff_id` (internal routing; optional)
+
+**Hard forbiddens (both roles):**
+- No staff-editing of any competitive/economic fields (examples: `coins_*`, `seasonal_stars_*`, `global_stars_*`, `participation_time_*`, snapshots, payouts, placements).
+
+### 12.1.9 Audit log visibility matrix
+
+Audit log access MUST be:
+
+- `Admin`: full detail (actor ids, timestamps, reason codes, evidence links)
+- `Moderator`: read-only; all moderation actions, but **reporter identities redacted**
+- `Player`: self-only summary (only actions affecting them; reason code + timestamp; **no actor identity**)
+
+### 12.1.10 Action reversibility rules
+
+Reversible actions:
+- `message.is_removed = false` (restores message visibility in its channel/thread)
+- `account.enforcement.muted_until = null`
+- `account.enforcement.suspended_until = null`
+- `account.enforcement.ban_expires_at` updates, including lifting a ban
+- `issue follow-up profile edit` (no “undo”; only a new edit)
+
+Not reversible:
+- `delete account profile` (forward-only; see 12.1.13)
+
+### 12.1.11 Account access interventions
+
+Admin-only interventions:
+
+- **Reset handle:** Allowed (Admin only; requires reason code; only for ToS/impersonation/safety).
+  Constraints (authoritative):
+  - New handle MUST satisfy Chapter 08 uniqueness + validation requirements.
+  - Old handle MUST remain non-reusable (Chapter 08 invariant).
+  - Admin reset MUST bypass the player cooldown check, but MUST write the same cooldown marker (`last_handle_change_at = now`) so the player cannot immediately self-change again (Chapter 08).
+  - Admin reset MUST append to `handle_history[]` and MUST emit an immutable audit record per Chapter 15.
+  - Throttle (per-target): max **1** successful admin reset per target account per **30 days**.
+  - Throttle (per-admin): a rate limit MUST exist (threshold is ops-configured) and MUST be enforced uniformly across all targets.
+    - Any threshold change MUST be ops-logged as an immutable audit record with an effective time.
+  - Every admin reset MUST include a mandatory audit note/reason payload.
+
+- **Revoke cosmetics ownership:** Denied.
+
+- **Force logouts:** Allowed (Admin only; **security-only** reason codes).
+
+### 12.1.12 Data correction doctrine (bugs and unintended currency)
+
+Manual player-specific remediation is forbidden.
+
+The **only** allowed remediation for unintended grants/losses is:
+- ship a deterministic, code-defined correction that re-derives state from the authoritative ledger
+- applies uniformly to **all affected accounts**
+- produces an auditable job record
+
+### 12.1.13 Delete account profile (admin-only) — semantics (authoritative)
+
+**Definition:** “Delete account profile” is **redaction-only**. The account still exists and may be separately muted/suspended/banned.
+
+**Hard constraints:**
+- Profile deletion (redaction-only) is **irreversible**. No restore/undelete action exists.
+- Competitive/economic ledgers, snapshots, placements, payouts, and awards MUST NOT change due to profile deletion.
+- Past message ordering and existence MUST remain intact; content MAY be moderated via message removal tombstones (12.2.2).
+
+**Field-level effects (exact):**
+- `account.status.profile_deleted_at` → set to **now** (timestamp)
+- `profile.visibility` → forced to **HIDDEN** (player cannot change while deleted)
+- `profile.display_name_override` → set to **"[Removed]"**
+- `profile.avatar_hidden` → set to **true**
+- `profile.avatar_asset_id` → set to **null** (if such a field exists; otherwise ignore)
+- If any granular visibility flags exist (implementation-dependent), they MUST be forced to “hidden” while deleted:
+  - `profile.cosmetics_visibility`
+  - `profile.badges_visibility`
+  - `profile.titles_visibility`
+  - `profile.profile_card_visibility`
+- `handle` → **unchanged** (never erased; never displayed when `profile_deleted_at` is set)
+
+**Viewer behavior (authoritative):**
+- Any non-staff attempt (including the affected user) to open the deleted profile MUST be denied with `Profile unavailable` (Chapter 08).
+- Friends list / chat / leaderboards / DMs MUST render `identity_label = "[Removed]"` and MUST NOT show avatar/cosmetics/badges/titles on those surfaces (Chapter 08 + Chapter 10).
+
+**Social graph + messaging shells:**
+- Friends list entries referencing the deleted account MUST remain but display `"[Removed]"`.
+- Existing DM threads MUST remain but display `"[Removed]"`.
+
+### 12.1.14 Break-glass policy
+
+No break-glass policy exists.
+
+---
+
+## 12.2 Moderation Tools and Limits
+
+### 12.2.1 Scope
+
+Moderation tools apply to:
+- Global public chat
+- Season public chat (per `season_id`)
+- DMs (1:1 threads)
+
+Staff MAY view live Global/Season channel feeds **ONLY via moderation surfaces** (e.g., Moderation Queue, Evidence Viewer, Audit Log). This feed access MUST be logged and MUST NOT be available through normal player chat UI browsing.
+
+**DM contents remain case/evidence-scoped only:** Staff MUST NOT browse DM contents arbitrarily. Staff access to original DM message content MUST occur only via:
+- a report/case evidence viewer, or
+- a moderation/audit surface for a specific `message_id`, and MUST be tied to an active case/audit.
+
+### 12.2.2 Message removal (soft delete tombstone) / restore
+
+**Canonical message fields:**
+- `message.is_removed` (boolean; default `false`)
+- `message.removal_reason_code` (required when `message.is_removed = true`)
+
+**Action:** `set_message_removed(message_id, is_removed, reason_code, note?)`
+
+Rules:
+- Setting `is_removed = true` MUST atomically set `message.is_removed = true` and `message.removal_reason_code = reason_code`.
+- Setting `is_removed = false` MUST atomically set `message.is_removed = false` and clear `message.removal_reason_code`.
+
+**User-facing tombstone (authoritative):**
+- If `message.is_removed == true`, all user-facing surfaces MUST replace the message body/content with exactly: **`Removed by moderation`**.
+- The message row MUST remain in-place with its original timestamp/order (no collapse, no reflow reordering).
+
+**Visibility of original content:**
+- Original message content MUST NOT be visible in normal chat/DM UI to any viewer (including staff).
+- Original content MUST be visible only in moderation/audit surfaces tied to the `message_id`.
+
+**Ordering rule for moderation events (per channel/thread):**
+- **Ownership:** Chapter 12 is the single owner for `message_id` properties and chat/DM ordering rules.
+- Ordering key: `(server_received_at, message_id)`
+- `message_id` is monotonic per channel/thread; ties break by `message_id`.
+
+### 12.2.3 Retention interaction and evidence store
+
+Public channel message retention remains “last 200 stored” per Chapter 08. DM retention remains “30 days” per Chapter 08.
+
+Additionally:
+
+- When a message is **removed** or **reported**, the server MUST copy:
+  - `message_content_snapshot`
+  - `context_prev_messages[]` (previous **5** messages in same channel/thread, snapshot)
+  into an **evidence store**.
+
+Evidence store rules:
+- Evidence items are exempt from channel/thread retention eviction.
+- Evidence retention: **90 days**, then **hard delete**.
+- Evidence retention applies even after season chat log deletion at season end.
+
+### 12.2.4 Timeout / mute (chat send restriction)
+
+Mute prevents **sending messages only** (reading remains allowed where otherwise eligible).
+
+Canonical field:
+- `account.enforcement.muted_until` (timestamp)
+
+Rules:
+- While `now < muted_until`, the server MUST reject `chat_send` for all `channel_kind ∈ {GLOBAL, SEASON, DM}` with `reason_code=muted` (Chapter 15).
+- Min duration: **60 seconds**
+- Max duration: **14 days**
+- Duration granularity: integer seconds
+- Stacking rule:
+  - `muted_until = max(current_muted_until, now + new_duration_seconds)`
+
+### 12.2.5 Warning system
+
+Warnings:
+- MUST be delivered as an in-app modal immediately
+- MUST be stored as an inbox item for later viewing
+- MUST NOT apply automatic restrictions (warning is informational + logged)
+
+### 12.2.6 Moderator escalation to Admin (case artifact)
+
+Escalation creates or updates an **Admin Case** with:
+
+- `case_id`
+- `created_at`
+- `created_by_mod_id`
+- `target_type` (`message`|`user`)
+- `target_id` (message_id or user_id)
+- `linked_report_ids[]`
+- `evidence_refs[]` (snapshots)
+- `proposed_action` (enum)
+- `reason_code` (enum) + optional note
+- `action_history[]` (moderation actions already taken)
+
+### 12.2.7 Moderator abuse-prevention limits (rate limits)
+
+If exceeded, reject with `reason_code=mod_rate_limited` (Chapter 15) and auto-escalate to admin review (where specified).
+
+- message remove/restore: **10/min** per moderator → reject `reason_code=mod_rate_limited` (Chapter 15) + auto-escalate
+- mute/timeout: **5/min** per moderator → reject `reason_code=mod_rate_limited` (Chapter 15) + auto-escalate
+- warning: **10/min** per moderator → reject `reason_code=mod_rate_limited` (Chapter 15)
+- escalate: **20/day** per moderator → reject `reason_code=mod_escalation_limit` (Chapter 15)
+
+### 12.2.8 Automated channel protections (public channels only)
+
+These protections apply to:
+- Global public chat
+- Season public chat
+
+They do not apply to DMs unless explicitly stated elsewhere.
+
+#### Profanity filter
+- Primary behavior: **reject send**
+- Secondary behavior: increment strike counter; repeated strikes MAY auto-mute
+- Matching: common obfuscations (leet + spacing + punctuation stripping)
+- Language: English only
+
+reason_code: `chat_profanity_blocked`
+
+#### Slow mode
+- Enabled per channel independently:
+  - global channel
+  - per `season_id` channel
+- Parameter: integer seconds per user per channel
+- Staff bypass: allowed for `Moderator/Admin` only
+
+reason_code: `chat_slow_mode_active` (include remaining seconds)
+
+#### Spam detection (deterministic thresholds)
+- rate spam: **≥ 6 messages in 10 seconds** in same channel
+- duplicate spam: **≥ 3 near-identical messages in 30 seconds** (after normalization)
+- link spam: **≥ 2 blocked-link attempts in 30 seconds**
+
+Auto-mute duration ladder:
+- base: **60 seconds**
+- escalation on repeat within 24h: multiply by 2 (cap **1 hour**): `60s, 120s, 240s, … max 3600s`
+
+reason_code: `chat_auto_muted_spam`
+
+#### Link blocking
+- Allowed links in public channels: **universal block**
+- What counts as a “link”:
+  - any `http://` or `https://`
+  - any `www.`
+  - any bare domain containing a dot + known TLD pattern (e.g., `example.com`)
+  - any IPv4 address with optional port (e.g., `1.2.3.4:8080`)
+
+Bypass:
+- link restriction bypass: denied (no bypass)
+
+reason_code: `chat_links_blocked`
+
+### 12.2.9 Cross-device consistency and offline submissions
+
+- Mute/ban MUST take effect immediately across all active sessions.
+- Server rejects any queued sends if the user is muted/banned at receipt time:
+  - returns reason code
+  - client MUST drop the queued message and display the reason
+
+### 12.2.10 Admin ban (temporary or permanent)
+
+Canonical fields (admin-only edits):
+- `account.enforcement.ban_expires_at` (timestamp; may be `null` = permanent)
+- `account.enforcement.ban_scope` (enum: `ACCOUNT_ONLY | ACCOUNT_AND_CHAT`)
+
+Ban activity window:
+- Banned if `ban_expires_at == null` OR `now < ban_expires_at`.
+
+Effects (forward-looking only; no retroactive economic changes):
+- While banned, the server MUST reject season participation and all economy actions.
+- If `ban_scope == ACCOUNT_AND_CHAT`, the server MUST also reject all `chat_send` attempts (GLOBAL/SEASON/DM).
+- If `ban_scope == ACCOUNT_ONLY`, `chat_send` MAY remain allowed (subject to other restrictions), but gameplay participation remains forbidden.
+
+Ban set/clear requirements:
+- 2FA re-auth challenge required
+- mandatory `reason_code`
+- 60s cooldown per target for set/clear
+
+---
+
+## 12.3 Reporting Systems
+
+### 12.3.1 Report types (closed set)
+
+Only these report types exist:
+
+- `report_message`
+- `report_user`
+
+### 12.3.2 Eligibility and windowing
+
+- Only logged-in users can report.
+- Users cannot report content they cannot view.
+- Reports must be initiated from an in-view surface:
+  - public channels: within the “last 200” accessible window (Chapter 08)
+  - DMs: within the 30-day DM retention window (Chapter 08)
+
+### 12.3.3 Report categories (authoritative)
+
+Reports use:
+- fixed enum category
+- optional free-text note
+
+Category enum values (closed set):
+
+- `SPAM` — Spam/Ads
+- `SCAM_FRAUD` — Scams/Fraud
+- `HARASSMENT` — Harassment/Bullying
+- `HATE_SPEECH` — Hate Speech
+- `THREATS_VIOLENCE` — Threats/Violence
+- `SEXUAL_CONTENT` — Sexual Content
+- `CHILD_SAFETY` — Child Safety
+- `SELF_HARM` — Self-Harm Concern
+- `IMPERSONATION` — Impersonation
+- `PRIVACY_DOXXING` — Privacy/Doxxing
+- `CHEATING_EXPLOIT` — Cheating/Exploits
+- `OTHER` — Other (requires description)
+
+### 12.3.4 Message report payload (authoritative)
+
+A `report_message` MUST include:
+
+- `report_id`
+- `report_type = report_message`
+- `reporter_user_id`
+- `message_id`
+- `channel_type` (`global`|`season`|`dm`)
+- `season_id` (nullable; required iff `channel_type == season`)
+- `sender_user_id`
+- `message_content_snapshot`
+- `created_at`
+- `context_prev_messages[]` (previous **5** messages in same channel/thread, snapshot)
+- `client_metadata` (app version, platform)
+
+For `channel_type == dm`, the report payload MUST additionally include:
+- `dm_other_user_id` (the other party in the DM thread)
+
+### 12.3.5 Reporter identity privacy
+
+- Moderators: reporter identity **hidden** (redacted)
+- Admins: reporter identity **visible**
+- Reported user: reporter identity **hidden**
+
+### 12.3.6 Anti-abuse rate limits
+
+Per reporting user:
+- **3 reports / minute**
+- **20 reports / day**
+
+If exceeded:
+- reject with `reason_code=report_rate_limited` (Chapter 15)
+- no automatic penalties beyond rate-limit
+
+### 12.3.7 Duplicate handling and merge keys
+
+Duplicate reports MUST merge into a single case with a counter.
+
+Merge keys:
+- message reports: `message_id`
+- user reports: `target_user_id + category + 24h rolling window`
+
+### 12.3.8 Case linkage requirement
+
+Every moderation action MUST link to a case.
+
+- If an action is taken without an existing report, the system MUST create a **case stub** and link the action to it.
+
+---
+
+## 12.4 Non-Intervention Rules
+
+### 12.4.1 Core non-intervention doctrine
+
+- Staff MUST NOT alter player economy state (balances, inventories, boosts, placements) manually or selectively.
+- Staff MUST NOT change season timing, pacing, schedules, or blackout windows.
+- Staff MUST act only on communication safety (chat/DM visibility + access) and profile policy compliance.
+- Staff actions MUST be logged with reason codes and be reviewable in audit logs.
+- Staff MUST apply rules consistently; no special treatment for individuals.
+
+### 12.4.2 Forbidden interventions (explicit)
+
+Forbidden:
+- adjusting balances
+- gifting cosmetics
+- manually changing ranks
+- undoing trades
+- refunding purchases
+- revoking cosmetics ownership
+
+### 12.4.3 Bug harms a player
+
+Allowed “compensation” is limited to:
+- deterministic, code-defined, universally applied correction jobs based on authoritative logs  
+(No manual per-player grants.)
+
+### 12.4.4 Private information non-intervention
+
+Admins/Mods are forbidden from revealing:
+- private telemetry
+- hidden participation info
+- audit details
+
+Only user-facing action summaries for the affected user are allowed.
+
+### 12.4.5 Shadow actions (prohibited)
+
+- Every punitive action MUST generate a user-facing notice to the affected user (warning/mute/ban).
+- Message removal MUST leave a tombstone for viewers.
+- Silent internal tagging is allowed.
+- Silent punishment is not allowed.
+
+### 12.4.6 DMs (governance constraints)
+
+- DM message removal MUST be implemented via the same soft-delete tombstone system (12.2.2).
+- Staff MUST NOT browse DM contents arbitrarily; staff access to DM contents MUST be case/evidence scoped (12.2.1).
+- DM reporting is supported by this chapter’s reporting system (12.3).
+
+### 12.4.7 Appeals
+
+Appeals do not exist.
+
+---
+
+## 12.5 Required Admin/Moderator Surfaces (tools/workflows)
+
+The following panels MUST exist:
+
+- **Moderation Queue** — view reports/cases, take actions, escalate/resolve
+- **Evidence Viewer** — view preserved message snapshots + context
+- **User Profile Editor** — force-edit allowlisted profile/enforcement fields; admin-only profile delete
+- **Chat Controls** — configure slow mode + automated channel protections (policy toggles; public channels only)
+- **Audit Log** — searchable log of moderation/admin actions
+
+Moderator workflow (canonical):
+1. report arrives → enters Moderation Queue
+2. moderator reviews evidence/context → action: remove message / mute / warning
+3. action writes audit log + links to case
+4. if severity/high-confidence rule match → escalate to Admin (creates/updates Admin Case)
+5. admin reviews case → may extend sanctions (e.g., ban), or close with disposition
+6. case closed → retention timers apply
+
+---
+
+### Notes for integration (non-normative, cross-chapter)
+
+- Chapter 07 MUST NOT claim any admin season/time override capabilities (none exist).
+- Chapter 08 defines social surface eligibility and identity rendering; Chapter 12 defines staff tooling and which enforcement flags staff can set.
+- Degraded operation / ServerMode behavior is defined in Chapter 11; Chapter 12 MUST NOT redefine degraded mode taxonomy.

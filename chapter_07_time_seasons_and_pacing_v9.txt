@@ -1,0 +1,498 @@
+## Chapter Draft (Version 9)
+
+# Chapter 07 — Time, Seasons, and Pacing
+
+This chapter defines the authoritative time model, deterministic season schedule, season lifecycle boundaries, and the player-visible pacing surfaces (blackout + countdowns).
+
+This chapter **does not** define:
+- Tick phase order, action intake rules, or non-time legality rules (Chapter 03)
+- Economic formulas, pricing curves, budgets, caps, burn rates, trade math, or the economy day index used for math (`day(T)`) (Chapter 05)
+- Reward magnitudes and placement rewards (Chapter 06)
+- Persistence/retention implementation details (Chapter 13)
+- Admin permissions (Chapter 12; no season timing overrides exist)
+- Infrastructure/commit authority implementation details (Chapter 15)
+
+If a timing rule is not explicitly defined here, it does not exist.
+
+---
+
+## 7.1 Season Length and Overlap Rules
+
+### 7.1.1 Server Time Authority (Clock Model)
+
+- The server is the **sole authority** over time.
+- All timestamps are represented as **UTC epoch seconds**.
+- The server MUST measure time using a **monotonic clock** and an **epoch anchor**:
+  - Epoch/UTC is the **representation**.
+  - Monotonic time is the **measurement**.
+- The server MUST **handle backward wall-clock adjustments**:
+  - Server time used for simulation and gating MUST NOT go backward.
+  - Leap seconds are ignored (continuous seconds).
+- For any season tick `t`, the authoritative time for that tick is `season_tick_start(season_id, t)` (server-only).
+
+### 7.1.2 Tick Time (Global Cadence + Per-Season Index)
+
+- The service maintains a single **global 1-second tick cadence**.
+- `global_tick_index == server_now` (UTC epoch seconds; int64). It exists even when a player is in no season.
+- `global_tick_start(G) == G` (UTC epoch seconds; int64).
+- Global (non-season) state-changing actions commit on the next `global_tick_index` boundary (Chapter 03).
+
+- Each season also exposes a per-season tick index:
+  - `season_tick_index` is an integer tick index relative to the season’s `start_time`.
+  - `season_tick_index` MUST always be paired with `season_id` in any API payload, idempotency key, or log that references it.
+
+Season tick execution MUST be idempotent and safe to retry.
+
+Season tick idempotency key (commit uniqueness key):
+- `(season_id, season_tick_index)`
+
+Multi-instance requirement:
+- The system MUST guarantee **exactly one committed season tick** per `(season_id, season_tick_index)` even under concurrent executors and retries.
+- The concrete authority/locking mechanism is defined in Chapter 15.
+
+#### 7.1.2.1 Tick Start (Global vs Season)
+
+Global tick functions (authoritative):
+
+- `global_tick_index == server_now` (UTC epoch seconds; int64)
+- `global_tick_start(G) == G` (UTC epoch seconds; int64)
+
+Season tick function (authoritative):
+
+Let:
+- `S` be a season id.
+- `start_time(S)` be the season’s UTC epoch start time (int64 seconds).
+- `t` be a per-season integer tick index (`season_tick_index`).
+
+```text
+season_tick_start(S, t) = start_time(S) + t
+```
+
+Implications:
+
+- A season’s `season_tick_start(S, t)` MUST always be aligned to the global 1-second cadence because `start_time(S)` is aligned to a UTC midnight boundary (7.1.3).
+- The **first live economic tick** is `season_tick_index = 0`.
+
+### 7.1.3 Global Season Schedule (Deterministic)
+
+Seasons are globally scheduled using a fixed anchor:
+
+- Anchor epoch:
+  - `S0 = 1970-01-05T00:00:00Z` (Monday 00:00 UTC)
+- Season cadence:
+  - A new season starts every `7*86400` seconds (7 days) from `S0`.
+- Season length:
+  - Each season lasts exactly `28*86400` seconds (28 days).
+- Start times MUST be aligned to **midnight UTC** (day boundary).
+
+Season identifier:
+
+```text
+season_id  = season_seq                     // sequential integer
+start_time = S0 + season_seq*(7*86400)      // exact integer math
+end_time   = start_time + 28*86400          // exclusive end boundary
+```
+
+Normal-operation overlap invariant:
+- Under normal operation, there are always **4 concurrent economically actionable seasons** (see 7.1.6).
+- No admin overrides exist for season timing or pacing (see Chapter 12).
+
+### 7.1.4 Tick Classification, Blackout, and Boundaries
+
+#### 7.1.4.1 Global `server_now` (Canonical)
+
+The server MUST provide `server_now` as a time authority surface with these hard requirements:
+
+- `server_now` is **global**: the same value MUST be used for all seasons returned in a single response.
+- `server_now` is **integer seconds**, quantized to the server tick boundary.
+- For `status=active` seasons: `server_now == season_tick_start(season_id, season_tick_index)` for that season.
+
+#### 7.1.4.2 Tick Index for Active Seasons
+
+For `status=active`:
+
+```text
+season_tick_index = clamp(floor((server_now - start_time)/1s), 0, E)
+```
+
+Where `clamp(x, 0, E)` returns:
+- `0` if `x < 0`
+- `E` if `x > E`
+- otherwise `x`
+
+#### 7.1.4.3 Blackout Window
+
+Let:
+- `blackout_start_tick = E - 259,200` (72 hours = 259,200 seconds)
+
+Then:
+
+```text
+blackout ticks: t ∈ [blackout_start_tick, E-1]   // inclusive
+blackout_start_time = start_time + blackout_start_tick*1s
+```
+
+#### 7.1.4.4 Last-Valid and Expiration Ticks
+
+- The **last valid economic tick** is `E−1`.
+- The **expiration boundary** is reached when `server_now >= end_time`.
+- The **expiration tick** is `E`, where:
+  - `season_tick_start(season_id, E) == end_time`.
+  - Any request arriving at wall-clock time exactly equal to `end_time` is treated as arriving on tick `E`.
+
+### 7.1.5 Season Day Surfaces (UI vs Economy)
+
+#### 7.1.5.1 Economy Day Index for Math (Defined Elsewhere)
+
+- Economy math uses a **0-based** day index `day(T)` defined in Chapter 05.
+- Chapter 07 does not redefine or override `day(T)`.
+
+#### 7.1.5.2 UI Day Index (1-Based)
+
+For UI display only, the server MAY provide `day_index` for `status=active` and `status=ended` seasons.
+
+For `status=active`, let `t = season_tick_index`:
+
+```text
+day_index  = clamp(floor(t / 86400) + 1, 1, 28)   // 1..28 (UI-only)
+total_days = 28
+```
+
+For `status=ended`:
+- `day_index` MUST be `28` (UI-only).
+- `total_days` MUST be `28`.
+
+Clients MUST treat `day_index` as a server-provided UI display value and MUST NOT use it for economy math.
+
+### 7.1.6 Season Status and Expiration Flags
+
+Two expiration flags are exposed:
+
+- `season_expired`:
+  - `true` iff `server_now >= end_time`.
+  - This becomes `true` at the tick `E` execution window and remains `true` forever after.
+- `expiration_finalized`:
+  - `true` iff the season’s expiration tick `E` commit has completed.
+  - This is the irreversible “ended/read-only” latch.
+
+Season `status` is defined using both time and finalization:
+
+- `scheduled` iff `server_now < start_time`
+- `ended` iff `expiration_finalized == true`
+- `active` otherwise
+
+Implications:
+- During tick `E` execution (pre-commit): `status=active`, `season_expired=true`, `expiration_finalized=false`.
+- After tick `E` commits: `status=ended`, `season_expired=true`, `expiration_finalized=true`.
+
+Post-`ended` dormancy:
+- After `status=ended`, the season is fully dormant:
+  - No further season-scoped ticking occurs after `E` commits.
+
+### 7.1.7 Economically Actionable Seasons (Invariant Counting)
+
+A season is **economically actionable** iff all of the following are true:
+
+- `status == active`
+- `expiration_finalized == false`
+- `season_tick_index <= E-1`
+
+Counting rule:
+- The normal-operation “4 concurrent seasons” invariant counts **economically actionable** seasons only.
+- During tick `E` execution, the season is still `status=active` but is not counted as actionable because `season_tick_index == E`.
+
+---
+
+## 7.2 Join / Exit Constraints
+
+### 7.2.1 Join / Reconnect Effect Timing
+
+- A join (or re-entry into a season) becomes economically effective starting the **next tick snapshot** after the join resolves.
+
+### 7.2.2 Join Cutoff (Economic-Effective Tick)
+
+- `season_join` MUST be rejected if its **economic-effective tick** would be `E` or later.
+- Equivalently: join is allowed only if `economic_effective_tick <= E-1`.
+
+### 7.2.3 Join During Blackout
+
+- Join/re-enter is allowed during blackout.
+- Blackout restricts **leaving/Lock-In only**; it does not restrict joining.
+- However, **Lock-In / exit remains illegal** during blackout and stays illegal until expiration.
+
+(Exit semantics and the “only one economic season at a time” constraint are owned by Chapter 07; other chapters reference these rules.)
+
+### 7.2.4 End Boundary Freeze (Time-Gating Only)
+
+Freeze meaning (time-gating only):
+- On expiration tick `E` and later, the server MUST reject all **non-exempt season-scoped gameplay actions**.
+
+Action-level validation, intake rules, and rejection reasons are defined in Chapter 03. Chapter 07 only defines the time boundary (`E`) that those rules reference.
+
+### 7.2.5 Reconnect vs Explicit Re-Entry (Canonical)
+
+There are two distinct cases:
+
+**A) Reconnect / session resume (no exit occurred).**
+If the player was economically participating in season `S` and disconnects, reconnecting is not treated as a fresh entry. The server MUST continue to treat the player as still joined to `S` until an explicit exit occurs.
+
+**B) Explicit exit + re-entry (exit occurred).**
+A player MAY exit and re-enter the **same season** any number of times while that season is `status=active`.
+
+- Re-entry is allowed even after a previous Lock-In.
+- Participation time totals are cumulative across exits/re-entries (Chapter 02).
+- Join-local counters reset on each `season_join` resolution (Chapter 03 gating counters).
+
+**Multiple Lock-Ins:**
+- A player MAY Lock-In multiple times in the same season.
+- The **latest successful Lock-In before Lock-In cutoff** is the only authoritative Lock-In snapshot used for leaderboard placement and settlement (Chapter 03).
+- Lock-In grants **no** expiration bonuses. Participation/placement bonuses exist only at natural season expiration finalization for end-finishers (eligibility + timing in Chapters 03/07; magnitudes in Chapter 06).
+
+After expiration/commit boundary, no re-entry and no further Lock-Ins for that season.
+
+### 7.2.6 Spectatorship Across Season States
+
+- Spectating is always allowed for `scheduled`, `active`, and `ended` seasons.
+- Ended seasons remain spectatable **indefinitely**.
+
+---
+
+## 7.3 Lock-In Timing Rules
+
+### 7.3.1 Blackout Restriction
+
+- Lock-In is legal only during the `normal` phase.
+- Lock-In MUST be illegal once blackout begins:
+  - Illegal for ticks `t >= blackout_start_tick`.
+
+### 7.3.2 Exposed Lock-In Deadline
+
+The server MUST expose both:
+- The semantic statement: “Lock-In closes at blackout start”
+- The explicit timestamp: `blackout_start_time`
+
+Lock-In countdown precision MUST be **seconds**.
+
+(Any minimum participation gate for Lock-In remains defined in Chapter 03.)
+
+### 7.3.3 No Grace Period
+
+- No grace period exists for any action type.
+- The end boundary is exact:
+  - Tick `E` starts at `end_time`.
+  - Non-exempt gameplay actions are illegal on tick `E`.
+
+### 7.3.4 Expiration Tick Exempt Inputs (Time Boundary Only)
+
+On expiration tick `E`, the server MAY accept only these exempt inputs:
+- `chat_send`
+- `season_end_ack`
+- Other pure acknowledgements that have **zero economic effect**
+
+All other season-scoped gameplay actions are illegal on tick `E`.
+
+---
+
+## 7.4 Countdown and Urgency Design
+
+### 7.4.1 Required Server-Provided Fields (Per Season Surface)
+
+For each season, the server MUST provide the following fields to clients:
+
+#### 7.4.1.1 Fields Always Present
+
+- `season_id`
+- `status` ∈ {`scheduled`, `active`, `ended`}
+- `start_time`
+- `end_time`
+- `blackout_start_time`
+- `server_now` (global authoritative tick-start timestamp)
+
+#### 7.4.1.2 Fields for `status=scheduled`
+
+- `seconds_until_start` (seconds until `start_time`)
+- `remaining_seconds` (MUST equal `seconds_until_start`)
+- `season_tick_index` MUST be omitted (null/absent)
+- `day_index` MUST be omitted (null/absent)
+- `total_days` MAY be provided as `28` (UI convenience), but clients MUST NOT infer gating from it.
+- Expiration flags:
+  - `season_expired = false`
+  - `expiration_finalized = false`
+- Urgency booleans (present and forced `false`):
+  - `is_blackout = false`
+  - `is_last_valid_tick = false`
+  - `is_expiration_tick = false`
+
+#### 7.4.1.3 Fields for `status=active`
+
+- Expiration flags:
+  - `season_expired`
+  - `expiration_finalized` (MUST be `false` while `status=active`)
+- `season_tick_index`
+- `day_index` (UI-only; 1..28)
+- `total_days` (= 28)
+- `remaining_seconds`
+- Urgency booleans:
+  - `is_blackout`
+  - `is_last_valid_tick`
+  - `is_expiration_tick`
+
+#### 7.4.1.4 Fields for `status=ended`
+
+- Expiration flags:
+  - `season_expired = true`
+  - `expiration_finalized = true`
+- `remaining_seconds = 0`
+- `day_index` MUST be `28` (UI-only)
+- `total_days` MUST be `28`
+- Urgency booleans (present and forced `false`):
+  - `is_blackout = false`
+  - `is_last_valid_tick = false`
+  - `is_expiration_tick = false`
+
+Notes:
+- For `status=ended`, `season_tick_index` MUST be omitted (null/absent).
+
+### 7.4.2 Countdown and Flags (Authoritative Computation)
+
+#### 7.4.2.1 Scheduled Seasons
+
+For `status=scheduled`:
+
+```text
+seconds_until_start = max(0, start_time - server_now)
+remaining_seconds   = seconds_until_start
+season_expired      = false
+expiration_finalized= false
+```
+
+#### 7.4.2.2 Active Seasons
+
+For `status=active`, compute `season_tick_index` as defined in 7.1.4.2, then:
+
+```text
+remaining_seconds = max(0, E - season_tick_index)
+season_expired    = (server_now >= end_time)
+```
+
+Urgency booleans for `status=active`:
+
+```text
+is_blackout        = (season_tick_index >= blackout_start_tick) AND (season_tick_index <= E-1)
+is_last_valid_tick = (season_tick_index == E-1)
+is_expiration_tick = (season_tick_index == E)
+```
+
+Expiration execution window rule:
+- During tick `E` execution (pre-commit), the season MUST report:
+  - `status=active`
+  - `season_expired = true`
+  - `expiration_finalized = false`
+  - `is_expiration_tick = true`
+  - `remaining_seconds = 0`
+- After tick `E` commits, the season MUST report:
+  - `status=ended`
+  - `season_expired = true`
+  - `expiration_finalized = true`
+  - urgency booleans forced `false`
+  - `remaining_seconds = 0`
+
+This means `remaining_seconds == 0` is allowed while `status=active` **only** during the tick `E` execution window.
+
+#### 7.4.2.3 Ended Seasons
+
+For `status=ended`:
+
+```text
+season_expired       = true
+expiration_finalized = true
+remaining_seconds    = 0
+day_index            = 28
+total_days           = 28
+is_blackout          = false
+is_last_valid_tick   = false
+is_expiration_tick   = false
+```
+
+### 7.4.3 Client Rules (Non-Authoritative UI)
+
+- Clients MUST treat all server-provided fields as authoritative.
+- Clients MUST NOT infer or approximate gating logic locally.
+  - Gating MUST be driven by explicit server-provided flags (`status`, `is_blackout`, `is_last_valid_tick`, `is_expiration_tick`, `season_expired`, `expiration_finalized`) and server-validated action results.
+- Clients MAY locally decrement countdown displays between updates **for presentation only**, and MUST hard-correct using the next server payload.
+
+### 7.4.4 Ended Season Payload Allowlist
+
+When `status = ended`, the season API payload MAY include:
+
+- Time fields:
+  - `start_time`, `end_time`, `blackout_start_time`
+- State:
+  - `season_id`, `status`
+  - `season_expired` (MUST be `true`)
+  - `expiration_finalized` (MUST be `true`)
+- UI pacing fields (non-final fields explicitly permitted):
+  - `server_now` (present)
+  - `day_index` (MUST be `28`)
+  - `total_days` (MUST be `28`)
+  - `remaining_seconds` (MUST be `0`)
+  - urgency booleans (present and forced `false`)
+- Final immutable outputs:
+  - final snapshot
+  - final ranks
+  - final rewards / conversion results
+  - audit summary
+
+Everything else MUST be omitted/disabled, including (non-exhaustive):
+- live mutable economy state (order books, market live state)
+- activity timers
+- pending action queues
+- “can_act” or other live gating surfaces
+- any per-tick mutable economy counters
+
+The ended season is permanently read-only.
+
+---
+
+## 7.5 Expiration Tick Semantics (Formal Boundaries)
+
+### 7.5.1 Expiration Tick Definition
+
+- Expiration tick `E` is the first tick where `season_tick_start(season_id, T) >= end_time`.
+- Under the deterministic schedule defined here, `season_tick_start(season_id, E) == end_time`.
+
+### 7.5.2 Arrival at the Boundary
+
+- Any request arriving at wall-clock time exactly equal to `end_time` is treated as arriving on tick `E`.
+
+### 7.5.3 Post-Expiration Dormancy
+
+- After tick `E` commits and `status=ended`, the season is fully dormant:
+  - No further season-scoped ticking occurs.
+
+---
+
+## 7.6 Yearly Cycle Timing
+
+### 7.6.1 Year Definition
+
+- A “year” is a rolling cycle of **12 sequential seasons** anchored to `season_id` order.
+- “Consecutive” means sequential season IDs:
+  - `season_id = k..k+11` (12 seasons), regardless of overlap.
+
+### 7.6.2 Yearly Reset Timing
+
+- The yearly reset executes during the **12th season’s expiration flow**:
+  - Immediately after the 12th season’s expiration finalization commits (within that same tick `E` commit).
+
+(Reset effects and what is reset are defined in Chapter 06 and/or Chapter 12; Chapter 07 defines only the timing.)
+
+---
+
+## 7.7 No Admin Overrides (Time Pacing Invariants)
+
+- No admin override capabilities exist for season timing, season cadence, season length, blackout timing, or season finalization.
+- The normal-operation schedule and time boundaries defined in this chapter are immutable.
+- Chapter 12 explicitly forbids staff from changing season timing/schedules/blackout windows.
+
+---
