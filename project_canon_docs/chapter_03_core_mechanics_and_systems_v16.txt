@@ -1,0 +1,1085 @@
+## Chapter Draft (Version 16)
+
+# Chapter 03 — Core Mechanics and Systems
+
+This chapter defines the authoritative mechanical framework governing:
+
+* Tick execution order
+* Sigil drop evaluation
+* Player action processing
+* Activity enforcement semantics
+* Temporary power behavior (boosts + system events as deterministic inputs)
+* Lock-In handling
+* Expiration resolution
+* Deterministic guarantees
+* Non-negotiable system invariants required for determinism
+
+This chapter does not define resource properties (Chapter 04), economic formulas or caps (Chapter 05), progression systems (Chapter 06), seasonal timing frameworks (Chapter 07), or social systems (Chapter 08).
+
+All mechanics operate under fixed one-second server ticks as defined in Chapter 02. Where Chapter 02 provides high-level loop descriptions, **this chapter is authoritative** for tick phase ordering and enforcement.
+
+Trading semantics are defined in Chapter 02 (trade locking timing semantics) and Chapter 05 (offer validity model, consideration rules, trade fees, friction, and trade economics). Chapter 03 defines only *how* trade actions are accepted, scheduled, ordered, and suppressed.
+
+Audit/log schema and long-form operational/telemetry detail are defined in Chapter 15. Chapter 03 defines only minimum ordering/state requirements needed for deterministic behavior.
+
+**Cross-chapter authority statement (authoritative).**
+Where Chapter 02 describes loop behavior, it is descriptive. For any mechanical enforcement, timing, or eligibility semantics defined in Chapter 03, **Chapter 03 is authoritative** and Chapter 02 MUST NOT restate conflicting normative rules.
+
+In particular:
+
+* Social/messaging actions (Chapter 08) **never** count-for-activity.
+* `idle_modal_ack` is **tick-governed** (commit-applied) and subject to commit buffering by `T_commit`.
+
+---
+
+## 3.1 Authoritative Tick Architecture
+
+### 3.1.1 Tick Definition and Boundary Semantics
+
+**Tick definition.** A **tick** is the authoritative server update step. One (1) tick occurs every one (1) second.
+
+**Tick domains (binding).**
+
+- All gameplay legality, season action intake/resolution, quoting, and expiration math use `season_tick_index` (Chapter 07).
+- `global_tick_index` MAY exist for logging/ops and equals `server_now` (Chapter 07).
+
+Within this chapter, unless explicitly stated otherwise:
+
+- `T` refers to `season_tick_index`.
+- `this_season` refers to the season context being evaluated (typically the player’s joined season at evaluation time).
+
+**Tick boundary (season).**
+For each tick index `T`, define:
+
+* `season_tick_start(this_season, T)` = wall-clock time at which tick window `T` begins.
+* Tick window `T` is `[season_tick_start(this_season, T), season_tick_start(this_season, T+1))`.
+
+**Commit cutoff.**
+The server MUST define a deterministic commit cutoff:
+
+* `T_commit(T) = season_tick_start(this_season, T+1) − δ_ms`
+* `δ_ms` is a configurable commit-cutoff buffer in milliseconds.
+  - Bounds: `δ_ms ∈ [50, 250]`.
+  - Default: `δ_ms = 100`.
+  - For any tick window `T`, the server MUST sample `δ_ms` once at `season_tick_start(this_season, T)` and treat it as constant for the entire window.
+  - `T_commit(T) = season_tick_start(this_season, T+1) − δ_ms` (millisecond subtraction).
+  - `δ_ms` MAY change only at a tick boundary and MUST emit an immutable ops audit record containing: `old_value_ms`, `new_value_ms`, and `effective_tick` (the first tick that uses the new value).
+
+**Commit model.**
+
+* Tick `T` commits at the end of its window.
+* Once commit processing begins for tick `T`, all state transitions for tick `T` MUST be deterministic under replay.
+
+### 3.1.2 Commit Buffering and Intake Tick
+
+Chapter 02 uses `received_time`. Chapter 03 standardizes on `arrival_time` and treats Chapter 02 `received_time` as synonymous (reference-only).
+
+For any **season-scoped** mechanical request with raw server arrival timestamp `arrival_time`:
+
+- All tick fields in this section are `season_tick_index`.
+
+* Let `arrival_tick` be the unique tick `T` such that `season_tick_start(this_season, T) <= arrival_time < season_tick_start(this_season, T+1)`.
+
+The request’s **intake tick** is:
+
+* If `arrival_time < T_commit(arrival_tick)`: `intake_tick = arrival_tick`
+* If `arrival_time >= T_commit(arrival_tick)`: the request MUST be buffered and treated as arriving on the next tick: `intake_tick = arrival_tick + 1`
+
+Buffered requests MUST NOT be accepted/rejected on `arrival_tick`. They MUST be accepted/rejected on `intake_tick`.
+
+### 3.1.3 Start-of-Tick Snapshot (Authoritative Sampling)
+
+At `season_tick_start(this_season, T)`, the server MUST capture immutable snapshot values for tick `T`:
+
+* `online_snapshot(T)` (3.11.10)
+* `activity_state_snapshot(T)`
+* `joined_season_id_snapshot(T)`
+* `participation_enabled_snapshot(T)`
+* `participating_snapshot(T)` (3.4.3)
+
+**Snapshot-before-acceptance rule.**
+For any tick `T`, the server MUST capture the start-of-tick snapshot for `T` **before** processing acceptance of any season-scoped requests whose `intake_tick == T` (including buffered requests).
+
+### 3.1.4 Tick Classification (Boundary)
+
+At the start-of-tick boundary for tick `T`, the server MUST classify the tick and set flags used by the rest of the tick:
+
+* `is_expiration_tick(T)`
+* `is_last_valid_tick(T)` (the last-valid economic tick immediately preceding expiration)
+* `is_blackout_tick(T)` (blackout window as defined in Chapter 07)
+
+These flags MAY overlap where applicable. Suppressions and legality rules in this chapter are defined in terms of these flags.
+
+### 3.1.5 Authoritative Tick Order (Per Tick `T`)
+
+For every tick `T` while the season is active, the server MUST execute the following deterministic order:
+
+1. **Tick classification + start-of-tick snapshot**
+   * Determine tick flags (3.1.4).
+   * Capture start-of-tick snapshot values (3.1.3).
+
+2. **System-event phase**
+   * Apply scheduled system-event start/stop whose effective tick is `T` (3.6.8).
+   * Ordering for multiple system-event changes on tick `T` is ascending by:
+     * `(effective_tick, event_kind, event_id)`
+     * where `event_kind` is a fixed enum order with `STOP` before `START`.
+   * This phase MUST be idempotent and MUST match the event-state already reflected in `surface_version = T` (3.6.8, 3.3.8).
+   * If `is_expiration_tick(T) == true`, forcibly end **all** remaining system events.
+
+3. **Sigil drop evaluation phase**
+   * If drops are allowed on tick `T`, evaluate eligibility and grant drops (3.2).
+   * Drops granted on tick `T` MUST be visible to actions resolving later in tick `T`.
+
+4. **Player action resolution phase**
+   * Resolve eligible season-scoped actions in deterministic order (3.3 and 3.4).
+   * On expiration tick `E`, expiration resolution runs here as an override (3.9).
+
+5. **System math + accrual phase (UBI)**
+   * Recompute `math_surface(T)` from post-action state for tick-`T` math (3.6.4).
+   * If UBI is allowed on tick `T`, compute and apply UBI using `math_surface(T)` (3.6).
+   * UBI occurs **after** action resolution and MAY be influenced by same-tick changes.
+
+6. **Market/price-surface publish phase**
+   * Compute and publish **`surface_version = T+1`** (3.3.8, 3.6.8).
+   * Published surfaces are authoritative for acceptance/quotes during tick window `T+1`.
+   * Published surfaces MUST NOT retroactively affect actions already resolved on tick `T`.
+
+7. **Activity evaluation phase**
+   * Evaluate inactivity and apply any Active→Idle transitions (3.5).
+   * Transitions applied on tick `T` are reflected in post-tick state; eligibility consequences apply starting tick `T+1`.
+
+8. **Leaderboard recalculation phase**
+   * Recalculate leaderboard state as required for that tick (3.9).
+
+9. **Persistence + audit**
+   * Persist minimum records required for deterministic replay and debugging.
+   * Exact audit schema is defined in Chapter 15.
+
+### 3.1.6 Tick-Type Suppressions and Overrides
+
+#### Normal tick
+All phases execute as defined in 3.1.5.
+
+#### Blackout tick
+* Tick order is unchanged.
+* Blackout legality constraints apply (3.8).
+* Sigil drops continue during blackout except where suppressed by last-valid/expiration rules and emergency suppression (3.2.3).
+
+#### Last-valid tick (`E−1`)
+* Tick order is unchanged.
+* Sigil drop evaluation MUST NOT execute if `is_last_valid_tick(T) == true`.
+* No other phase changes occur due to the tick being last-valid.
+
+#### Expiration tick (`E`)
+On expiration tick `E`:
+
+* Sigil drop phase is skipped.
+* UBI phase is skipped.
+* Surface publish phase is skipped.
+* Activity evaluation is skipped.
+* Leaderboard recalculation is verify-only and MUST NOT recompute final ranks (3.9.7).
+* Expiration resolution runs as an override during the player action resolution phase (3.9).
+
+#### Inactive season (post-expiration)
+After tick `E` completes, the season is inactive:
+
+* All phases are **no-op**, except minimal audit/verification bookkeeping (Chapter 15).
+* No economic operations execute.
+
+---
+
+## 3.2 Sigil Drop Evaluation
+
+### 3.2.1 Eligibility Conditions (Start-of-Tick Snapshot)
+
+A player is eligible for Sigil drop evaluation on tick `T` only if all are true at the **start-of-tick snapshot**:
+
+* `online_snapshot(T) == true`
+* `participating_snapshot(T) == true`
+* `activity_state_snapshot(T) == Active`
+
+**Mid-tick connectivity rule.**
+Connect/disconnect events during the tick window do not retroactively change `online_snapshot(T)` (3.11.10).
+
+### 3.2.2 Award Rules
+
+* A player can receive at most one (1) Sigil per eligible tick.
+* Sigils granted on tick `T` MAY be consumed by actions resolving later in tick `T`.
+
+### 3.2.3 Tick Suppressions
+
+Sigil drop evaluation:
+
+* MUST execute on Normal ticks and Blackout ticks, subject to eligibility.
+* MUST NOT execute on the last-valid tick.
+* MUST NOT execute on the expiration tick.
+
+**Service safety suppression (ops-controlled, not a role action).**
+If `sigil_drops_suppressed(season_id) == true`, the Sigil drop evaluation phase MUST be skipped (no grants) for that season. The flag becomes effective starting the next tick boundary. This deploy/config-controlled safety latch is defined in Chapter 15.
+
+### 3.2.4 Isolation Guarantees
+
+Sigil drop evaluation:
+
+* Is independent of UBI rate.
+* Is not influenced by boosts.
+* Is not influenced by system events.
+* Cannot be modified by any player mechanic.
+
+Drop rates and distribution logic are defined in Chapter 04 only.
+
+---
+
+## 3.3 Player Action Processing
+
+### 3.3.1 Acceptance, Ordering, and Sequencing
+
+All player actions are server-authoritative.
+
+**Cross-scope serialization boundary (season-tick vs global actions).**
+The server MUST maintain a single per-player serialized action queue for all non-exempt state-changing requests that can affect season determinism. On any commit boundary where both season-tick actions and global actions are pending for the player, the server MUST process them in this fixed phase order:
+
+1. **Season-tick actions** (including `lock_in_confirm`)
+2. **Global actions** (including cosmetic purchases that spend `GlobalStars`; Chapter 04)
+
+Therefore, if `lock_in_confirm` and a cosmetic purchase are both pending for the same commit boundary, the Lock-In conversion/credit is applied first, then the cosmetic spend is evaluated against the updated `GlobalStars` balance.
+
+**Global action commit boundary (no joined season).**
+- If `joined_season_id_snapshot(T) == null` for the player at tick `T`, the commit boundary for that player is the **global tick** `T`.
+- In that case, only the **Global actions** phase runs for the player at tick `T` (no season-tick actions exist).
+- Global state-changing actions MUST be accepted/buffered by the same commit-cutoff rule shape (3.1.2), but evaluated against `global_tick_index` boundaries (Chapter 07), and MUST commit on the next global tick boundary.
+
+
+**Lifecycle and Degraded Mode Invariant**
+The cross-scope serialization rule (season-tick actions before global actions at a commit boundary) remains authoritative during:
+
+- lifecycle phase transitions (Chapter 14),
+- ServerMode changes (Chapter 11),
+- feature-gate flips (Chapter 15).
+
+A lifecycle phase change, ServerMode change, or feature-gate flip MUST become effective only at the **next tick boundary** (Chapter 14/11/15) and MUST NOT:
+
+- reorder already-accepted actions,
+- clear a pending non-exempt action slot,
+- alter the deterministic processing order for that commit boundary.
+
+
+For season-scoped mechanical actions:
+
+* Acceptance MUST occur on the request’s `intake_tick` (3.1.2).
+* Requests whose `intake_tick == T` MUST be accepted/rejected on tick `T` in deterministic order by:
+  * `(arrival_time, connection_seq, request_seq)` ascending (3.11.8)
+* `accept_seq` MUST be assigned in that same order, and is assigned when the request is formally accepted into the `intake_tick` ordering.
+  * Buffered requests therefore receive `accept_seq` on their buffered `intake_tick` (not at original wall-clock receipt).
+
+If accepted, the server MUST:
+
+* assign a monotonically increasing per-season `accept_seq`,
+* validate the request under acceptance-time legality rules (3.3.5),
+* reserve/lock required funds and/or assets so the accepted action cannot later fail due to insufficiency, **except where defined otherwise for trade actions in Chapter 02 and Chapter 05**,
+* compute `resolution_tick` and `effect_tick` (3.3.4, 3.11.5).
+
+### 3.3.2 Acceptance-Time Affordability and No Projection
+
+Affordability validation MUST use:
+
+* the player’s balance as-of acceptance time,
+* minus any prior reservations.
+
+No projected future accrual MAY be used to pass affordability checks, including deterministic UBI that will apply later in the same tick.
+
+### 3.3.3 One Pending Non-Exempt Action Per Player
+
+A player may have at most one (1) accepted unresolved **non-exempt** action at any time.
+
+This pending-slot rule applies to:
+
+- season-scoped mechanical/economic actions in this chapter, and
+- any global action that is serialized against the player’s season commit boundary to preserve determinism (e.g., Global Stars spend for cosmetics; Chapter 04).
+
+If the player already has any accepted unresolved non-exempt action, any new non-exempt request MUST be rejected immediately.
+
+**Lifecycle boundary clarification.**
+The pending-slot invariant applies across lifecycle phase transitions, ServerMode transitions, and feature-gate flips. These transitions MUST NOT implicitly clear, bypass, or reclassify an occupied pending slot.
+
+**Trade acceptance is two-party constrained.**
+`trade_accept` MUST be rejected if **either party** has an accepted unresolved non-exempt action at acceptance time. If accepted, the pending slot is considered occupied for **both parties** until the trade resolves (success or invalidate). Exempt actions remain allowed.
+
+
+### 3.3.4 Scheduling Rule (Resolution Tick)
+
+For each accepted non-exempt season-scoped action:
+
+* If the action is same-tick eligible (3.4.8), it MUST resolve on `resolution_tick = intake_tick`.
+* Otherwise it MUST resolve on `resolution_tick = intake_tick + 1`.
+
+`effect_tick = resolution_tick` (3.11.5).
+
+**Buffered + next-tick-only explicit behavior (authoritative).**
+If a next-tick-only action arrives after `T_commit(T)` on tick `T`, it is buffered to `intake_tick = T+1` and therefore resolves on `resolution_tick = T+2`. This is intended and required for determinism.
+
+**Expiration-tick acceptance hard rule.**
+If `intake_tick == E` (the expiration tick), the server MUST reject all non-exempt season-scoped actions with reason_code `expiration_tick`.
+
+**General last-valid rejection rule for next-tick-only actions.**
+On the last-valid tick `E−1`, any **next-tick-only** non-exempt action MUST be rejected at acceptance time, because its earliest resolution would be the expiration tick `E` (illegal). Only explicitly defined last-valid exceptions may override this.
+
+**Last-valid special-cases (boost and seasonal stars).**
+On `E−1`:
+
+* `purchase_boost` MUST resolve on `E−1` if accepted on `E−1`.
+* `purchase_seasonal_stars` MUST resolve on `E−1` if accepted on `E−1`.
+
+### 3.3.5 Legality Enforcement (Acceptance and Resolution)
+
+Any non-exempt action MUST be legal at both:
+
+* acceptance time, and
+* its computed `resolution_tick`.
+
+The server MUST reject at acceptance time any request whose computed `resolution_tick` would be the expiration tick `E` (or later).
+
+### 3.3.6 Deterministic Resolution Ordering
+
+Actions resolved on a tick MUST be processed in strict ascending order of `accept_seq`.
+
+No randomness is permitted.
+
+### 3.3.7 Allowed Invalidation Causes (Defensive-Only)
+
+Under normal-path operation (non-corrupt data), accepted actions MUST NOT invalidate due to:
+
+* blackout legality,
+* participation state,
+* season state,
+* finite shared stock contention,
+
+because these are enforced and/or reserved at acceptance.
+
+Defensive invariants (corruption/legacy/bug cases):
+
+* If an accepted action reaches processing while the player is no longer economically participating, it MUST invalidate with a deterministic reason code.
+* If an accepted action reaches processing while the season is inactive/expired, it MUST invalidate with a deterministic reason code.
+* If a `trade_*` action reaches processing while trade-state validity is broken, it MUST invalidate with a deterministic reason code (trade validity rules are defined in Chapter 05).
+
+### 3.3.8 Surfaces, Versions, and Locked Quotes
+
+This chapter defines two surface concepts:
+
+* **Published price/fee surface** used for acceptance/quotes: `surface_version = V`
+* **Math surface** used for tick-`T` UBI calculation: `math_surface(T)`
+
+#### Published surface versioning (authoritative)
+
+Surface version rule:
+
+* **Surface version `V` is published at end of tick `V−1` and used during tick window `V`.**
+* During commit of tick `V−1`, **Phase 6** MUST compute and publish **`surface_version = V`**.
+* That published surface is authoritative for all acceptance/quote snapshots whose `intake_tick == V`.
+
+#### Locked quote snapshot rule (authoritative)
+
+For any action whose cost depends on a price surface or fee surface:
+
+* `surface_version_used = intake_tick`
+* A surface is considered “published” when Phase 6 of tick `(intake_tick − 1)` completes.
+* The server MUST snapshot `surface_version_used` at acceptance time.
+* The server MUST compute a locked quote from that snapshot and reserve the full quoted cost immediately.
+* Resolution MUST use the locked quote even if later published surfaces differ.
+* No repricing and no compensation occur.
+
+---
+
+## 3.4 Canonical Player Actions
+
+### 3.4.1 Closed Set (Season Economy/Mechanics State-Changing Actions)
+
+The following is the complete and closed set of **season-scoped mechanical/economic** player actions that may mutate **season participation** and/or **season economy** state:
+
+* Season participation
+  * `season_join`
+
+* Economy
+  * `purchase_seasonal_stars`
+  * `purchase_sigils_vault`
+  * `purchase_boost`
+
+* Trading (semantics defined in Chapter 05)
+  * `trade_initiate`
+  * `trade_accept`
+  * `trade_decline`
+  * `trade_cancel`
+
+* Lock-In
+  * `lock_in_confirm`
+
+* Acknowledgements / gating
+  * `idle_modal_ack`
+  * `season_end_ack`
+
+This closed set explicitly excludes social/messaging, moderation, profile, and global-meta actions (including cosmetics). Those actions are owned by their respective chapters and MUST NOT mutate season participation/economy state except where explicitly defined by Chapter 03 (none).
+
+No other operation may alter season participation or season economy state.
+
+### 3.4.2 Scope Note: Cross-Season Spectatorship (Reference-Only)
+
+Cross-season spectatorship is an observational UI feature defined in Chapters 08 and 10. It has **zero** mechanical effect and is not represented as a Chapter 03 player action.
+
+No in-joined-season “pause participation” view modes exist.
+
+### 3.4.3 Canonical Participation Predicates
+
+This chapter defines two participation predicates:
+
+* `participating_snapshot(T)`: computed at tick start from committed state and used only for snapshot-gated phases.
+* `participating_current`: computed at acceptance/resolution time from current state.
+
+**Canonical predicate (current form).**
+`participating_current := (joined_season_id == this_season) AND (participation_enabled == true)`
+
+`participating_snapshot(T)` MUST be computed identically using the committed state as-of `season_tick_start(this_season, T)`.
+
+Notes:
+- `idle_modal_active` gates certain season-scoped inputs (3.5.5), but does not change `participating_*` predicates.
+
+### 3.4.4 Exempt Actions (Tick-Governed vs Wall-Clock)
+
+**Tick-governed exempt action (season-scoped):**
+* `idle_modal_ack`  
+This action does not consume the non-exempt pending slot.
+
+Commit buffering applies (3.1.2). `idle_modal_ack` MUST resolve on its `intake_tick` and apply at tick commit:
+
+* Apply semantics: state changes apply **only at tick commit** (not immediately at acceptance).
+
+**Wall-clock action (not season tick work):**
+* post-expiration `season_end_ack(target_season_id)`
+
+This bypasses season tick semantics entirely.
+
+#### `idle_modal_ack` validity and commit-time effects
+
+* Valid only when `idle_modal_active == true`; otherwise reject.
+* On resolution (commit of its `intake_tick`), apply:
+  * `idle_modal_active = false`
+  * `activity_state_current = Active`
+  * clear `idle_since_tick` (if tracked)
+  * reset inactivity counter
+
+**UBI carve-out (explicit).**
+Because UBI is computed after action resolution during tick commit, `idle_modal_ack` resolving on tick `T` MAY affect tick-`T` UBI branch selection (3.6.6).
+
+#### `season_end_ack(target_season_id)` (wall-clock)
+
+* Valid only when `season_expired(target_season_id) == true`.
+* Requires an ack-pending season-end record for that player and season.
+* Idempotent: if already acked, treat as no-op success.
+* Applies immediately as a record update and bypasses all tick semantics.
+
+
+### 3.4.5 `season_join` (Entry and Re-Entry)
+
+`season_join(target_season_id)` is the **only** action that enters (or re-enters) a season for economic participation.
+
+#### Acceptance Gates (Authoritative)
+
+A `season_join` request MUST be rejected at acceptance time if any of the following are true:
+
+1. `target_season_id` does not exist.
+2. The target season is not `status=active` at acceptance time.
+3. The join would become effective on or after expiration (i.e., `intake_tick` is `E` or later for the target season).
+4. The player is currently economically participating in any season:
+   * `joined_season_id != null` (one economic season at a time; Chapter 07 owns the high-level constraint).
+
+If accepted, the join resolves on `effect_tick = intake_tick + 1` (3.6.1).
+
+#### Re-Entry Semantics (Canonical)
+
+Re-entry is allowed:
+- A player MAY exit and re-enter the **same season** any number of times while that season is `status=active`.
+- Re-entry is allowed even after a previous Lock-In.
+- Re-entry is NOT allowed after expiration/commit completes for that season (all joins are rejected once the season is past its expiration boundary).
+
+There is **no per-entry identifier** and no per-entry participation instance tracking.
+
+#### Resolution Effects (Authoritative)
+
+When `season_join` resolves on tick `T` for season `S`, the server MUST atomically:
+
+1. Ensure a persistent `SeasonParticipationRecord` exists for `(player_id, S)` (3.11.5).
+   * This record persists across exits/re-entries during the active season.
+
+2. Enter the season:
+   * set `joined_season_id = S`
+   * set `participation_enabled = true`
+      * set `idle_modal_active = false`
+
+3. Reset join-local counters:
+   * set `participation_ticks_since_join = 0` (3.6.9)
+
+4. Reset all season-bound economic state (Chapter 04 rules apply):
+   * set Coins = 0
+   * set Seasonal Stars = 0
+   * set Sigils = 0
+   * clear/disable any season-scoped boosts/modifiers
+   * cancel/close any open trade offers by the player and clear any trade reservations/locks held by the player
+
+`SeasonParticipationRecord.participation_time_total` MUST NOT be reset by re-entry; it is cumulative across the season (Chapter 02).
+
+### 3.4.7 View-Mode Actions (Non-Existent)
+
+No in-joined-season view-mode actions exist in final scope.
+
+- Cross-season spectatorship is defined in Chapters 08 and 10.
+- Participation state MUST NOT pause due to viewing.
+
+### 3.4.8 Same-Tick Eligibility Matrix (Authoritative)
+
+| action_type               | Same-tick on Normal?         | Same-tick on Blackout? | Special-case on `E−1`?                          |
+| ------------------------- | ---------------------------- | ---------------------- | ----------------------------------------------- |
+| `purchase_seasonal_stars` | No (normally resolves `T+1`) | Allowed; `T+1` only    | Yes (resolves on `E−1` if accepted on `E−1`)    |
+| `purchase_sigils_vault`   | Yes                          | No (blackout-illegal)  | No (blackout-illegal on `E−1`)                  |
+| `purchase_boost`          | No (normally resolves `T+1`) | Allowed; `T+1` only    | Yes (resolves on `E−1` if accepted on `E−1`)    |
+| `trade_initiate`          | Yes                          | No                     | No                                              |
+| `trade_accept`            | Yes                          | No                     | No                                              |
+| `trade_decline`           | Yes                          | No                     | No                                              |
+| `trade_cancel`            | Yes                          | No                     | No                                              |
+| `lock_in_confirm`         | Yes                          | No                     | No                                              |
+| `season_join`             | No (allowed; resolves `T+1`) | No (allowed; resolves `T+1`) | No (rejected if economic-effective tick is `E`+) |
+| `idle_modal_ack`          | Exempt (tick-governed)       | Exempt                 | Exempt                                          |
+| `season_end_ack`          | Wall-clock post-exp only     | Wall-clock post-exp    | Wall-clock post-exp                             |
+
+### 3.4.9 Participation Gating (Per Action)
+
+Unless explicitly stated otherwise, all non-exempt season-scoped actions require `joined_season_id == this_season` and `participating_current == true` at both acceptance and resolution.
+
+Exceptions are explicitly listed below.
+
+| action_type               | requires `joined_season_id==this_season`? | requires `participating_current` at acceptance? | requires `participating_current` at resolution? | notes |
+| ------------------------- | ----------------------------------------: | ----------------------------------------------: | ----------------------------------------------: | ----- |
+| `purchase_seasonal_stars` | Yes | Yes | Yes | quote locked at acceptance |
+| `purchase_sigils_vault`   | Yes | Yes | Yes | blackout-illegal |
+| `purchase_boost`          | Yes | Yes | Yes | quote locked at acceptance |
+| `trade_initiate`          | Yes | Yes | Yes | trade semantics in Chapter 05 |
+| `trade_accept`            | Yes (both) | Yes (both) | Yes (both) | pending-slot occupies both |
+| `trade_decline`           | Yes | Yes | Yes | — |
+| `trade_cancel`            | Yes | Yes | Yes | — |
+| `lock_in_confirm`         | Yes | Yes | Yes | additional gate in 3.7.2 |
+| `idle_modal_ack`          | Yes | No | No | valid only if modal active; commit-applied |
+| `season_end_ack`          | No | No | No | wall-clock post-expiration |
+
+---
+
+### 3.4.10 Role Gate (Staff Participation Hard-Block)
+
+Role ownership is defined in Chapter 12. This chapter defines the **request gate** that enforces staff non-participation in season economy/mechanics.
+
+Hard rules:
+
+- If `role ∈ {Moderator, Admin}` the server MUST reject any season participation or economy-mutating season action, including:
+  - `season_join`
+  - `purchase_seasonal_stars`
+  - `purchase_sigils_vault`
+  - `purchase_boost`
+  - `trade_initiate`, `trade_accept`, `trade_decline`, `trade_cancel`
+  - `lock_in_confirm`
+
+Rejection:
+
+- The rejection reason_code MUST be `staff_participation_forbidden` for any rejected action due to this role gate.
+
+---
+
+## 3.5 Activity Enforcement
+
+### 3.5.1 Counts-for-Activity Inputs (closed set)
+
+Counts-for-activity inputs are **only** the following accepted decisions:
+
+- `season_join`
+- `purchase_seasonal_stars`
+- `purchase_sigils_vault`
+- `purchase_boost`
+- `trade_initiate`
+- `trade_accept`
+- `trade_decline`
+- `trade_cancel`
+- `lock_in_confirm`
+- `idle_modal_ack`
+
+Explicit exclusions:
+
+- Social/messaging actions (Chapter 08) never count-for-activity.
+- Viewing/loading snapshots never counts-for-activity.
+- `season_end_ack` never counts-for-activity (wall-clock post-expiration).
+
+
+### 3.5.2 Inactivity Window (Exact Boundary Rule)
+
+At Activity evaluation phase of tick `T`, if activity enforcement applies (3.5.3), the system MUST enforce:
+
+* There MUST exist at least one counts-for-activity input with `effect_tick ∈ [T-899, T]` inclusive.
+
+### 3.5.3 Activity Evaluation Gate (Idle Enforcement Gate)
+
+Activity enforcement MUST gate on `participating_current` at Activity evaluation phase time:
+
+* If `participating_current == false` at Activity evaluation phase time:
+  * do not evaluate inactivity,
+  * do not apply Active→Idle transition,
+  * do not issue Idle modal.
+
+### 3.5.4 Inactivity Failure Writes (Exact)
+
+If `participating_current == true` at Activity evaluation phase time and the inactivity rule in 3.5.2 fails, then at commit of tick `T` the server MUST apply:
+
+* `activity_state_current = Idle`
+* `idle_modal_active = true`
+* `idle_modal_issued_tick = T`
+* `idle_since_tick = T`
+* `last_activity_effect_tick` unchanged
+* (optional but deterministic) `idle_transition_reason = inactivity_window_fail`
+
+### 3.5.5 Idle Modal Allowlist
+
+While `idle_modal_active == true`, interaction is restricted as follows:
+
+* Allowed:
+  * `idle_modal_ack`
+  * disconnect/logout
+  * report-player
+  * settings
+  * view-only navigation
+* Disallowed:
+  * all other season-scoped non-exempt actions
+
+---
+
+## 3.6 Boosts, System Events, Surfaces, and UBI
+
+### 3.6.1 UBI Eligibility (Snapshot-Gated)
+
+UBI eligibility is determined at the start-of-tick snapshot:
+
+`ubi_eligible_snapshot(T) := (is_expiration_tick(T) == false) AND (participating_snapshot(T) == true)`
+
+If `ubi_eligible_snapshot(T) == false`, the player receives zero UBI on tick `T`.
+
+### 3.6.2 Snapshot vs Current Timing (Join/Exit/View Mode)
+
+Because UBI eligibility is snapshot-gated:
+
+* If `season_join` resolves on tick `T`, it does not create UBI eligibility on tick `T`. Eligibility begins at snapshot of `T+1`.
+
+### 3.6.3 Math Surface for Tick-`T` UBI
+
+In Phase 5 of tick `T`, after action resolution, the server MUST recompute a **`math_surface(T)`** from the post-action state, and MUST use `math_surface(T)` for tick-`T` UBI calculation.
+
+`math_surface(T)` MAY differ from the published acceptance surface versioning rules (3.3.8). `math_surface(T)` is not used for acceptance/quotes.
+
+### 3.6.4 UBI Application Order and Influence
+
+UBI is computed and applied in Phase 5 (after action resolution). Therefore, any modifier or state change that becomes effective earlier in tick `T` MAY influence tick-`T` UBI if Chapter 05 formulas consume it, including:
+
+* same-tick `purchase_boost` on `E−1`,
+* `idle_modal_ack` resolving on tick `T`,
+* system-event state effective on tick `T` as represented in `math_surface(T)`.
+
+### 3.6.5 Same-Tick UBI Suppression (Terminal Actions)
+
+If any of the following resolves for the player on tick `T`, the player MUST receive zero UBI on tick `T`:
+
+* `lock_in_confirm`
+
+The following MUST NOT suppress same-tick UBI:
+
+* `season_join`
+
+### 3.6.6 UBI Branch Selection Input
+
+UBI branch selection uses `activity_state_current` as it exists at the start of the UBI phase (after action resolution, before activity evaluation).
+
+* `idle_modal_ack` resolving on tick `T` MAY set `activity_state_current = Active` for tick-`T` UBI branch selection.
+* Inactivity-triggered Active→Idle transitions occur after UBI and therefore do not change tick-`T` branch; they apply starting tick `T+1`.
+
+### 3.6.7 UBI Safety Constraints (Non-Negotiable)
+
+UBI and modifiers MUST satisfy:
+
+* UBI MUST NOT be negative on any tick.
+* No modifier/system event may siphon Coins from a player as “negative UBI.”
+* System events and boosts MUST NOT modify Sigil drop rates (3.2.4).
+
+Exact clamp behavior is defined in Chapter 05.
+
+### 3.6.8 System Events (Internal Scheduled Engine Work)
+
+System events are real mechanics under Chapter 03’s authoritative execution framework.
+
+**Surface-based impact only.**
+All economy-facing impacts of system events MUST be reflected in surfaces and MUST NOT be applied as direct adjustments on top of a snapshotted surface.
+
+**Acceptance visibility via surface versioning.**
+Acceptance and locked quotes on intake tick `T` snapshot `surface_version = T`. Therefore, any system-event impacts visible to acceptance during tick window `T` MUST already be reflected in `surface_version = T`, which is published during Phase 6 of tick `T−1`.
+
+**Scheduling constraint (deterministic).**
+System-event active state for tick `T` MUST be determinable no later than commit of tick `T−1` so it can be incorporated into `surface_version = T`.
+
+**System-event phase ordering.**
+If multiple system-event changes occur on tick `T`, ordering inside the System-event phase is ascending by:
+`(effective_tick, event_kind, event_id)`
+with `event_kind` ordered as `STOP` before `START`.
+
+**System-event phase idempotency.**
+On tick `T`, the System-event phase (Phase 2) MUST start/stop events to match the already-determined active set for tick `T` and MUST be idempotent.
+
+**Allowed surface-affected inputs (examples).**
+System events MAY affect, only via surfaces:
+
+* trade costs/fees,
+* sigil costs,
+* vault availability,
+* UBI rate modifiers,
+* boost effectiveness modifiers,
+* boost max stack modifiers,
+* any other economy-facing gate/value.
+
+System events MUST NOT influence Sigil drop evaluation and MUST obey UBI safety constraints.
+
+**Season initialization as a System Event (explicit).**
+Season initialization for globally scheduled seasons is modeled as a System Event on the expiration tick `E` that occurs **after** expiration resolution completes for the ending season. Its effects are included in surfaces published for `E+1` where applicable.
+
+---
+
+## 3.7 Lock-In
+
+### 3.7.1 Participation Tick Counter (Since Last Join)
+
+`participation_ticks_since_join` is a per-player-per-season counter used only for gating (e.g., “no Lock-In before 1 completed participation tick”).
+
+**Increment rule (authoritative).**
+For season `S`, at commit of tick `T`:
+
+Increment `SeasonParticipationRecord(player_id, S).participation_ticks_since_join` by 1 iff:
+
+- `participating_snapshot(T) == true` at the start-of-tick snapshot for `T`.
+
+Otherwise, do not change the counter.
+
+**Activity state.**
+This counter does not filter by activity state. Both Active and Idle ticks count if snapshot participation is true.
+
+**Reset moment.**
+This counter resets to `0` on `season_join` resolution (during tick `T` commit).
+
+**Not Seasonal Participation Time (explicit).**
+This counter is not the Season Participation Time metric (defined elsewhere) and does not reset the season-wide `participation_time_total` accumulation across exits/re-entries.
+
+
+### 3.7.2 Core Rules
+
+* Lock-In is executed only via `lock_in_confirm`.
+* Lock-In consumes the player’s non-exempt pending slot.
+* Lock-In is blackout-illegal (3.8).
+* Lock-In MUST be rejected if `participation_ticks_since_join < 1` as evaluated from current committed state at acceptance time.
+  * Therefore, a player cannot Lock-In on the first participation tick; they must wait until after that tick commits.
+* Legality MUST be enforced at both acceptance and resolution.
+
+### 3.7.3 Tick Ordering for Lock-In
+
+On any tick where `lock_in_confirm` resolves:
+
+* Sigil drops evaluate first (if allowed and eligible),
+* actions resolve by `accept_seq`,
+* Lock-In resolves by `accept_seq` and may destroy Sigils granted earlier in the tick.
+
+UBI accrues after action resolution. If Lock-In resolves on tick `T`, the player MUST receive **zero** UBI on tick `T`.
+
+### 3.7.4 Resolution Effects and State Writes (Authoritative)
+
+At the moment `lock_in_confirm` resolves on tick `T`, the server MUST atomically:
+
+1. Record/overwrite the player’s Lock-In snapshot for this season in `SeasonParticipationRecord(player_id, this_season)` (3.11.5):
+   * set `lock_in_effect_tick = T`
+   * set `lock_in_snapshot_seasonal_stars = SeasonalStars_current` (pre-conversion / pre-destruction)
+   * set `lock_in_snapshot_participation_time_total = participation_time_total_current` (cumulative total as-of this Lock-In)
+
+   This overwrite behavior enforces: **latest successful Lock-In snapshot is authoritative for ranking surfaces**. It MUST NOT reverse any Global Stars already credited by earlier Lock-Ins.
+
+2. Apply Lock-In conversion immediately (intended “double-dipping”):
+   * `GlobalStars += lock_in_snapshot_seasonal_stars` (1:1 integer)
+   * set `SeasonalStars = 0`
+
+3. Destroy all remaining season-bound resources for the player (Chapter 04):
+   * set Coins = 0
+   * set Sigils = 0
+   * (Defensive invariant) ensure Seasonal Stars remains 0 after conversion
+
+4. Exit the season:
+   * set `participation_enabled = false`
+      * set `idle_modal_active = false`
+   * disable/remove any active boosts/modifiers owned by the player for that season
+   * cancel/close any open trade offers by the player and clear any trade reservations/locks held by the player
+   * set `joined_season_id = null`
+
+Lock-In grants no expiration bonuses; bonuses exist only at natural season expiration finalization for players satisfying `eligible_end_snapshot(P,S)` (3.9; magnitudes in Chapter 06).
+
+---
+
+## 3.8 Blackout Enforcement
+
+During blackout:
+
+* `purchase_sigils_vault` is blackout-illegal.
+* All `trade_*` actions are blackout-illegal.
+* `lock_in_confirm` is blackout-illegal.
+* `season_join` is allowed (subject to expiration-effective join legality).
+* `purchase_boost` is allowed (resolves `T+1` only, except last-valid special-case).
+* `purchase_seasonal_stars` is allowed (resolves `T+1` only, except last-valid special-case).
+* `idle_modal_ack` remains allowed.
+
+Blackout legality MUST be enforced at both acceptance and resolution.
+
+---
+
+## 3.9 Expiration Resolution
+
+### 3.9.1 Expiration Tick Overview
+
+Expiration tick `E` runs the phase pipeline with suppressions and overrides (3.1.6).
+
+On `E`:
+
+* Sigil drop phase is skipped.
+* UBI phase is skipped.
+* Surface publish phase is skipped.
+* Activity evaluation is skipped.
+* Leaderboard recalculation is verify-only and MUST NOT recompute final ranks (3.9.7).
+* Expiration resolution runs as an override during the player action resolution phase (3.9.4).
+
+### 3.9.2 Eligible End Snapshot Predicate (Authoritative)
+
+All end-of-season eligibility is evaluated from the **post-`E−1` committed state** for season `S`.
+
+Define end-membership:
+
+`eligible_end_snapshot(P,S) = (joined_season_id_current(P) == S) AND (participation_enabled_current(P) == true)`
+
+Interpretation:
+- `eligible_end_snapshot(P,S) == true` iff the player is **economically participating in season `S` at committed `E−1`** (end-membership).
+- Connectivity (online/offline) does not affect this predicate.
+
+Define Lock-In snapshot eligibility (separate predicate; ranking interface only):
+
+`has_successful_lock_in_before_cutoff(P,S) = (SeasonParticipationRecord(P,S).lock_in_effect_tick is defined) AND (SeasonParticipationRecord(P,S).lock_in_effect_tick < lock_in_cutoff_tick(S))`
+
+Where:
+- `lock_in_cutoff_tick(S)` is the tick index at which blackout begins for season `S` (Chapter 07 timing).
+
+Define ranked-entry inclusion for season-final ordering:
+
+`eligible_season_ranking_entry(P,S) = eligible_end_snapshot(P,S) OR has_successful_lock_in_before_cutoff(P,S)`
+
+This ranked-entry predicate is used for:
+- season-final ordering and outcome labels (Chapter 09),
+- read-only “final leaderboard” surfaces after expiration finalization.
+
+Bonuses and natural-end conversion are **end-only**:
+- Eligibility for expiration bonuses and natural-end conversion uses **only** `eligible_end_snapshot(P,S)`.
+
+### 3.9.3 Action Handling on Expiration Tick (Finalizing Gate)
+
+During tick `E`, once expiration resolution marks `season_expired = true`, the season is finalizing until tick `E` completes:
+
+* If `season_expired == true`: reject all non-exempt season-scoped actions immediately.
+* Exempt actions MAY be accepted only if their validity gates pass.
+* post-expiration `season_end_ack(target_season_id)` applies immediately whenever `season_expired(target_season_id) == true` (wall-clock).
+
+**Defensive invariant.**
+If any unresolved non-exempt action record exists during tick `E` (legacy/corrupt data), it MUST be invalidated with reason_code `season_expired`.
+
+### 3.9.4 Deterministic Expiration Order
+
+Expiration resolution MUST execute in this deterministic order:
+
+1. Mark season expired (`season_expired = true`).
+2. Remove all boosts and all system events (idempotent).
+3. Compute and freeze the season-final rank ordering from the post-`E−1` committed snapshot (pre-bonus):
+   * Consider all players satisfying `eligible_season_ranking_entry(P,S)`.
+   * For each ranked entry, derive the value used for ordering per Chapter 06 (`authoritative_seasonal_value`), and apply Chapter 06 tie-breakers.
+   * This produces the **final season rank** used for Season Winner / Podium outcome labels (Chapter 09).
+4. Award seasonal bonuses as **Global Stars** (magnitudes defined in Chapter 06), eligible players only:
+   * Participation bonus applies to all players satisfying `eligible_end_snapshot(P,S)`, using the player’s cumulative Active participation time across the season (Chapter 06 definition).
+   * Placement bonus is awarded to the **top-3 ranked among players satisfying `eligible_end_snapshot(P,S)`**, where placement is computed from the post-`E−1` snapshot (pre-bonus).
+5. Apply natural-end conversion for eligible players only:
+   * `GlobalStars += SeasonalStars_current` (1:1 integer) using the post-`E−1` committed Seasonal Stars value.
+   * set Seasonal Stars = 0
+   * Seasonal bonuses MUST NOT modify Seasonal Stars.
+6. Create/ensure an ack-pending season-end record for each eligible player (required for post-expiration `season_end_ack(target_season_id)`):
+   * Key: `(player_id, season_id)`
+   * Fields (minimum): `pending = true`, `acked = false`, `created_on_expiration_tick = E`
+   * Idempotency: if the record already exists, do not overwrite `acked=true` with `acked=false`.
+7. Invalidate any unresolved non-exempt action records (defensive invariant), reason `season_expired`.
+8. End-of-expiration player detachment and cleanup (applies to all players whose `joined_season_id == this_season` at expiration finalization time):
+   * Set `participation_enabled = false`.
+   * Force `idle_modal_active = false`.
+   * Set `joined_season_id = null`.
+
+### 3.9.5 End-of-Expiration Cleanup Guarantee
+
+By end of tick `E`, all remaining seasonal state is destroyed/closed. This includes (at minimum) cleanup for **all** players who were joined to the season at expiration finalization time, whether or not they were eligible for bonuses.
+
+By end of tick `E`, all remaining seasonal state is destroyed/closed, including at minimum:
+
+* destroy remaining Coins and Sigils,
+* close/cancel open trade offers,
+* clear reservations/locks,
+* disable further seasonal economic interaction.
+
+### 3.9.6 Single-Execution, Inactive State, and Idempotency
+
+Expiration resolution is strictly single-execution and idempotent.
+
+Idempotency key: `(season_id, season_tick_index)` where `season_tick_index == E`
+
+Protected operations (MUST NOT double-apply):
+
+* participation bonus application
+* placement bonus application
+* SeasonalStars → GlobalStars conversion
+* badge awarding (seasonal + yearly where applicable)
+* season-final snapshots/finalization flags
+* cancel remaining offers / disable further season operations
+
+After tick `E` completes, the season is inactive and all subsequent ticks for that season perform no economic operations.
+
+### 3.9.7 Final Leaderboard Behavior (Frozen + Verify-Only)
+
+Intended observable behavior:
+
+* Leaderboard shown on tick `E` is the final frozen rank/order from post-`E−1` (no recompute on `E`).
+* Expiration applies bonuses/conversions using that frozen snapshot, but does not change displayed ranks.
+* After `E`, the season becomes inactive and the final leaderboard remains static/read-only.
+
+“Verify-only” on tick `E` verifies the stored final snapshot is internally consistent and matches what would be produced if recomputed.
+
+---
+
+## 3.10 System Constraints and Non-Negotiables (Determinism-Critical)
+
+The following are absolute:
+
+* No player action can create Coins outside UBI accrual (Chapter 05 defines UBI sources).
+* No action can modify Sigil drop rates or distribution logic.
+* No action can bypass blackout restrictions.
+* No action can delay or alter the expiration tick.
+* No action can modify past tick history.
+* No action can resurrect destroyed seasonal state.
+* No mechanical advantage persists across seasons (persistent items are non-mechanical).
+* Numeric behavior MUST be deterministic (3.11.9).
+
+Only Global Stars, Cosmetics, and persistent prestige records (badges) persist across seasons. Cosmetics and badges provide zero backend modifiers.
+
+---
+
+## 3.11 Determinism (Minimum Requirements)
+
+### 3.11.1 Authoritative Ordering Inputs
+
+Deterministic behavior MUST be derived strictly from:
+
+* tick index and tick flags (blackout/last-valid/expiration),
+* start-of-tick snapshot values,
+* accepted season-scoped action records with `accept_seq`,
+* season participation records (3.11.5),
+* deterministic buffering/intake ordering (3.1.2, 3.11.8),
+* deterministic numeric representation (3.11.9).
+
+### 3.11.2 Authoritative Season Action Stream (Reference-Only)
+
+The authoritative season action stream schema, storage, and replay rules are defined in Chapter 15.
+
+### 3.11.3 Audit and Telemetry Schema (Reference-Only)
+
+Audit/log schemas, retention policies, and long-form telemetry details are defined in Chapter 15.
+
+### 3.11.4 `effect_tick` (Authoritative)
+
+`effect_tick` is the tick where an input’s state changes are applied in commit.
+
+* Non-exempt tick-scheduled actions: `effect_tick = resolution_tick`.
+* Buffered actions:
+  * if `arrival_time >= T_commit(T)` on tick `T`, then `intake_tick = T+1`.
+  * if same-tick eligible: `resolution_tick = T+1`, `effect_tick = T+1`
+  * otherwise: `resolution_tick = T+2`, `effect_tick = T+2`
+* `idle_modal_ack` (tick-governed exempt): `effect_tick = intake_tick` (applies at commit of intake tick).
+
+### 3.11.5 Season Participation Records (Authoritative)
+
+The system MUST maintain a `SeasonParticipationRecord` keyed by:
+
+`(player_id, season_id)`
+
+There is **no per-entry identifier** and no per-entry participation instance records.
+
+Each record MUST contain, at minimum:
+
+* `participation_time_total` (int64 seconds; cumulative across all participation segments in the season, as defined in Chapter 02)
+* `participation_ticks_since_join` (int64; resets to 0 on each `season_join` resolution; used only for same-join gating, 3.6.9)
+* `lock_in_effect_tick` (int64 tick index; undefined if the player has never successfully Lock-In’d in this season)
+* `lock_in_snapshot_seasonal_stars` (int64; Seasonal Stars value captured at Lock-In, pre-destruction)
+* `lock_in_snapshot_participation_time_total` (int64 seconds; `participation_time_total` captured at Lock-In)
+
+Overwriting rule:
+- Each successful Lock-In MUST overwrite (`lock_in_*`) fields with the latest resolved Lock-In for that season.
+- This enforces the canonical authority rule: **latest successful Lock-In before cutoff is authoritative**.
+
+The player session state MUST include:
+
+* `joined_season_id`
+* `participation_enabled`
+* `idle_modal_active`
+* `activity_state_current`
+
+### 3.11.6 Non-Season Tick Inputs (Reference-Only)
+
+Social/messaging actions (Chapter 08) and post-expiration `season_end_ack` bypass all season tick semantics.
+
+### 3.11.7 Buffered Ordering Field Definitions
+
+**`connection_seq`**
+* Scope: per-player.
+* Meaning: monotonically increasing integer assigned at connection/session establishment (first connection = 1, next reconnect = 2, etc.).
+* Monotonicity: strictly increases; never reused.
+* Reset rules: does not reset during a season; may reset only on full account reset/data wipe (if such exists).
+
+**`request_seq`**
+* Scope: per `(player_id, connection_seq)` session.
+* Meaning: monotonically increasing integer assigned to each request as received by the server for that connection.
+* Monotonicity: strictly increases within the session; starts at 1 when the session starts.
+* Reset rules: resets to 1 on each new `connection_seq`.
+
+### 3.11.8 Receipt Ordering Key (Authoritative)
+
+Requests accepted on the same `intake_tick` MUST be ordered deterministically by:
+`(arrival_time, connection_seq, request_seq)` ascending.
+
+### 3.11.9 Numeric Determinism (Representation)
+
+Numeric representation MUST be deterministic:
+
+* Coins, Seasonal Stars, Global Stars: int64 integers
+* Modifiers: fixed-point int64, where `1_000_000 = 1.0`
+
+Deterministic multiply formula (authoritative):
+- The exact multiplier formula text is owned by Chapter 05.
+- This chapter defines representation and determinism constraints only.
+
+### 3.11.10 `online_snapshot(T)` Boundary Semantics (Authoritative Minimum)
+ `online_snapshot(T)` Boundary Semantics (Authoritative Minimum)
+
+* `online_snapshot(T)` is sampled exactly at `season_tick_start(this_season, T)` from `online_current`.
+* Connect/disconnect events update `online_current` in real time but MUST NOT retroactively change `online_snapshot(T)`.
+* A disconnect during tick window `T` affects `online_snapshot(T+1)` (not `T`).
+* A connect during tick window `T` affects `online_snapshot(T+1)` (not `T`).
+* Sigil eligibility uses `online_snapshot(T)` only.

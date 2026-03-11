@@ -1,0 +1,651 @@
+## Chapter Draft (Version 12)
+
+# 15 — Technical and Implementation References
+
+## 15.1 Purpose and Scope
+
+This chapter defines the authoritative requirements for:
+
+- Telemetry
+- Audit logging
+- State snapshot logging
+- Deterministic identifiers
+- Feature-gate catalog ownership
+- Reason-code catalog ownership
+- Replay determinism requirements
+- Front-end state representation (interface contracts only)
+- Back-end authority assumptions (determinism-critical)
+- Documentation governance references
+
+This chapter does not define gameplay mechanics (Chapter 03), economic math (Chapter 05), lifecycle policy (Chapter 14), or moderation authority (Chapter 12).
+
+If a logging/audit/telemetry rule is not defined here, it does not exist.
+
+---
+
+## 15.2 Canonical Event Taxonomy
+
+All events MUST belong to exactly one event family:
+
+1. Lifecycle / Configuration Events
+   - lifecycle_phase change
+   - feature-gate flip
+   - ServerMode change
+   - ops suppression toggle
+
+2. Season Events
+   - season_created
+   - season_started
+   - blackout_entered
+   - season_expired
+   - season_finalized
+
+3. Player Action Events
+   - action_submitted
+   - action_rejected
+   - action_accepted
+   - action_resolved
+
+4. Trade Events
+   - trade_initiated
+   - trade_accept_attempt
+   - trade_locked
+   - trade_committed
+   - trade_invalidated
+   - trade_timeout_released
+
+5. Economy Events
+   - UBI_granted
+   - sigil_drop_awarded
+   - seasonal_to_global_conversion
+   - yearly_reset_executed
+   - ledger_entry_written
+
+6. Moderation Events
+   - report_submitted
+   - moderation_action_applied
+
+7. Wipe Events
+   - wipe_planned
+   - wipe_executed
+   - wipe_completed
+
+8. Failure / System Events
+   - request_idempotent_duplicate
+   - affordability_failed
+   - invariant_violation_detected
+
+No other event families may exist.
+
+---
+
+## 15.3 Deterministic Identifiers and Ordering
+
+Every logged event MUST include:
+
+- event_id (globally unique, immutable)
+- event_family
+- event_type
+- server_time (UTC epoch seconds; int64)
+- global_tick_index (int64; always present)
+- season_id (nullable if global)
+- season_tick_index (nullable; present iff season_id is present)
+- player_id (nullable if system-only)
+- client_request_id (nullable; present iff the event is generated from an idempotent API request per Chapter 11)
+- client_request_payload_hash (nullable; present iff client_request_id is present)
+- surface_version (if price/fee dependent)
+- lifecycle_phase_snapshot
+- ServerMode_snapshot
+
+Conditional field requirements:
+
+- If `event_type == action_rejected` and `reason_code == mode_disallows_action`, then `ServerMode_snapshot` MUST be present and MUST equal the evaluation-time effective mode that caused the rejection.
+
+Tick field pairing rule:
+
+- If `season_id != null`, then `season_tick_index` MUST be present.
+- If `season_id == null`, then `season_tick_index` MUST be null/absent.
+
+Ordering guarantees:
+
+- Events sharing a global_tick_index MUST reflect deterministic processing order for that tick boundary.
+- Player action events MUST reflect ascending accept_seq\.
+- Cross-scope serialization ordering \(season-tick before global actions\) MUST be visible in event ordering for the same global_tick_index\.
+
+accept_seq requirements (authoritative):
+
+- `accept_seq` MUST be present on every `action_accepted` and `action_rejected` event.
+- Any action-derived mutation event MUST carry the source action ordering key:
+  - `source_accept_seq` (int64; equals the originating `action_accepted.accept_seq`)
+
+---
+
+## 15.3.1 Deterministic Hash-Based RNG Contracts (authoritative)
+
+Chapter 15 is the sole authority for deterministic randomness contracts used by gameplay systems.
+Systems MUST reference this section and MUST NOT restate or modify these primitives.
+
+### 15.3.1.1 Sigil Drop RNG Stream (`TMC/SigilDrop/v1`)
+
+**Domain separation (required):**
+- `domain = ASCII("TMC/SigilDrop/v1")` (exact bytes; no null terminator)
+
+**Encodings (required):**
+- `season_id` encoding = `uint64` big-endian
+- `season_tick_index` encoding = `uint32` big-endian (non-negative; MUST fit)
+- `season_seed` = 32 raw bytes (if stored as hex/base64, it MUST be decoded to bytes before use)
+
+**Tick seed (authoritative):**
+- `tick_seed = SHA256( domain || u64be(season_id) || season_seed || u32be(season_tick_index) )`
+- Output is 32 bytes.
+
+**Draw function (stateless):**
+- `draw_bytes(i) = SHA256( tick_seed || u32be(i) )`
+- If more bytes are needed, use `i+1`, `i+2`, etc.
+- A system MUST NOT reuse the same draw index `i` for different purposes.
+
+**Integer sampling rules (no floats anywhere):**
+- Bernoulli `1/50000` example:
+  - `u = uint64be(draw_bytes(i)[0:8]) % 50000`
+  - success iff `u == 0`
+- Fixed-point tier roll example (scale `1_000_000`):
+  - `u = uint32be(draw_bytes(j)[0:4]) % 1_000_000`
+  - pick the first tier where `u < cdf_fp[tier]`
+
+**Fixed-point convention:**
+- `1_000_000 = 1.0`
+- Tier weights MUST sum to exactly `1_000_000`.
+
+---
+
+## 15.4 State Snapshot Logs
+
+### 15.4.1 Snapshot Definition
+
+A snapshot is an immutable record of:
+
+- snapshot_global_tick_index
+- season_id (nullable if global)
+- season_tick_index (nullable; present iff season_id is present)
+- participation predicates
+- balances (Coins, SeasonalStars, GlobalStars)
+- active boosts
+- trade locks
+- leaderboard ordering
+- lifecycle_phase_snapshot
+- ServerMode_snapshot
+
+### 15.4.2 Snapshot Cadence
+
+Snapshots MUST be captured:
+
+- At every tick commit.
+- Immediately before expiration resolution.
+- Immediately after expiration resolution.
+- Immediately before yearly reset.
+- Immediately after yearly reset.
+
+### 15.4.3 Integrity Verification
+
+Each snapshot MUST include:
+
+- snapshot_hash
+- previous_snapshot_hash
+
+Hash chain MUST be tamper-evident.
+
+---
+
+## 15.4.4 WipeBoundary and Snapshot Epochs (required)
+
+- All wipes (ALPHA lifecycle wipes and the Alpha→Beta migration wipe) MUST emit an immutable `WipeBoundary` audit event.
+- Telemetry/audit + snapshot chain MUST be stored in a separate durability store and MUST be preserved across wipes (Chapter 14).
+
+Allowed integrity models (implementation MUST pick one and apply consistently):
+
+A) Continuous chain
+- The snapshot hash chain continues across wipes.
+- The `WipeBoundary` event MUST be included in the logged event stream and MUST be representable in integrity verification for the boundary tick/commit.
+
+B) Epoch model
+- Each wipe starts a new snapshot epoch.
+- Each epoch MUST have a `genesis_record` containing `prior_epoch_terminal_hash`.
+- Old epochs MUST remain retained permanently per 15.7.
+
+Every snapshot record MUST include:
+- `snapshot_epoch` (monotonic int32) and
+- `epoch_terminal` marker for the final snapshot of an epoch.
+
+### 15.4.5 Wipe boundaries are not “data loss” for integrity
+
+- Wipes may delete gameplay state stores, but MUST NOT delete integrity proofs required for determinism, fraud detection, or incident response.
+- Wipe execution MUST be replayable deterministically from the audit stream + retained epoch chain.
+
+---
+
+## 15.5 Domain-Specific Logging Requirements
+
+### 15.5.1 Trade Logging Requirements
+
+The following MUST be logged:
+
+- trade_initiate (initiator escrow acquired)
+- trade_accept_attempt (lock acquisition results)
+- trade_commit (assets + fees)
+- trade_cancel
+- trade_decline
+- trade_timeout
+- orphan-lock reconciliation events
+
+Trade locks MUST be explicitly represented in snapshot state.
+
+### 15.5.2 Sigil Drop Award Telemetry (required)
+
+- A Sigil drop **award** MUST emit a dedicated telemetry/audit event:
+  - `event_family = Economy Events`
+  - `event_type = sigil_drop_awarded`
+- A per-tick "no drop" event is NOT required.
+
+The `sigil_drop_awarded` event MUST include:
+- global_tick_index
+- season_id
+- season_tick_index
+- player_id
+- drop_tier (Tier I–V)
+- tick_seed (32 bytes; this is already SHA-256 output)
+- draw_indices_used (ordered list of `uint32` indices consumed by this decision)
+- sampled_u_values (ordered list of the derived sampled integers used for the decision; e.g., the Bernoulli `% 50000` result and the tier-roll `% 1_000_000` result when applicable)
+
+Notes:
+- Systems MUST NOT log or expose `season_seed`.
+- The event MUST be sufficient to re-evaluate and verify the decision deterministically using 15.3.1 without reconstructing from state deltas.
+
+### 15.5.3 Ops suppression toggles (authoritative minimal contract)
+
+Ops suppression toggles are service-safety controls and are not player/staff actions.
+
+Minimum contract (required):
+- Any suppression flag MUST become effective only at the next tick boundary.
+- Any change MUST emit an immutable audit record in `Lifecycle / Configuration Events` with:
+  - `toggle_id`
+  - `old_value`
+  - `new_value`
+  - `effective_global_tick_index`
+
+Defined toggle IDs referenced by this Bible:
+- `sigil_drops_suppressed(season_id)` (boolean; season-scoped)
+  - If true, Sigil drop evaluation is skipped for that season (Chapter 03).
+
+---
+
+## 15.6 Privacy and Redaction
+
+- Profile deletion is redaction-only (Chapter 12 / Chapter 13).
+- Logs MUST retain internal identifiers.
+- Public exports MUST redact:
+  - email
+  - IP address
+  - session tokens
+  - internal moderation notes
+
+---
+
+## 15.7 Retention and Access Control
+
+Retention windows are owned by Chapters 12 and 13.
+
+Minimum requirements:
+
+- Economy and lifecycle events: retained permanently.
+- Moderation events: retained per Chapter 12 policy.
+- Snapshot chain (all epochs): retained permanently.
+
+Wipe interaction (hard): lifecycle wipes MUST NOT delete audit/telemetry/snapshot durability stores.
+
+Access control:
+
+- Admins: full audit access.
+- Moderators: limited to moderation + report-related logs.
+- Players: no direct raw-log access.
+
+---
+
+## 15.8 Export and Incident Workflow
+
+An incident export bundle MUST include:
+
+- Relevant event range
+- Snapshot chain segment
+- Lifecycle/ServerMode timeline
+- Feature-gate timeline
+- Deterministic replay metadata
+
+Bundles MUST be immutable.
+
+---
+
+## 15.9 Operational Safeguards
+
+If telemetry sinks fail:
+
+- Gameplay MUST continue.
+- Logging MUST queue locally.
+- If queue exceeds safety threshold:
+  - system MUST enter RATE_LIMIT_ACTIONS.
+  - event logged.
+  - operators alerted.
+
+---
+
+## 15.10 Catalogs Owned by Chapter 15 (closed sets)
+
+### 15.10.1 Reason-code catalog (authoritative)
+
+- `reason_code` values are a **closed set** owned by this chapter.
+- Every `action_rejected` event MUST include exactly one `reason_code`.
+- Reason codes MUST be stable identifiers (snake_case). Renames MUST NOT occur; deprecations MUST keep the old code resolvable in replay.
+
+Minimum required reason-code set (referenced by this Game Bible):
+
+# Core protocol / idempotency / ordering
+- protocol_mismatch
+- stale_client
+- client_request_id_reused
+- session_superseded
+
+# Rate limiting / degraded service
+- rate_limited
+- mode_disallows_action
+- read_only_economy
+- lockdown_connections
+
+# Participation / role / gating
+- not_participant
+- not_eligible
+- not_writer
+- not_idle
+- idle_gated
+- pending_action_block
+- pending_two_party_action
+- staff_participation_forbidden
+- counterparty_unavailable
+
+# Legality / time bounds
+- blackout_disallows_action
+- expiration_tick
+- season_expired
+- yearly_reset_in_progress
+
+# Trade / economics validation
+- invalid_trade_asset
+- insufficient_balance
+- insufficient_assets
+- conflict_replaced
+- numeric_overflow
+
+# Social / moderation / reporting
+- muted
+- dm_unavailable
+- mod_rate_limited
+- mod_escalation_limit
+- report_rate_limited
+- chat_slow_mode_active
+- chat_profanity_blocked
+- chat_links_blocked
+- chat_auto_muted_spam
+
+`dm_unavailable` UI mapping (binding): client copy MUST be generic and MUST NOT disclose block state (e.g., do not reveal “you are blocked”).
+`not_eligible` definition (binding): “You don’t meet the eligibility requirement for this action right now.”
+
+
+# Internal / unexpected
+- internal_error
+
+### 15.10.2 Feature-gate catalog (authoritative)
+
+- Feature gates are global runtime toggles that may enable/disable phase-gated systems (Chapter 14).
+- Feature-gate flips MUST become effective only at the next tick boundary and MUST be fully audited.
+- If a gated system is disabled, dependent actions MUST hard-reject with a stable `reason_code` and MUST have no side effects.
+
+Canonical feature-gate IDs (closed set referenced by this Game Bible):
+
+- gate_trading
+- gate_cosmetics
+- gate_badges
+- gate_moderation_tools
+
+Stable rejection mapping (authoritative):
+
+- If any gated system is disabled, all dependent actions MUST hard-reject with:
+  - `reason_code = not_eligible`
+  - and MUST have no side effects.
+
+### 15.10.3 Wipe-type catalog (authoritative)
+
+Canonical wipe types (closed set referenced by this Game Bible; Chapter 14 provides policy):
+
+- full_db_wipe
+- economy_wipe
+- season_wipe
+- year_wipe
+- beta_entry_wipe
+
+---
+
+## 15.11 Front-End State Representation (interface contracts only)
+
+This section defines the minimum client-visible state representation fields required to keep UI deterministic and unambiguous. Detailed UI rules are owned by Chapter 10.
+
+Minimum required fields for any session snapshot payload:
+
+- `server_now` (UTC epoch seconds; tick-quantized)
+- `global_tick_index` (int64; equals `server_now`)
+- `lifecycle_phase`
+- `ServerMode`
+- `feature_gates{}` (Chapter 15.10.2 IDs)
+- `viewing.active_season_id` (nullable)
+- `participation.joined_season_id` (nullable)
+- `participation.participation_enabled` (boolean; meaningful iff joined_season_id is not null)
+- `activity.activity_state` (Active/Idle; meaningful iff participating)
+- `idle_modal_active` (boolean)
+
+### 15.11.1 Economy action gating flags (derived from Chapter 03 closed action set)
+
+For every economy-affecting season action `X` in the closed action set defined by Chapter 03, the server MUST emit:
+
+- `can_X: bool`
+- `cannot_X_reason: reason_code` (present iff `can_X == false`)
+
+Clients MUST treat these as authoritative. Clients MUST NOT infer legality.
+
+Notes:
+- This gating requirement applies to **economy** actions only.
+- Chat/messaging controls (Chapter 08) are explicitly exempt; `chat_send` MAY be attempted and MAY be rejected without `can_chat_send` flags (Chapter 10).
+
+### 15.11.2 Leaderboard snapshot leader identity fields (partial slices)
+
+Whenever a leaderboard snapshot is returned as a **partial slice** (i.e., the payload does not necessarily include global rank #1), the payload MUST include:
+
+- `leader_player_id`
+- `leader_identity_label` (already redacted per Chapter 08 identity rules; the client MUST NOT resolve this separately)
+
+If the payload slice includes rank #1, the leader fields MUST match that #1 row.
+
+### 15.11.3 EndedSeasonView DTO (authoritative)
+
+Ended seasons MUST be served via a dedicated DTO (separate from live season payloads). This DTO MUST include:
+
+Core:
+
+- `season_id`
+- `status`
+- `start_time`
+- `end_time`
+- `blackout_start_time`
+- `server_now`
+- `global_tick_index`
+- `day_index`
+- `total_days`
+- `remaining_seconds`
+- `season_expired`
+- `expiration_finalized`
+
+Final immutable outputs:
+
+- `final_snapshot` (compact summary; 15.11.3.1)
+- `final_ranks` (embedded slice + pagination envelope; 15.11.3.2)
+- `final_settlement` (rewards + conversion results; owned by Chapter 03 / Chapter 13)
+- `audit_summary` (15.11.3.3)
+
+#### 15.11.3.1 `final_snapshot` (compact summary only)
+
+`final_snapshot` MUST be compact and MUST NOT embed full state.
+
+Required fields:
+
+- `final_surface_version` (season_tick_index; equals the published surface version that locked the final quote set)
+- `final_state_snapshot_hash` (bytes32; equals `snapshot_hash` of the final state snapshot in the Chapter 15 snapshot chain)
+- `final_previous_snapshot_hash` (bytes32; equals `previous_snapshot_hash` of that snapshot)
+- `final_top_value` (int64; `0` if no entries exist)
+
+#### 15.11.3.2 `final_ranks` (embedded slice + pagination envelope)
+
+`final_ranks` MUST be returned as an embedded slice with pagination envelope fields:
+
+- `leader_player_id`
+- `leader_identity_label`
+- `slice_start_rank` (int32; 1-based)
+- `slice_size` (int32)
+- `has_more` (bool)
+- `rows[]` (leaderboard row schema as defined by Chapter 06; includes stored `handle_snapshot` per Chapter 08)
+
+#### 15.11.3.3 `audit_summary` (minimal)
+
+`audit_summary` MUST provide a minimal “tail pointer” to support deterministic “what happened” review without embedding staff-only audit contents:
+
+- `season_audit_tail_event_id` (event_id)
+- `season_audit_tail_global_tick_index` (int64; equals `global_tick_index` of that event)
+
+### 15.11.4 User-facing moderation notice payload (authoritative)
+
+User-facing moderation notices MUST be delivered using this payload:
+
+- `notice_id` (stable id)
+- `notice_type` ∈ `{warning, mute, ban, message_removed}`
+- `reason_code` (from Chapter 15 reason-code catalog)
+- `issued_at_tick` (int64; `global_tick_index`)
+- `effective_at_tick` (int64; `global_tick_index`)
+- `duration_seconds` (nullable; required for timed mutes/bans)
+- `expires_at_tick` (nullable; required iff duration is set)
+- `case_id` (nullable; case id only)
+- `target_ref` (nullable object; e.g., `{channel_id, message_id}` for message removal)
+- `appeal_available` (bool; MUST be `false`)
+
+Consistency requirement:
+- If both `duration_seconds` and `expires_at_tick` are present, they MUST be consistent under:
+  - `expires_at_tick == effective_at_tick + duration_seconds`
+
+
+---
+
+
+### 15.11.5 Derived client fields (authoritative)
+
+This subsection defines **standard derived fields** that the client MAY compute for UI convenience.
+
+Derived client fields:
+
+- MUST be computed **purely** from authoritative server fields defined elsewhere in this chapter.
+- MUST NOT be treated as authoritative state (they are **UI convenience only**).
+- MUST be deterministic (same inputs => same output).
+
+#### 15.11.5.1 `GlobalParticipationStatus` (binding)
+
+**Definition (binding):**
+`GlobalParticipationStatus := (participation.joined_season_id != null) AND (participation.participation_enabled == true)`
+
+**Inputs (authoritative fields):**
+- `participation.joined_season_id` (nullable)
+- `participation.participation_enabled` (boolean; meaningful iff `joined_season_id` is not null)
+
+**Notes (binding):**
+- If `participation.joined_season_id == null`, then `GlobalParticipationStatus == false` regardless of any other fields.
+
+## 15.12 Back-End Authority Assumptions (determinism-critical)
+
+### 15.12.1 Seed material (authoritative)
+
+The system MUST maintain:
+
+- `season_seed: bytes32` per season
+  - Generated at season creation from a CSPRNG.
+  - Immutable for the life of the season.
+  - MUST NOT be exposed to clients.
+
+- `year_seed: bytes32` per year (year_seq)
+  - Generated at yearly reset from a CSPRNG.
+  - Immutable for the life of the year.
+  - MUST NOT be exposed to clients.
+
+These seeds may be used as key material for:
+- deterministic RNG streams (15.3.1),
+- deterministic tie-break keys (Chapter 06).
+
+### 15.12.2 Deterministic encoding primitives (authoritative)
+
+Canonical encodings used by this Bible:
+- `u64be(x)` = uint64 big-endian (8 bytes)
+- `u32be(x)` = uint32 big-endian (4 bytes)
+
+### 15.12.3 Modifier registry identity space (authoritative minimal)
+
+Where a system uses `modifier_id:uint32` identifiers (Chapter 05), those IDs MUST be stable and non-reused across the product lifetime.
+
+- Registry ownership: Chapter 15 (documentation governance).
+- Concrete list of modifier IDs (closed set for this version):
+  - `(modifier_id=1001, name="ubi_mod_from_boosts_fp")` — Sum of all purchased boost contributions to UBI modifier (fixed-point). Owner: Chapter 03.
+  - `(modifier_id=1002, name="ubi_mod_from_system_events_fp")` — Sum of all active system-event contributions to UBI modifier (fixed-point). Owner: Chapter 03.
+
+---
+
+## 15.13 Documentation Governance
+
+This section is authoritative.
+
+### 15.13.1 Canonical version map (authoritative)
+
+The following chapter versions are the only authoritative design source for implementation:
+
+- Ch01=v7
+- Ch02=v15
+- Ch03=v16
+- Ch04=v12
+- Ch05=v11
+- Ch06=v7
+- Ch07=v9
+- Ch08=v16
+- Ch09=v19
+- Ch10=v19
+- Ch11=v16
+- Ch12=v8
+- Ch13=v9
+- Ch14=v9
+- Ch15=v12
+### 15.13.2 Deprecated files policy (authoritative)
+
+Any chapter draft file not listed in the canonical version map is **deprecated** and is **non-authoritative by definition**.
+
+Deprecated drafts are treated as **ignored / non-existent** for all design and implementation purposes (they may remain in repository history only).
+
+### 15.13.3 Ownership boundaries for catalogs and schemas
+
+- Chapter 15 owns:
+  - reason-code catalog
+  - feature-gate catalog
+  - event schema definitions
+  - audit schema
+  - front-end state representation interface fields
+  - back-end determinism-critical primitives
+- Other chapters MUST reference but MUST NOT redefine these catalogs/primitives.
+
+End of Chapter 15.

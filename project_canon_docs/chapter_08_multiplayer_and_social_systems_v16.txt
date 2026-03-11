@@ -1,0 +1,258 @@
+## Chapter Draft (Version 16)
+
+# Chapter 08 — Multiplayer and Social Systems
+
+This chapter defines the game’s social surface (player-to-player interaction rules, communication systems, and social visibility/spectatorship) while preserving the core principle: **all economy, progression, rewards, and competition outcomes are individual**.
+
+**Scope boundary (binding):**
+- Chapter 08 owns: routing, eligibility, visibility, retention rules for social systems, and non-mechanical invariants.
+- Chapter 03 owns: season-scoped mechanical actions and activity enforcement.
+- Chapter 11 owns: failure-state taxonomy and server behavior when things go wrong.
+- Chapter 12 owns: staff permissions, moderation tools, enforcement flags, and message ordering (`message_id`, ordering key).
+- Chapter 10 owns: client UI behavior (what is clickable/visible), but MUST align to this chapter’s routing/eligibility rules.
+
+**Real-time chat invariant (binding):** Chat MUST remain wall-clock real-time and MUST NOT be blocked by season tick processing. Chat may still be rejected deterministically due to ServerMode or enforcement flags.
+
+---
+
+## 8.1 Player-to-Player Interaction Rules
+
+### 8.1.1 Non-mechanical invariants (applies to all Chapter 08 systems)
+
+All social and communication systems defined in this chapter:
+
+- MUST NOT trigger any gameplay action.
+- MUST NOT transfer any value.
+- MUST NOT count-for-activity.
+- MUST NOT affect eligibility, timers, or activity state.
+- MUST NOT mutate season economy state.
+
+### 8.1.2 Account identity primitives (authoritative)
+
+Canonical identity fields:
+
+- `player_id` (immutable internal identifier): Private
+- `handle` (current username; may change; see 8.1.3): Public
+- `profile.display_name_override` (staff-only redaction label; may be `null`): Public effect
+- `profile.visibility` (player-controlled access flag): Public effect
+- `account.status.profile_deleted_at` (profile redaction marker; may be `null`): Public effect
+
+**Frozen attribution requirement (binding):** Any *historical* social row (chat message row or season leaderboard row) MUST store a `handle_snapshot` captured at row creation time.
+
+Identity label rendering (single source of truth):
+
+`identity_label(viewer, target, handle_snapshot)` resolves in this order:
+
+1. If `target.account.status.profile_deleted_at != null` → `"[Removed]"`
+2. Else if `target.profile.display_name_override != null` → that override
+3. Else → `handle_snapshot`
+
+Notes:
+- For **live profile pages**, `handle_snapshot` is `target.handle` at render time.
+- For **historical rows**, `handle_snapshot` is the stored snapshot on that row.
+- Handle non-reuse and handle history are persistence requirements owned by Chapter 13.
+
+### 8.1.3 Social graph primitives (Friends + Blocks) (closed set)
+
+**Friends:**
+- Friends are a **bidirectional** edge between two players.
+- A friends edge is created ONLY by `friend_request_send → friend_request_accept`.
+- A friends edge is removed ONLY by `friend_remove`.
+
+**Blocks:**
+- Blocks are a **unidirectional** edge from `blocker → blocked`.
+- A block edge is created ONLY by `block_add`.
+- A block edge is removed ONLY by `block_remove`.
+
+**Block overrides everything (binding):** If there exists a block edge in either direction between two players:
+
+- The two players MUST NOT be friends:
+  - Any existing friendship edge MUST be removed immediately.
+- Any pending friend request(s) between the two players MUST be canceled immediately.
+- DMs between the two players MUST be disallowed (see 8.2.4).
+- Profile viewing between the two players MUST be denied (see 8.1.4).
+
+### 8.1.4 Profile visibility and access rules (authoritative)
+
+`profile.visibility ∈ {PUBLIC, FRIENDS_ONLY, HIDDEN}`.
+
+**Access rules (binding):**
+
+- `PUBLIC`:
+  - Any authenticated user MAY view the profile page (including staff), subject to moderation-surface rules in Chapter 12.
+- `FRIENDS_ONLY`:
+  - Viewers allowed: **self + accepted friends** only.
+  - Staff MAY view ONLY via moderation surfaces (Chapter 12), not via normal browsing.
+- `HIDDEN`:
+  - Viewers allowed: **self only**.
+  - Staff MAY view ONLY via moderation surfaces (Chapter 12), not via normal browsing.
+
+**Block override (binding):** If there exists a block edge in either direction between viewer and target, profile view MUST be denied regardless of `profile.visibility`. The UI MUST treat the profile as unavailable (generic messaging; do not reveal block state).
+
+---
+
+### 8.1.3 Handle Changes (authoritative)
+
+Players MAY change their handle via a global action.
+
+Canonical actions:
+- `handle_change_request` (global action; player-initiated)
+- `handle_change_commit` (resolution; server-authored)
+
+Validation and normalization (binding):
+- `min_len = 3`
+- `max_len = 16`
+- `allowed_charset = ASCII letters, digits, underscore only`
+  - regex: `^[A-Za-z0-9_]+$`
+- `case_sensitivity = Insensitive`
+  - normalization rule: `normalized_handle = to_lower_ascii(handle)` for uniqueness and storage
+- `reserved_words = ["admin","moderator","mod","support","system","official"]`
+- `uniqueness_scope = global`
+- Handle non-reuse is absolute across all time (authoritative invariant in Chapter 13).
+
+Cooldown (binding):
+- `cooldown_seconds = 2592000` (30 days)
+- Cooldown starts at the successful handle change commit time (self-change or admin reset).
+- The server MUST store `last_handle_change_at` and MUST reject any player-initiated handle change whose cooldown has not elapsed.
+
+Rejection semantics (binding):
+- Any rejected `handle_change_request` MUST return a Chapter 15 `reason_code`.
+- For eligibility/validation/unavailability failures, rejection MUST use `not_eligible`.
+
+Attribution (binding):
+- Historical social rows MUST remain frozen to their stored `handle_snapshot` (8.1.2). Handle changes affect only future rows and future “current handle” surfaces.
+
+Staff override (reference):
+- Admin handle reset is defined in Chapter 12 and bypasses the player cooldown check, but still updates `last_handle_change_at` and writes handle history (Chapter 13).
+
+## 8.2 Communication Systems
+
+### 8.2.1 `chat_send` (single routing envelope)
+
+All in-game messages (Global chat, Season chat, and DMs) are sent via a single logical send attempt: `chat_send`.
+
+A `chat_send` request MUST include:
+- `channel_kind ∈ {GLOBAL, SEASON, DM}`
+- `body` (string; content constraints per channel apply)
+- If `channel_kind == SEASON`: `season_id`
+- If `channel_kind == DM`: `recipient_player_id`
+
+### 8.2.2 Commit model (real-time)
+
+- `chat_send` is processed immediately on receipt (wall-clock), not tick-scheduled.
+- `chat_send` MUST NOT consume or be blocked by the “one pending non-exempt action” slot (Chapter 03).
+- Ordering guarantees (owned by Chapter 12):
+  - Per channel/thread, accepted messages MUST have:
+    - `message_id:uint64` monotonic per channel/thread, and
+    - `ordering_key = (server_received_at, message_id)`.
+
+### 8.2.3 Eligibility and gating sources (closed set)
+
+A `chat_send` attempt MAY be rejected only due to this closed set of gates:
+
+1. **Auth/session gates** (not logged in, auth invalid)
+2. **ServerMode gates** (Chapter 11; e.g., `MAINTENANCE_LOCKDOWN`, `LOCKDOWN_CONNECTIONS`)
+3. **Account enforcement/restriction flags** set by staff (Chapter 12)
+4. **Channel-specific eligibility** defined in this chapter (e.g., season chat requires participation; DMs disallowed under blocks)
+
+**Idle gating rule (binding):** Idle does NOT block chat. Idle affects only season-scoped economy actions (Chapter 11).
+
+Reason codes are a closed set owned by Chapter 15. This chapter defines WHEN a reject occurs; Chapter 15 defines the `reason_code` identifier(s).
+
+### 8.2.4 Direct Messaging (DMs)
+
+- DMs are 1:1 only (no group DMs).
+- Any logged-in account MAY DM any other logged-in account, subject to:
+  - block rules (8.1.3), and
+  - Chapter 12 enforcement/restriction flags.
+
+**Blocked / unavailable DM rule (binding):**
+- If a DM delivery is disallowed due to:
+  - block state in either direction, or
+  - a staff enforcement flag that disables DMs,
+  then `chat_send` MUST hard-reject with `reason_code = dm_unavailable`.
+- UI copy MUST be generic and MUST NOT reveal whether the sender is blocked.
+
+Retention:
+- DMs MUST be stored server-side with a retention window of 30 days.
+
+Rate limits (per sender):
+- 20 messages per minute
+- 500 characters max per message
+- 50 maximum new DM conversations per day
+
+### 8.2.5 Public Channels
+
+#### 8.2.5.1 Global chat
+
+Eligibility:
+- Read: logged-in accounts only
+- Write: logged-in accounts only, subject to Chapter 12 enforcement flags and Chapter 11 ServerMode
+
+Admin posting:
+- Admins MAY write in Global chat (Chapter 12).
+- Admin-authored messages MUST be labeled as: `"[ADMIN] " + identity_label(viewer, admin, handle_snapshot)`.
+
+Retention (player-visible):
+
+- The server MUST store exactly the last 200 Global chat message rows (player-visible retrieval buffer).
+- If a message is removed by moderation, it MUST be replaced **in-place** by a tombstone row and still counts toward the last-200 buffer.
+- Tombstones remain player-visible until evicted by the last-200 window.
+
+Retention (staff-only):
+
+- Moderation MAY retain tombstones/evidence in staff-only stores (Chapter 12/15) independent of the player-visible last-200 window.
+
+#### 8.2.5.2 Season chat
+
+Eligibility:
+- Players: season chat requires the player is currently participating in that season.
+  - Authoritative condition: `participation_enabled == true` for that season context (Chapter 03 term).
+- Non-participant players (viewing-only): no read, no write.
+- Staff exception (Chapter 12):
+  - Staff MAY view live Season chat feeds ONLY via moderation surfaces (not normal chat UI browsing).
+  - Admins MAY write in Season chat as staff (not as participants).
+
+Admin posting:
+- Admin-authored messages MUST be labeled as: `"[ADMIN] " + identity_label(viewer, admin, handle_snapshot)`.
+
+Retention (active season; player-visible):
+
+- The server MUST store exactly the last 200 Season chat message rows per season (player-visible retrieval buffer).
+- If a message is removed by moderation, it MUST be replaced **in-place** by a tombstone row and still counts toward the last-200 buffer.
+- Tombstones remain player-visible until evicted by the last-200 window.
+
+Expiration cutoff:
+- Season chat read/write is allowed through the end of the expiration tick `E` processing window.
+- Season chat MUST be disabled immediately after tick `E` completes.
+- At the end of tick `E`, the server MUST delete the entire season chat log for that season from player-visible retrieval surfaces.
+- Staff evidence/audit retention is unaffected (Chapter 12/15).
+
+---
+
+## 8.3 Absence of Group Power Structures
+
+- No guilds, clans, teams, parties, or shared inventories exist.
+- Friends lists, DMs, and chat are social-only and provide no mechanical advantage.
+
+---
+
+## 8.4 Social Visibility and Spectatorship
+
+Terminology note:
+- “Spectatorship” here means cross-season viewing with zero economic effect.
+- No in-joined-season “pause participation” view modes exist in final scope. Participation state is unaffected by what season the user is viewing.
+
+Spectators:
+- MAY view season leaderboards.
+- MUST NOT access season chat (no read, no write), except staff exceptions.
+- MAY use global chat and DMs.
+
+Season leaderboard row field constraints:
+- A season leaderboard row MUST display only: `season_rank`, `identity_label`, and `SeasonalStars_total`.
+- A season leaderboard row MUST store `handle_snapshot` captured at row creation time for frozen attribution rendering.
+- Forbidden: avatars, cosmetics, titles, flair, etc.
+
+---
+
+End of Chapter 08.
