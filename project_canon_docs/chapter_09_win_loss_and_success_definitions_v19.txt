@@ -1,3 +1,13 @@
+<!-- CANON STATUS BLOCK — added 2026-07-31 -->
+> **CANON STATUS: ASPIRATIONAL** (amended 2026-07-31)
+>
+> Nothing shipped contradicts this chapter — but nothing enforces it either. No implemented
+> surface makes its rules binding. Treat it as a **design target**, not a description of
+> current behavior.
+>
+> See the **Amendment Note** at the end of this file, and Chapter 01 §1.0 for how canon
+> now stands.
+
 ## Chapter Draft (Version 19)
 
 # CHAPTER 09 — WIN, LOSS, AND SUCCESS DEFINITIONS
@@ -250,3 +260,32 @@ This chapter’s “no failure condition” invariant refers strictly to **playe
 ---
 
 End of Chapter 09.
+
+
+---
+
+## Amendment Note — 2026-07-31
+
+*Added by the 2026-07-31 canon amendment. Status: **ASPIRATIONAL**. Divergences verified against
+`TheRealTwizzy/too-many-coins-game` @ `ca5759d`. This note records observed differences between this file and the shipped
+implementation; it is not a change request.*
+
+### Why ASPIRATIONAL rather than SUPERSEDED
+
+Nothing in the shipped game contradicts this chapter. Nothing enforces it either.
+
+This chapter binds **official language rules** — how outcomes must be framed, and the
+prohibition on failure framing for ordinary player outcomes (early Lock-In, low finish,
+idling, re-entry, participation without placing). These are copy constraints. There is no
+implemented surface that validates copy against them: no lint rule, no string catalog with
+review gates, no test asserting the absence of loss language.
+
+The rules are therefore **design targets** — correct, uncontradicted, and unenforced. The
+definitions of season-winning (podium at natural end) and year-winning (global #1 at yearly
+reset) rest on outcome machinery that is partly unbuilt: yearly reset does not run at all
+(see Chapter 07), so year-winning is currently undefinable in practice.
+
+### What would move this to IMPLEMENTED
+
+An enforcement surface — a reviewed string catalog, or tests asserting the framing rules
+against shipped player-facing copy.

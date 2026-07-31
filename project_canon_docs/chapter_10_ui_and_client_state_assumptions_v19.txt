@@ -1,3 +1,13 @@
+<!-- CANON STATUS BLOCK — added 2026-07-31 -->
+> **CANON STATUS: ASPIRATIONAL** (amended 2026-07-31)
+>
+> Nothing shipped contradicts this chapter — but nothing enforces it either. No implemented
+> surface makes its rules binding. Treat it as a **design target**, not a description of
+> current behavior.
+>
+> See the **Amendment Note** at the end of this file, and Chapter 01 §1.0 for how canon
+> now stands.
+
 ## Chapter Draft (Version 19)
 
 # Chapter 10 — UI and Client State Assumptions
@@ -211,3 +221,31 @@ Modal behavior applies equally on all mediums.
 ---
 
 End of Chapter 10.
+
+
+---
+
+## Amendment Note — 2026-07-31
+
+*Added by the 2026-07-31 canon amendment. Status: **ASPIRATIONAL**. Divergences verified against
+`TheRealTwizzy/too-many-coins-game` @ `ca5759d`. This note records observed differences between this file and the shipped
+implementation; it is not a change request.*
+
+### Why ASPIRATIONAL rather than SUPERSEDED
+
+Nothing shipped contradicts this chapter, but its central contract is only half-built.
+
+**§10.7** requires the server to expose, for every player action, both a `can_X` capability
+flag and a matching `cannot_X_reason` explaining refusal. The implementation ships six
+`can_*` flags. **No `cannot_*_reason` field exists anywhere in the codebase.** Clients can
+therefore tell *whether* an action is available but never *why* it is not — the explanatory
+half of the contract is absent.
+
+The rest of the chapter — global vs seasonal context separation, UI state persistence,
+mobile/desktop assumptions, and the non-authoritative-UI guarantee — is consistent with the
+implementation, though it is guaranteed by convention rather than enforced by any check.
+
+### What would move this to IMPLEMENTED
+
+`cannot_*_reason` coverage for the full action set, drawn from the reason-code catalog that
+Chapter 15 specifies and the code does not yet centralize.

@@ -1,3 +1,14 @@
+<!-- CANON STATUS BLOCK — added 2026-07-31 -->
+> **CANON STATUS: SUPERSEDED** (amended 2026-07-31)
+>
+> This chapter records **design intent**, not shipped behavior. At least one binding rule
+> here is contradicted by the running implementation. The specific divergences are
+> enumerated in the **Amendment Note** at the end of this file.
+>
+> Where this chapter and the code disagree, the code is the record of what the game **is**;
+> this chapter is the record of what it was **meant to be**. Neither reading is automatically
+> a defect report. See Chapter 01 §1.0 for how canon now stands.
+
 # Too Many Coins — Descriptive Unified Design Summary
 
 ## Source Basis
@@ -12,7 +23,7 @@ The game’s emotional center is not accumulation without consequence. It is ten
 
 ## Core Canon and Design Doctrine
 
-The entire game is governed by a few non-negotiable principles. Server authority is absolute over time, legality, ordering, balances, quotes, rankings, and outcomes. The simulation runs on a single global one-second tick cadence. Global timing uses `global_tick_index`, which is identical to authoritative server time in integer Unix seconds. Season-local timing uses `season_tick_index`, derived from the season’s fixed start time. Determinism is mandatory. Ordering, math, random draws, idempotency handling, and persistence behavior must replay identically from authoritative inputs. Immutable logs and snapshot chains exist because the game is intended to be auditable, not merely functional. If a rule is not explicitly defined in canon, it does not exist. That applies equally to mechanics, social affordances, moderation authority, persistence, and UI assumptions.
+The entire game is governed by a few non-negotiable principles. Server authority is absolute over time, legality, ordering, balances, quotes, rankings, and outcomes. The simulation runs on a single global one-second tick cadence. Global timing uses `global_tick_index`, which is identical to authoritative server time in integer Unix seconds. Season-local timing uses `season_tick_index`, derived from the season’s fixed start time. Determinism is mandatory. Ordering, math, random draws, idempotency handling, and persistence behavior must replay identically from authoritative inputs. Immutable logs and snapshot chains exist because the game is intended to be auditable, not merely functional. Canon records design intent; it does not enumerate the shipped game. Where canon is silent, no conclusion follows about whether the behavior exists (Chapter 01 §1.0). This replaces the former rule that anything undefined in canon did not exist.
 
 The doctrine also sharply limits what the game is not. Social systems must never transfer value, count as gameplay activity, or modify economy state. Staff cannot edit outcomes, economy values, timing, placements, rewards, cosmetics, or competitive history. Profile deletion exists, but account deletion does not; deletion is irreversible redaction of player-facing identity rather than erasure of authoritative history. Official system framing also refuses punitive language around ordinary outcomes. A player who Lock-Ins early, finishes with little value, idles, re-enters, or simply participates without placing is not considered a loser by system doctrine. The design wants pressure and consequence, but not shame-based rhetoric.
 
@@ -40,7 +51,7 @@ The game’s authoritative simulation advances on a global one-second tick. At e
 
 Requests that arrive after the commit cutoff for a tick do not slide into that tick opportunistically; they are buffered to the next intake boundary. Each player may have only one unresolved non-exempt state-changing action at a time, and trades occupy that pending slot for both parties involved. Accepted actions receive authoritative sequencing through `accept_seq`, lock their required economic surface inputs at acceptance, and carry explicit resolution and effect timing. Cross-scope action ordering is also fixed. If a player has both season-scoped and global actions pending at the same commit boundary, season actions resolve before global actions. This matters, for example, when a Lock-In and a cosmetic purchase both exist around the same boundary, because the Lock-In conversion to Global Stars must happen first before any cosmetic spend checks the updated balance.
 
-The allowed season action set is closed. It includes season join, purchase of Seasonal Stars, purchase from the Sigil Vault, boost purchase, trade actions, Lock-In confirmation, idle acknowledgment, and season-end acknowledgment. If an action is not in canon, it does not exist. Defensive invalidation is also tightly constrained. Accepted actions are not later canceled simply because conditions changed in a fuzzy way; invalidation causes are closed and replay-safe.
+The allowed season action set is closed. It includes season join, purchase of Seasonal Stars, purchase from the Sigil Vault, boost purchase, trade actions, Lock-In confirmation, idle acknowledgment, and season-end acknowledgment. Actions outside this set are outside canon's design intent; the shipped verb set is substantially larger (Chapter 01 §1.0, Chapter 03 Amendment Note). Defensive invalidation is also tightly constrained. Accepted actions are not later canceled simply because conditions changed in a fuzzy way; invalidation causes are closed and replay-safe.
 
 ## Sigil Drops, Sigil Vault, and Temporary Power
 
@@ -151,3 +162,43 @@ The result is a game where trust is as much a feature as any mechanic. Players a
 ## Condensed Final Definition
 
 Too Many Coins is a deterministic four-season-overlap economy competition in which players join one live season at a time, earn Coins only through UBI, convert those Coins into Seasonal Stars, decide whether to spend those Stars for temporary Sigil-based leverage or preserve them for rank, and then choose between early Lock-In for guaranteed one-to-one conversion into Global Stars or natural season end for additional bonus potential. All live competition is governed by a one-second authoritative server tick, immutable legality windows, replay-safe math, deterministic trade and RNG rules, and strict staff non-intervention. Seasonal power never persists. Cross-season persistence is limited to current-year Global Stars, cosmetics, and prestige badges. Yearly reset wipes the numeric prestige layer, leaving only history, cosmetics, and permanent badge recognition behind.
+
+
+---
+
+## Amendment Note — 2026-07-31
+
+*Added by the 2026-07-31 canon amendment. Status: **SUPERSEDED**. Divergences verified against
+`TheRealTwizzy/too-many-coins-game` @ `ca5759d`. This note records observed differences between this file and the shipped
+implementation; it is not a change request.*
+
+### Verified divergences
+
+This file carried the **canonical wording** of the closed-world rule, in two places, both
+now retired (see Chapter 01 §1.0):
+
+- *"If a rule is not explicitly defined in canon, it does not exist. That applies equally to
+  mechanics, social affordances, moderation authority, persistence, and UI assumptions."*
+  (Core Canon and Design Doctrine)
+- *"The allowed season action set is closed. ... If an action is not in canon, it does not
+  exist."* (Action processing) — the shipped verb set is roughly twice the size of the one
+  this paragraph closes over; see Chapter 03.
+
+Further divergences carried forward from the chapters this file consolidates:
+
+- **The one-second tick** is not the deployed cadence — default 60
+  (`includes/config.php:72`), deployed 5 (`docker-compose.yml:16,39`).
+- **Trades occupying the pending slot for both parties** describes a removed system
+  (`migration_20260405_sigil_theft_no_trade_launch.sql:37`).
+- **"Profile deletion exists, but account deletion does not"** — a player-initiated
+  deletion button ships. The redaction semantics this sentence describes are accurate; the
+  availability claim is not. See Chapter 14 §14.5.
+- **Staff cannot edit economy values** — `AdminService::globalEconomyReset` /
+  `playerEconomyReset`, `includes/admin.php:30,73`.
+
+### What still holds
+
+The doctrine this file states about **server authority**, **determinism**, **social systems
+never transferring value**, and the **refusal of punitive framing** for ordinary outcomes is
+accurate and uncontradicted. The economic model summary — UBI as sole faucet, sinks,
+scarcity, inflation control — matches the implementation.

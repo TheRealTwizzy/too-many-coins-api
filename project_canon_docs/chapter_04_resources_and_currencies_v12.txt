@@ -1,3 +1,14 @@
+<!-- CANON STATUS BLOCK — added 2026-07-31 -->
+> **CANON STATUS: SUPERSEDED** (amended 2026-07-31)
+>
+> This chapter records **design intent**, not shipped behavior. At least one binding rule
+> here is contradicted by the running implementation. The specific divergences are
+> enumerated in the **Amendment Note** at the end of this file.
+>
+> Where this chapter and the code disagree, the code is the record of what the game **is**;
+> this chapter is the record of what it was **meant to be**. Neither reading is automatically
+> a defect report. See Chapter 01 §1.0 for how canon now stands.
+
 ## Chapter Draft (Version 12)
 
 # Chapter 04 — Resources and Currencies
@@ -10,7 +21,7 @@ Boost mechanics and effect semantics are defined in **Chapter 03**.
 Season timing, expiration semantics, and blackout windows are defined in **Chapter 07**.  
 Authoritative per-tick phase order (including where Sigil drop evaluation occurs) is defined in **Chapter 03**. This chapter MUST NOT define tick order.
 
-If a behavior is not explicitly defined here, it does not exist.
+If a behavior is not explicitly defined here, it is outside this chapter's design intent. That is not evidence of its absence from the shipped game (Chapter 01 §1.0).
 
 ---
 
@@ -395,7 +406,7 @@ Suppressions are enforced via Chapter 03 tick flags; this chapter does not defin
     - Tier V: `5_000`
   - CDF rule: sample `u ∈ [0, 999_999]` and pick the first tier where `u < cdf_fp[tier]` (deterministic sampling contract is defined in Chapter 15).
 
-If a rule is not explicitly defined in this section, it MUST NOT exist.
+If a rule is not explicitly defined in this section, it is outside this section's design intent (Chapter 01 §1.0). Note that the drop rate and tier CDF above are superseded by the shipped values; see this chapter's Amendment Note.
 
 #### Pity rule (forced Tier I at threshold)
 
@@ -598,3 +609,34 @@ The following invariants apply to all resources:
 9. No resource may create permanent mechanical advantage across seasons.  
 
 Cosmetics are naturally capped by the finite SKU catalog size; this is a catalog-size cap, not an economic ceiling.
+
+
+---
+
+## Amendment Note — 2026-07-31
+
+*Added by the 2026-07-31 canon amendment. Status: **SUPERSEDED**. Divergences verified against
+`TheRealTwizzy/too-many-coins-game` @ `ca5759d`. This note records observed differences between this file and the shipped
+implementation; it is not a change request.*
+
+### Verified divergences
+
+| Canon | Shipped |
+|---|---|
+| §4.1.1 — integers only, *"no hidden decimal storage"* | Fractional storage is explicit: `global_stars_fractional_fp` and `coins_fractional_fp`, `schema.sql:19,167`. |
+| §4.5.2 — closed set of **five** sigil tiers | `SIGIL_MAX_TIER = 6` — `includes/config.php:306`. |
+| §4.5.4.4 — drop rate **1-in-50,000** with the tier CDF at lines 388-396 | `SIGIL_DROP_RATE = 8` — `includes/config.php:235`. One in eight, ~12.5% combined base rate, scaling to 1-in-16 at full sigil power. Four orders of magnitude apart. |
+| §4.5.3 — closed set of **two** acquisition paths | Three. Starter grant of 5×Tier-I on first join — `STARTER_GRANT_COUNT`, `includes/config.php:376`. |
+| §4.3.5 — exit conversion always **1:1** | Early Lock-In grants 65% — `includes/actions.php:678`. |
+| §4.5.7 — sigils **destroyed** on exit | Early Lock-In *refunds* sigil value into the conversion rather than destroying it. |
+| Vault purchase as a first-class resource path | The vault is inert — `includes/economy.php:1061-1064`. |
+
+- **The section-scoped closed-world clause has been retired** (formerly at §4.5.4.4:
+  *"If a rule is not explicitly defined in this section, it MUST NOT exist"*), along with
+  the chapter-level clause in the preamble. See Chapter 01 §1.0.
+
+### What still holds
+
+Resource class definitions and their lifecycle boundaries; Coins destroyed on exit; sigils
+non-persistent across seasonal boundaries; Seasonal Stars as a spendable competitive
+resource whose spend immediately reduces leaderboard standing.

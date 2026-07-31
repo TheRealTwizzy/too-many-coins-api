@@ -1,3 +1,14 @@
+<!-- CANON STATUS BLOCK — added 2026-07-31 -->
+> **CANON STATUS: SUPERSEDED** (amended 2026-07-31)
+>
+> This chapter records **design intent**, not shipped behavior. At least one binding rule
+> here is contradicted by the running implementation. The specific divergences are
+> enumerated in the **Amendment Note** at the end of this file.
+>
+> Where this chapter and the code disagree, the code is the record of what the game **is**;
+> this chapter is the record of what it was **meant to be**. Neither reading is automatically
+> a defect report. See Chapter 01 §1.0 for how canon now stands.
+
 ## Chapter Draft (Version 15)
 
 # CHAPTER 02 — CORE GAME LOOPS
@@ -255,3 +266,29 @@ The system MUST frame all of these outcomes as valid and non-failure (Chapter 09
 ---
 
 End of Chapter 02.
+
+
+---
+
+## Amendment Note — 2026-07-31
+
+*Added by the 2026-07-31 canon amendment. Status: **SUPERSEDED**. Divergences verified against
+`TheRealTwizzy/too-many-coins-game` @ `ca5759d`. This note records observed differences between this file and the shipped
+implementation; it is not a change request.*
+
+### Verified divergences
+
+- **§2.4 — Trade Lock Acquisition / Release Timing Semantics** specifies lock acquisition
+  order, release timing, and both-party pending-slot occupancy for a system that does not
+  exist. Trading was implemented and then removed at launch:
+  `migration_20260405_sigil_theft_no_trade_launch.sql:37` executes
+  `DROP TABLE IF EXISTS trades`. This is a **deliberate replacement**, not drift — sigil
+  theft was introduced in the same migration to take its place. Roughly half of this
+  chapter is specification for a removed feature.
+- The one-second tick assumed throughout is not the deployed cadence. See Chapter 03.
+
+### What still holds
+
+§2.1 (primary loop), §2.2 (seasonal participation), §2.3 (Lock-In decision loop), §2.5
+(risk vs reward), and §2.6 all describe the shipped game accurately. The accrue → convert
+→ spend → lock-in shape is intact.

@@ -1,3 +1,13 @@
+<!-- CANON STATUS BLOCK — added 2026-07-31 -->
+> **CANON STATUS: ASPIRATIONAL** (amended 2026-07-31)
+>
+> Nothing shipped contradicts this chapter — but nothing enforces it either. No implemented
+> surface makes its rules binding. Treat it as a **design target**, not a description of
+> current behavior.
+>
+> See the **Amendment Note** at the end of this file, and Chapter 01 §1.0 for how canon
+> now stands.
+
 ## Chapter Draft (Version 12)
 
 # 15 — Technical and Implementation References
@@ -19,7 +29,7 @@ This chapter defines the authoritative requirements for:
 
 This chapter does not define gameplay mechanics (Chapter 03), economic math (Chapter 05), lifecycle policy (Chapter 14), or moderation authority (Chapter 12).
 
-If a logging/audit/telemetry rule is not defined here, it does not exist.
+If a logging/audit/telemetry rule is not defined here, it is outside this chapter's design intent. That is not evidence of its absence from the shipped game (Chapter 01 §1.0).
 
 ---
 
@@ -649,3 +659,40 @@ Deprecated drafts are treated as **ignored / non-existent** for all design and i
 - Other chapters MUST reference but MUST NOT redefine these catalogs/primitives.
 
 End of Chapter 15.
+
+
+---
+
+## Amendment Note — 2026-07-31
+
+*Added by the 2026-07-31 canon amendment. Status: **ASPIRATIONAL**. Divergences verified against
+`TheRealTwizzy/too-many-coins-game` @ `ca5759d`. This note records observed differences between this file and the shipped
+implementation; it is not a change request.*
+
+### Why ASPIRATIONAL rather than SUPERSEDED
+
+The chapter is not contradicted so much as unbuilt. Its major specifications have no
+implementation to diverge from:
+
+- **Snapshot hash chain** — the immutable chained-snapshot contract that makes replay
+  auditable. Not built.
+- **Event taxonomy** — the structured event catalog. Not built.
+- **Deterministic RNG primitives** (hash / encoding / PRNG / sampling contracts) — the
+  formal contract is absent. The code does draw deterministically, but not through the
+  primitives specified here.
+- **Reason-code catalog.** Canon defines a closed catalog. The implementation emits roughly
+  nineteen reason codes declared ad hoc at their call sites, with no central registry and
+  no closure guarantee. This is the one item closest to a true divergence — the catalog is
+  not closed in practice.
+- The closed-world clause in the preamble has been retired. See Chapter 01 §1.0.
+
+### What still holds
+
+The **audit log ships**, including the secret-redaction rule this chapter specifies
+(`includes/audit.php:20`). Back-end authority assumptions hold throughout: the server is
+authoritative over time, legality, ordering, balances, and outcomes, exactly as required.
+
+### What would move this to IMPLEMENTED
+
+A central reason-code registry, and the snapshot hash chain — the two items other chapters
+most depend on.
