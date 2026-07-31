@@ -536,7 +536,7 @@ Every moderation action MUST link to a case.
 ### 12.4.1 Core non-intervention doctrine
 
 > **AMENDED 2026-07-31 — the economy boundary is not enforced.** `AdminService::globalEconomyReset()`
-> (`includes/admin.php:30`) and `AdminService::playerEconomyReset()` (`includes/admin.php:73`)
+> (`includes/admin.php:30`) and `AdminService::playerEconomyReset()` (`includes/admin.php:74`)
 > both alter player economy state; the per-player variant is the selective intervention
 > the first bullet below forbids. The doctrine stated here is a policy commitment, not a
 > technical guarantee. See this chapter's Amendment Note.
@@ -634,7 +634,7 @@ amendment markers have been placed at §12.1.1 and §12.4.1.
 
 | Canon | Shipped |
 |---|---|
-| Preamble hard constraint 1: staff *"MUST NOT have any control over the economy"*; §12.4.1: staff *"MUST NOT alter player economy state"*; §12.4.2 forbids adjusting balances | `AdminService::globalEconomyReset()` (`includes/admin.php:30`) and `AdminService::playerEconomyReset()` (`includes/admin.php:73`). The per-player variant is exactly the "selective, per-player edit" §12.4.1 names. |
+| Preamble hard constraint 1: staff *"MUST NOT have any control over the economy"*; §12.4.1: staff *"MUST NOT alter player economy state"*; §12.4.2 forbids adjusting balances | `AdminService::globalEconomyReset()` (`includes/admin.php:30`) and `AdminService::playerEconomyReset()` (`includes/admin.php:74`). The per-player variant is exactly the "selective, per-player edit" §12.4.1 names. |
 | §12.1.1: role is *"single and immutable"*, *"MUST NOT be changed in-app"* | `admin_role_update` — `includes/admin.php:11`. Roles are mutable in-app by admins. |
 | §12.3 (Reporting Systems), ~90 lines | Nothing. No `report_message` or `report_user` action, no cases, no evidence store, no moderation queue, no 2FA. |
 | §12.5 required panels | Moderation Queue, Evidence Viewer, and Audit Log surfaces are absent. |

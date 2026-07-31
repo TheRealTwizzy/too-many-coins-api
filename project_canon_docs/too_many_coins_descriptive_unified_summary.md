@@ -194,7 +194,7 @@ Further divergences carried forward from the chapters this file consolidates:
   deletion button ships. The redaction semantics this sentence describes are accurate; the
   availability claim is not. See Chapter 14 §14.5.
 - **Staff cannot edit economy values** — `AdminService::globalEconomyReset` /
-  `playerEconomyReset`, `includes/admin.php:30,73`.
+  `playerEconomyReset`, `includes/admin.php:30,74`.
 
 ### What still holds
 
