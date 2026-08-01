@@ -814,6 +814,18 @@ implementation; it is not a change request.*
 
 ### What still holds
 
-Substantially the chapter's core. UBI as the only mint; the sink catalog; scarcity
-enforcement; inflation controls; the hoarding sink; and StarPrice behavior are all
-implemented as specified.
+Substantially the chapter's core: UBI as the only mint, inflation controls, the hoarding
+sink, and StarPrice behavior are all implemented as specified.
+
+Two entries need narrowing rather than blanket endorsement, because both are defined partly
+over systems recorded above as removed or inert:
+
+- **§5.3's sink catalog** lists four sinks. Two ship — Coins burned on Seasonal Star
+  purchases, and Sigils burned on Boost purchases. Two do not: *"Coins burned as trade
+  fees"* names a removed system, and *"Seasonal Stars burned on Sigil vault purchases"*
+  names the inert vault. The sink *accounting model* — the sink/reset distinction and the
+  rule that resets are destruction but not sinks — holds as specified.
+- **§5.12's scarcity enforcement** is defined entirely through the seasonal Sigil Vault's
+  fixed, globally shared, non-replenished inventory. That vault is inert, so the mechanism
+  this section specifies does not currently enforce anything. Scarcity in the shipped game
+  comes from the drop rate and the sinks that do exist.

@@ -625,7 +625,7 @@ implementation; it is not a change request.*
 |---|---|
 | §4.1.1 — integers only, *"no hidden decimal storage"* | Fractional storage is explicit: `global_stars_fractional_fp` and `coins_fractional_fp`, `schema.sql:19,167`. |
 | §4.5.2 — closed set of **five** sigil tiers | `SIGIL_MAX_TIER = 6` — `includes/config.php:306`. |
-| §4.5.4.4 — drop rate **1-in-50,000** with the tier CDF at lines 388-396 | `SIGIL_DROP_RATE = 8` — `includes/config.php:235`. One in eight, ~12.5% combined base rate, scaling to 1-in-16 at full sigil power. Four orders of magnitude apart. |
+| §4.5.4.4 — drop rate **1-in-50,000** with the tier CDF that section defines | `SIGIL_DROP_RATE = 8` — `includes/config.php:235`. One in eight, ~12.5% combined base rate, scaling to 1-in-16 at full sigil power. Four orders of magnitude apart. |
 | §4.5.3 — closed set of **two** acquisition paths | Three. Starter grant of 5×Tier-I on first join — `STARTER_GRANT_COUNT`, `includes/config.php:376`. |
 | §4.3.5 — exit conversion always **1:1** | Early Lock-In grants 65% — `includes/actions.php:678`. |
 | §4.5.7 — sigils **destroyed** on exit | Early Lock-In *refunds* sigil value into the conversion rather than destroying it. |
