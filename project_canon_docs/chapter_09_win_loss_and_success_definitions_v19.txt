@@ -274,11 +274,27 @@ implementation; it is not a change request.*
 
 Nothing in the shipped game contradicts this chapter. Nothing enforces it either.
 
-This chapter binds **official language rules** — how outcomes must be framed, and the
-prohibition on failure framing for ordinary player outcomes (early Lock-In, low finish,
-idling, re-entry, participation without placing). These are copy constraints. There is no
-implemented surface that validates copy against them: no lint rule, no string catalog with
-review gates, no test asserting the absence of loss language.
+Most of this chapter binds **official language rules** — how outcomes must be framed, and
+the prohibition on failure framing for ordinary player outcomes (early Lock-In, low finish,
+idling, re-entry, participation without placing). Those are copy constraints, and there is
+no implemented surface that validates copy against them: no lint rule, no string catalog
+with review gates, no test asserting the absence of loss language.
+
+**It is not only copy, though.** Two sections bind server/client *interface* contracts that
+no copy check could enforce:
+
+- **§9.1.3** requires an explicit authoritative leader identifier when the UI renders a
+  partial leaderboard slice that does not contain the snapshot's rank #1 — and forbids
+  showing a "current leader" label at all when no such identifier is provided.
+- **§9.4.2.4.1** requires the header participation chip to be derived from
+  `GlobalParticipationStatus` (the canonical derived field named in Chapter 15 §15.11.5)
+  under a three-branch rule, with `ViewedSeasonParticipationStatus` kept semantically
+  distinct.
+
+Both are **absent rather than contradicted**: no `GlobalParticipationStatus` field and no
+leader identifier appear anywhere in the implementation. That is why the chapter is still
+ASPIRATIONAL — nothing shipped disagrees with it — but it also means the unbuilt surface
+here is wider than copy tooling.
 
 The rules are therefore **design targets** — correct, uncontradicted, and unenforced. The
 definitions of season-winning (podium at natural end) and year-winning (global #1 at yearly
@@ -287,5 +303,14 @@ reset) rest on outcome machinery that is partly unbuilt: yearly reset does not r
 
 ### What would move this to IMPLEMENTED
 
-An enforcement surface — a reviewed string catalog, or tests asserting the framing rules
-against shipped player-facing copy.
+Both halves, not just the first:
+
+1. **Copy enforcement** — a reviewed string catalog, or tests asserting the framing rules
+   against shipped player-facing copy.
+2. **The interface contracts** — `GlobalParticipationStatus` exposed as a real derived
+   field with the §9.4.2.4.1 derivation covered by tests, and an authoritative leader
+   identifier on leaderboard payloads with the §9.1.3 suppression rule enforced when it is
+   absent.
+
+Stating only the first would let this chapter be marked IMPLEMENTED on the strength of a
+lint rule while two binding interface rules remained unbuilt and unchecked.

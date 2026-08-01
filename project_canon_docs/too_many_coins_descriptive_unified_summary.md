@@ -225,6 +225,16 @@ Further divergences carried forward from the chapters this file consolidates:
   primitives Chapter 15 §15.3.1 mandates, and nothing references that section.
 - **"State snapshots are immutable, hash-chained, and captured at each tick commit."** The
   snapshot hash chain is not built. See Chapter 15.
+- **"Event families are closed and include lifecycle or configuration events, season events,
+  player actions, trades, economy events […]"** The structured event taxonomy is unbuilt
+  (Chapter 15), so there is no closed family set to speak of — and the list names *trades*,
+  a removed system.
+- **The closed reason-code catalog.** The implementation emits roughly nineteen reason codes
+  declared ad hoc at their call sites, with no central registry and no closure guarantee
+  (Chapter 15). The mismatch is concrete, not just structural: canon's catalog defines
+  `dm_unavailable` and Chapter 08 §8.2.4 requires `chat_send` to reject with exactly that
+  code, while the shipped path returns **`dm_disabled`** (`api/index.php:2243-2254`). A
+  closed catalog whose own entries the code does not use is not closed.
 - **"Domain-specific logging is mandatory for trades, Sigil drop awards, and operational
   suppression toggles."** Trades no longer exist, and the economy ledger has a single write
   site covering sigil changes only (`includes/actions.php:238`) — Coin, Star and boost
