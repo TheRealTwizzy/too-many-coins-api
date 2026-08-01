@@ -69,7 +69,7 @@ A label applies to the file as a whole and is not a verdict on all of its conten
 each SUPERSEDED chapter still matches the implementation; the **Amendment Note** at the end
 of each file states specifically what does not, and — equally binding — what still holds.
 
-Chapters 09, 10, and 15 are ASPIRATIONAL. All other files are SUPERSEDED.
+Chapters 09 and 15 are ASPIRATIONAL. All other files are SUPERSEDED.
 
 ### Scope of this amendment
 
@@ -82,6 +82,14 @@ line citations in the Amendment Notes refer to that repository at that commit. T
 `too-many-coins-live` repository is a March 2026 snapshot and was **not** used as the basis
 for any citation; where the two repositories disagree, `too-many-coins-game` is the live
 system.
+
+**Citation convention.** `file:line` citations point *outward*, into the implementation
+repository at the pinned commit, where the line is fixed by that pin. Citations *within* this
+corpus name a section, never a line number. Adding this status section to Chapter 01 shifted
+every line in it by 81, and the header blocks shifted every other file by their own height —
+which silently invalidated the same-file line numbers a first draft of these notes used.
+Amendment Notes are part of the corpus they describe, so any line number they quote about
+themselves rots the moment the corpus is edited again. Quote the section and the claim.
 
 ---
 
@@ -242,13 +250,13 @@ implementation; it is not a change request.*
 
 | §1.1 claim | Shipped behavior |
 |---|---|
-| Seasons last **28 days**, new season every **7** (line 11) | 14 days / 7 days — `includes/config.php:64-65`. Two seasons overlap, not four. |
-| Seasonal Sigil vault as a core pillar (line 43) | Inert. `Economy::calculateVaultCost()` was deleted; the comment left in its place (`includes/economy.php:1061-1064`) states that nothing inserts stock and nothing sells from it. The `season_vault` / `player_season_vault` tables and ~10 re-pricing migrations are all dead weight. |
-| Exit conversion is **1:1 integer** (lines 50-51) | Natural season end is 1:1 (`includes/economy.php:323`). **Early Lock-In grants 65%** — `applyGlobalStarsGrantWithCarry($total, $carry, 65, 100)` at `includes/actions.php:678` and `includes/economy.php:1048`. |
-| Sigils acquired through **two paths** (lines 66-68) | Three. A starter grant of 5×Tier-I fires on first join — `STARTER_GRANT_COUNT`, `includes/config.php:376`. |
-| Sigils may be traded (line 70) | No trading. Removed at launch — `migration_20260405_sigil_theft_no_trade_launch.sql:37`. |
-| Yearly cycle of twelve expirations; Global Stars erased; top-10 permanent badges (line 86) | Unimplemented. `yearly_state` exists (`schema.sql:399`) and is seeded once (`api/index.php:386`), but the only code touching it rescales tick units (`includes/game_time.php:329,592`). No rollover, no reset, no badges. |
-| Cosmetic prestige purchased with Global Stars (lines 93-95) | Ships, but at different prices than Chapter 06 fixes. See that chapter's Amendment Note. |
+| Seasons last **28 days**, new season every **7** | 14 days / 7 days — `includes/config.php:64-65`. Two seasons overlap, not four. |
+| Seasonal Sigil vault as a core pillar | Inert. `Economy::calculateVaultCost()` was deleted; the comment left in its place (`includes/economy.php:1061-1064`) states that nothing inserts stock and nothing sells from it. The `season_vault` / `player_season_vault` tables and ~10 re-pricing migrations are all dead weight. |
+| Exit conversion is **1:1 integer** | Natural season end is 1:1 (`includes/economy.php:323`). **Early Lock-In grants 65%** — `applyGlobalStarsGrantWithCarry($total, $carry, 65, 100)` at `includes/actions.php:678` and `includes/economy.php:1048`. |
+| Sigils acquired through **two paths** | Three. A starter grant of 5×Tier-I fires on first join — `STARTER_GRANT_COUNT`, `includes/config.php:376`. |
+| Sigils may be traded | No trading. Removed at launch — `migration_20260405_sigil_theft_no_trade_launch.sql:37`. |
+| Yearly cycle of twelve expirations; Global Stars erased; top-10 permanent badges | Unimplemented. `yearly_state` exists (`schema.sql:399`) and is seeded once (`api/index.php:386`), but the only code touching it rescales tick units (`includes/game_time.php:329,592`). No rollover, no reset, no badges. |
+| Cosmetic prestige purchased with Global Stars | Ships, but at different prices than Chapter 06 fixes. See that chapter's Amendment Note. |
 
 ### What still holds
 

@@ -497,7 +497,8 @@ implementation; it is not a change request.*
 
 ### Verified divergences
 
-- **§13.1.2.2 — *"Account deletion does not exist"*** (and its restatement at line 83). A
+- **§13.1.2.2 — *"Account deletion does not exist"*** (and its restatement in the bullet
+  directly beneath that heading). A
   player-initiated deletion flow ships: `account_delete_request` /
   `account_delete_confirm`. What it performs is redaction-only soft delete
   (`Account::softDelete()`, `includes/account.php:344`) — so the chapter is right about the

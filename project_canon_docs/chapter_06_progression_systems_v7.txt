@@ -536,8 +536,10 @@ implementation; it is not a change request.*
 
 - **§6.2.5.1 — cosmetic price tiers.** Canon fixes `[10, 25, 60, 150, 400]` and states that
   *"no other Global Star prices are valid unless this chapter is amended."* Shipped:
-  `COSMETIC_PRICE_TIERS = [25, 80, 250, 800, 2400]` — `includes/config.php:594`. This
-  Amendment Note is that amendment; the shipped values are now the record.
+  `COSMETIC_PRICE_TIERS = [25, 80, 250, 800, 2400]` — `includes/config.php:594`. This note
+  is **not** that amendment and does not make the shipped values canonical: the canon prices
+  remain the record of intent, the shipped prices the record of current behavior. Recording
+  the gap is all that happens here (Chapter 01 §1.0).
 - **§6.1.4 / §6.1.5 — no unlock thresholds, no gated mechanics, all tiers visible
   immediately.** A feature-unlock system ships: the `player_feature_unlocks` table plus
   `includes/progression.php`, which gates sigil tier visibility on first acquisition. This

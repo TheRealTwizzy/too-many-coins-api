@@ -214,6 +214,6 @@ implementation; it is not a change request.*
 
 ### What still holds
 
-The constitutional invariants in §14.6 are not contradicted by anything shipped. The
+The constitutional invariants in §14.4 are not contradicted by anything shipped. The
 authority split declared in the preamble (Ch14 lifecycle policy, Ch11 ServerMode, Ch15
 catalogs, Ch12-13 moderation and persistence) is the split the code follows.

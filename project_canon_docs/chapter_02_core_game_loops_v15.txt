@@ -289,6 +289,7 @@ implementation; it is not a change request.*
 
 ### What still holds
 
-§2.1 (primary loop), §2.2 (seasonal participation), §2.3 (Lock-In decision loop), §2.5
-(risk vs reward), and §2.6 all describe the shipped game accurately. The accrue → convert
-→ spend → lock-in shape is intact.
+§2.1 (primary loop), §2.2 (seasonal participation), §2.3 (activity/connectivity sub-loop),
+§2.5 (lock-in decision loop), and §2.6 (risk vs reward) all describe the shipped game
+accurately. The accrue → convert → spend → lock-in shape is intact. §2.4 is excluded
+deliberately: it specifies trade lock semantics for a feature removed at launch.

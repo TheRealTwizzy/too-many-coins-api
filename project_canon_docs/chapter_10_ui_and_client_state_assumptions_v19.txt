@@ -1,12 +1,13 @@
 <!-- CANON STATUS BLOCK — added 2026-07-31 -->
-> **CANON STATUS: ASPIRATIONAL** (amended 2026-07-31)
+> **CANON STATUS: SUPERSEDED** (amended 2026-07-31)
 >
-> Nothing shipped contradicts this chapter — but nothing enforces it either. No implemented
-> surface makes its rules binding. Treat it as a **design target**, not a description of
-> current behavior.
+> This chapter records **design intent**, not shipped behavior. At least one binding rule
+> here is contradicted by the running implementation. The specific divergences are
+> enumerated in the **Amendment Note** at the end of this file.
 >
-> See the **Amendment Note** at the end of this file, and Chapter 01 §1.0 for how canon
-> now stands.
+> Where this chapter and the code disagree, the code is the record of what the game **is**;
+> this chapter is the record of what it was **meant to be**. Neither reading is automatically
+> a defect report. See Chapter 01 §1.0 for how canon now stands.
 
 ## Chapter Draft (Version 19)
 
@@ -227,25 +228,31 @@ End of Chapter 10.
 
 ## Amendment Note — 2026-07-31
 
-*Added by the 2026-07-31 canon amendment. Status: **ASPIRATIONAL**. Divergences verified against
+*Added by the 2026-07-31 canon amendment. Status: **SUPERSEDED**. Divergences verified against
 `TheRealTwizzy/too-many-coins-game` @ `ca5759d`. This note records observed differences between this file and the shipped
 implementation; it is not a change request.*
 
-### Why ASPIRATIONAL rather than SUPERSEDED
+### Verified divergences
 
-Nothing shipped contradicts this chapter, but its central contract is only half-built.
+- **§10.7 — the `cannot_X_reason` requirement.** The section requires every economy
+  actionable control to be backed by both a `can_X` capability flag and a matching
+  `cannot_X_reason`, the latter **"present iff `can_X == false`"**. The implementation ships
+  six `can_*` flags. **No `cannot_*_reason` field exists anywhere in the codebase.** Those
+  six flags do go false, and when they do the field canon requires to be present is absent —
+  so the shipped responses contradict the rule rather than merely failing to enforce it.
+  Clients can tell *whether* an action is available but never *why* it is not.
 
-**§10.7** requires the server to expose, for every player action, both a `can_X` capability
-flag and a matching `cannot_X_reason` explaining refusal. The implementation ships six
-`can_*` flags. **No `cannot_*_reason` field exists anywhere in the codebase.** Clients can
-therefore tell *whether* an action is available but never *why* it is not — the explanatory
-half of the contract is absent.
+This chapter was first labelled ASPIRATIONAL on the reading that a half-built contract is an
+unenforced one. That was wrong: "present iff `can_X == false`" is a binding server contract,
+and shipping the false case without the field breaks it. The label was corrected to
+SUPERSEDED on 2026-08-01.
+
+### What still holds
 
 The rest of the chapter — global vs seasonal context separation, UI state persistence,
 mobile/desktop assumptions, and the non-authoritative-UI guarantee — is consistent with the
 implementation, though it is guaranteed by convention rather than enforced by any check.
 
-### What would move this to IMPLEMENTED
-
-`cannot_*_reason` coverage for the full action set, drawn from the reason-code catalog that
-Chapter 15 specifies and the code does not yet centralize.
+Closing the §10.7 divergence would take `cannot_*_reason` coverage for the full action set,
+drawn from the reason-code catalog that Chapter 15 specifies and the code does not yet
+centralize.
