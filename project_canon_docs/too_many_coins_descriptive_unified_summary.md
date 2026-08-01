@@ -203,6 +203,11 @@ Condensed Final Definition — diverge as follows:
 
 Further divergences carried forward from the chapters this file consolidates:
 
+- **The Sigil drop rate**, stated in the Sigil Drops section as *"one in fifty thousand"*,
+  is `SIGIL_DROP_RATE = 8` — `includes/config.php:235`. One in eight, roughly a 12.5%
+  combined base rate, scaling to 1-in-16 at full sigil power. Four orders of magnitude
+  apart, and the section spells the figure out in words rather than digits, which is how it
+  escaped an earlier numeric sweep.
 - **The one-second tick** is not the deployed cadence — default 60
   (`includes/config.php:72`), deployed 5 (`docker-compose.yml:16,39`).
 - **Trades occupying the pending slot for both parties** describes a removed system
@@ -217,5 +222,12 @@ Further divergences carried forward from the chapters this file consolidates:
 
 The doctrine this file states about **server authority**, **determinism**, **social systems
 never transferring value**, and the **refusal of punitive framing** for ordinary outcomes is
-accurate and uncontradicted. The economic model summary — UBI as sole faucet, sinks,
-scarcity, inflation control — matches the implementation.
+accurate and uncontradicted. Of the economic model summary, UBI as the sole faucet and the
+inflation controls match the implementation.
+
+**Sinks and scarcity need the same narrowing Chapter 05's note applies.** This file defines
+sinks to include trade fees and vault purchases, and defines scarcity through the Sigil
+Vault's finite, globally shared, non-replenishing inventory. Trading is removed and the
+vault is inert, so two of the sinks and the whole of the stated scarcity mechanism describe
+machinery that is not running. Scarcity in the shipped game comes from the drop rate and the
+sinks that do exist — Coins burned on Seasonal Star purchases, Sigils burned on Boosts.

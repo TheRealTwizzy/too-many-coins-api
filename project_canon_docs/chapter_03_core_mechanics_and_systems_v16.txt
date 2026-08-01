@@ -1106,11 +1106,20 @@ implementation; it is not a change request.*
 
 ### Verified divergences
 
-- **§3.4.1's closed action set is not closed.** The chapter names ten season verbs. The
+- **§3.4.1's closed action set is not closed.** The chapter names eleven season verbs:
+  `season_join`, `purchase_seasonal_stars`, `purchase_sigils_vault`, `purchase_boost`, the
+  four trade actions, `lock_in_confirm`, `idle_modal_ack`, and `season_end_ack`. The
   implementation ships roughly twenty beyond them, including `combine_sigil`,
   `distil_sigils`, `transmute_sigils`, `sigil_theft_attempt`, `freeze_player_ubi`,
   `self_melt_freeze`, `ward_activate`, `sight_reveal`, `market_prime`, and `affinity_pick`.
-  Two of the ten canon verbs (the trade actions) no longer exist.
+  Four of the eleven canon verbs — `trade_initiate`, `trade_accept`, `trade_decline`,
+  `trade_cancel` — no longer exist; the migration removed the trading system outright.
+- **§3.7.4 — Lock-In conversion is specified 1:1.** The section requires the server to apply
+  `GlobalStars += lock_in_snapshot_seasonal_stars` **(1:1 integer)** at the moment
+  `lock_in_confirm` resolves. Early Lock-In grants **65%** — `includes/actions.php:678`,
+  `includes/economy.php:1048`. Natural season end remains 1:1 (`includes/economy.php:323`).
+  This is a binding resolution rule, not a summary: §3.7.4 is titled *Resolution Effects and
+  State Writes (Authoritative)*.
 - **The one-second tick is not what runs.** `TICK_REAL_SECONDS` defaults to **60**
   (`includes/config.php:72`); the deployed value is **5** (`docker-compose.yml:16,39`,
   `DEPLOY_DOKPLOY.md:151`). Canon's 1s is reachable by setting `TMC_TICK_REAL_SECONDS=1`,

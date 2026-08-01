@@ -40,7 +40,7 @@ That rule is withdrawn. It was:
 
 1. **Factually wrong.** Systems exist in the shipped game that appear nowhere in these
    chapters — a feature-unlock progression layer, sigil theft, a starter sigil grant, and
-   roughly twenty season verbs beyond the ten Chapter 03 names.
+   roughly twenty season verbs beyond the eleven Chapter 03 names.
 2. **An inversion of the burden of evidence.** It licensed the inference "canon is silent,
    therefore the code does not do this." A design document is not entitled to that
    inference about a codebase it does not read.
