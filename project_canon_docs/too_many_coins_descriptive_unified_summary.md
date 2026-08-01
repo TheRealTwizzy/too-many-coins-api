@@ -229,6 +229,40 @@ Further divergences carried forward from the chapters this file consolidates:
   suppression toggles."** Trades no longer exist, and the economy ledger has a single write
   site covering sigil changes only (`includes/actions.php:238`) — Coin, Star and boost
   mutations are unlogged. See Chapter 05 §5.16.2.
+- **"A player may acquire [Sigils] either through deterministic probabilistic drops […] or
+  by spending Seasonal Stars in the shared seasonal Sigil Vault."** Three paths ship, not
+  two: a starter grant of 5×Tier-I fires on first join — `STARTER_GRANT_COUNT`,
+  `includes/config.php:376`. See Chapter 04 §4.5.3.
+- **"[Sigils] are not progression gates."** A feature-unlock system ships —
+  `player_feature_unlocks` plus `includes/progression.php` — gating sigil tier visibility on
+  first acquisition. See Chapter 06 §6.1.4/§6.1.5.
+- **Sigils destroyed on exit.** Early Lock-In *refunds* sigil value into the conversion
+  rather than destroying it. See Chapter 04 §4.5.7.
+- **"Handle changes are player-initiated global actions subject to strict validation."** No
+  `handle_change_request` action exists and the `handle_history` table is written by
+  nothing. See Chapter 08 §8.1.3.
+- **Chat "channel kinds for Global, Season, and DM."** DMs are **deliberately disabled** —
+  `api/index.php:2243-2254` returns `reason_code: dm_disabled` with a written rationale. A
+  design decision never written back into canon. See Chapter 08 §8.2.4.
+- **"Only Global Stars […] cosmetics, seasonal top-three badges, and yearly top-ten badges
+  persist."** Seasonal placement badges are awarded and do persist
+  (`includes/tick_engine.php:951-955`), but `yearly_top10` exists only as a schema enum
+  value (`schema.sql:287`) with nothing awarding it — there is no yearly reset to award it
+  at.
+- **"The entire service is always in exactly one phase: Alpha, Beta, or Release. Phase
+  flips, feature-gate flips, and ServerMode changes take effect only at the next tick
+  boundary."** `lifecycle_phase` is written once and the API returns a hardcoded `'Release'`
+  string (`api/index.php:1407`); no transition contract executes, so the Alpha/Beta
+  workflow and its phase gates are unreachable. See Chapter 14.
+- **ServerMode as a live five-value set with transition behavior.** `staff_server_mode`
+  validates against `NORMAL` and `MAINTENANCE_LOCKDOWN` only — `api/index.php:1002`. The
+  other three modes are unreachable and every transition rule involving them is inert. See
+  Chapter 11 §11.2.3.
+- **"Admins can manage cases, moderation actions […]"** and the reporting, evidence-review
+  and 2FA workflows this file describes. None of it exists: no `report_message` or
+  `report_user` action, no cases, no evidence store, no moderation queue, no 2FA, and the
+  Moderation Queue / Evidence Viewer / Audit Log panels are absent. See Chapter 12 §12.3 and
+  §12.5.
 
 ### What still holds
 
