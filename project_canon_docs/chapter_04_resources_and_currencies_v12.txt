@@ -406,7 +406,7 @@ Suppressions are enforced via Chapter 03 tick flags; this chapter does not defin
     - Tier V: `5_000`
   - CDF rule: sample `u ∈ [0, 999_999]` and pick the first tier where `u < cdf_fp[tier]` (deterministic sampling contract is defined in Chapter 15).
 
-If a rule is not explicitly defined in this section, it is outside this section's design intent (Chapter 01 §1.0). Note that the drop rate and tier CDF above are superseded by the shipped values; see this chapter's Amendment Note.
+If a rule is not explicitly defined in this section, it is outside this section's design intent (Chapter 01 §1.0). Note that the drop rate and tier CDF above **diverge** from the shipped values: the figures in this section remain the record of intent, and the shipped ones are the record of current behavior. Neither supersedes the other, and this amendment does not re-set the rate (Chapter 01 §1.0). See this chapter's Amendment Note for the divergence.
 
 #### Pity rule (forced Tier I at threshold)
 
