@@ -217,6 +217,18 @@ Further divergences carried forward from the chapters this file consolidates:
   availability claim is not. See Chapter 14 §14.5.
 - **Staff cannot edit economy values** — `AdminService::globalEconomyReset` /
   `playerEconomyReset`, `includes/admin.php:30,74`.
+- **"The server must provide the relevant `can_X` and `cannot_X_reason` flags"** — six
+  `can_*` flags ship and **no `cannot_*_reason` field exists anywhere in the codebase**. See
+  Chapter 10 §10.7.
+- **"Sigil drops use a domain-separated SHA-256 based RNG stream with fixed byte encoding
+  and integer sampling contracts."** Drops do draw deterministically, but not through the
+  primitives Chapter 15 §15.3.1 mandates, and nothing references that section.
+- **"State snapshots are immutable, hash-chained, and captured at each tick commit."** The
+  snapshot hash chain is not built. See Chapter 15.
+- **"Domain-specific logging is mandatory for trades, Sigil drop awards, and operational
+  suppression toggles."** Trades no longer exist, and the economy ledger has a single write
+  site covering sigil changes only (`includes/actions.php:238`) — Coin, Star and boost
+  mutations are unlogged. See Chapter 05 §5.16.2.
 
 ### What still holds
 
