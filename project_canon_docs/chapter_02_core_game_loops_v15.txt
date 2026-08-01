@@ -289,7 +289,17 @@ implementation; it is not a change request.*
 
 ### What still holds
 
-§2.1 (primary loop), §2.2 (seasonal participation), §2.3 (activity/connectivity sub-loop),
-§2.5 (lock-in decision loop), and §2.6 (risk vs reward) all describe the shipped game
-accurately. The accrue → convert → spend → lock-in shape is intact. §2.4 is excluded
-deliberately: it specifies trade lock semantics for a feature removed at launch.
+The **loop shape** survives: accrue → convert → spend → compete → exit → convert. §2.3
+(activity/connectivity sub-loop), §2.5 (lock-in decision loop), and §2.6 (risk vs reward)
+describe the shipped game accurately in full.
+
+§2.1 and §2.2 hold *except* at two steps, both of which name systems this amendment records
+as absent elsewhere:
+
+- **§2.1 step 9, "Yearly reset occurs."** No yearly reset runs. The loop as shipped does not
+  close; Global Stars accumulate indefinitely. See Chapter 07.
+- **§2.2 step 2, "Make economic decisions (Stars, Sigils, Boosts, Trades)."** Trades were
+  removed at launch. The other three decision types ship.
+
+§2.4 is excluded from this inventory entirely: it specifies trade lock semantics for that
+same removed feature.

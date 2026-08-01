@@ -516,3 +516,7 @@ implementation; it is not a change request.*
 The persist/destroy split across seasonal boundaries is implemented as specified: Coins,
 sigils, boosts, and Seasonal Stars are destroyed at the boundary; Global Stars, cosmetics,
 and badges persist. Identity-surface redaction semantics match §13.1.2.
+
+"Badges" needs one qualification: seasonal first/second/third are awarded and do persist
+(`includes/tick_engine.php:951-955`), but `yearly_top10` exists only as a schema enum value
+(`schema.sql:287`) — nothing awards it, because no yearly reset runs.

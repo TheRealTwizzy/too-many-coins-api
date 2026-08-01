@@ -212,8 +212,20 @@ implementation; it is not a change request.*
   `api/index.php:1407`. No transition contract executes, so the phase-gating rules in
   §14.1-§14.4 are unreachable.
 
+- **§14.4 invariant 2 — *"Economy-affecting and governance-affecting operations MUST be
+  auditable and replay-safe."*** Economy mutations are not auditable: the economy ledger has
+  a single write site covering sigil changes only (`includes/actions.php:238`), so Coin,
+  Star and boost mutations go unlogged — see Chapter 05's note on §5.16.2. Nor are they
+  replay-safe in the sense §14.4 intends: the snapshot hash chain that makes replay
+  verifiable is unbuilt (Chapter 15). This is a **constitutional** rule — the chapter titles
+  §14.4 *"What Will Never Change"* — which makes it the most serious divergence in this file.
+
 ### What still holds
 
-The constitutional invariants in §14.4 are not contradicted by anything shipped. The
+The other five constitutional invariants in §14.4 are not contradicted by anything
+shipped: the single global lifecycle phase exists as a value, staff do not directly edit
+competitive outcomes, competitive acceptance is deterministic under replay, idempotency
+replay safety exists for side-effecting actions, and the season schedule is fixed. Only
+invariant 2 fails, and it is listed above. The
 authority split declared in the preamble (Ch14 lifecycle policy, Ch11 ServerMode, Ch15
 catalogs, Ch12-13 moderation and persistence) is the split the code follows.
