@@ -638,5 +638,12 @@ implementation; it is not a change request.*
 ### What still holds
 
 Resource class definitions and their lifecycle boundaries; Coins destroyed on exit; sigils
-non-persistent across seasonal boundaries; Seasonal Stars as a spendable competitive
-resource whose spend immediately reduces leaderboard standing.
+non-persistent across seasonal boundaries; Seasonal Stars as a competitive **rank**
+resource.
+
+**Their *spendable* half is currently unreachable.** Every write to `seasonal_stars` in the
+implementation either increments it on purchase (`includes/actions.php:557`) or sets it to
+zero — season join (`:77`), Lock-In (`:728`), season end (`includes/tick_engine.php:940`).
+No code path decrements it. The Sigil Vault was this resource's only sink and it is inert,
+so Seasonal Stars accumulate until they are converted or destroyed, and the clause about
+spend immediately reducing leaderboard standing describes a transaction that cannot occur.

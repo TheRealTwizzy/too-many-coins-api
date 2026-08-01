@@ -290,8 +290,21 @@ implementation; it is not a change request.*
 ### What still holds
 
 The **loop shape** survives: accrue → convert → spend → compete → exit → convert. §2.3
-(activity/connectivity sub-loop), §2.5 (lock-in decision loop), and §2.6 (risk vs reward)
-describe the shipped game accurately in full.
+(activity/connectivity sub-loop) and §2.5 (lock-in decision loop) describe the shipped game
+accurately in full.
+
+**§2.6's spend-versus-save tradeoff does not exist in the shipped game.** The section is
+built on *"Spending Seasonal Stars (Sigils/Boosts/cosmetics) […] lowers rank"*, and all
+three flows are wrong: the Star-funded Sigil Vault is inert, Boosts are bought by burning
+**Sigils** (Ch05 §5.3.1), and cosmetics are bought with **Global** Stars (Ch06 §6.2.5.1).
+
+Checked against the implementation directly: every write to `seasonal_stars` either
+increments it on purchase (`includes/actions.php:557`) or sets it to zero — at season join
+(`:77`), at Lock-In (`:728`), and at season end (`includes/tick_engine.php:940`). **There is
+no decrement anywhere.** Seasonal Stars accumulate and are destroyed; they are never spent.
+Removing the vault took the resource's only sink with it, so the sacrifice this chapter
+calls the game's central tension is currently unreachable. What survives of §2.6 is the
+Lock-In tradeoff — early conversion forfeits natural-end bonuses — which does hold.
 
 §2.1 and §2.2 hold *except* at two steps, both of which name systems this amendment records
 as absent elsewhere:

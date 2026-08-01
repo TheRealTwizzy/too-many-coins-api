@@ -220,12 +220,18 @@ implementation; it is not a change request.*
   verifiable is unbuilt (Chapter 15). This is a **constitutional** rule — the chapter titles
   §14.4 *"What Will Never Change"* — which makes it the most serious divergence in this file.
 
+- **§14.4 invariant 3 — *"Staff MUST NOT directly edit individual competitive outcomes."***
+  `AdminService::playerEconomyReset()` (`includes/admin.php:74`) is exactly that: a
+  selective, per-player economy edit that rewrites one competitor's balances, inventory and
+  boosts. Invoked mid-season it changes that player's standing directly. Chapter 12 records
+  it against the staff non-intervention doctrine; it contradicts this invariant too. A
+  second **constitutional** rule.
+
 ### What still holds
 
-The other five constitutional invariants in §14.4 are not contradicted by anything
-shipped: the single global lifecycle phase exists as a value, staff do not directly edit
-competitive outcomes, competitive acceptance is deterministic under replay, idempotency
-replay safety exists for side-effecting actions, and the season schedule is fixed. Only
-invariant 2 fails, and it is listed above. The
+The other four constitutional invariants in §14.4 are not contradicted by anything
+shipped: the single global lifecycle phase exists as a value, competitive acceptance is
+deterministic under replay, idempotency replay safety exists for side-effecting actions,
+and the season schedule is fixed. Invariants 2 and 3 fail and are listed above. The
 authority split declared in the preamble (Ch14 lifecycle policy, Ch11 ServerMode, Ch15
 catalogs, Ch12-13 moderation and persistence) is the split the code follows.
