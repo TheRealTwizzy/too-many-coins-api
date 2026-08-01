@@ -57,6 +57,11 @@ preamble and the sigil drop-rate section); the chapter preambles of Chapters 06,
 Chapter 13's persistence non-existence rule; and the Descriptive Unified Summary twice.
 Each now carries a scope-limiting statement in place of an existence claim.
 
+The repository `README.md` restated the same rule in two places — its "Closed action set"
+principle and its "Closed rule set" design principle — outside this corpus, where a reader
+entering through the README would have drawn exactly the inference being withdrawn. Both
+were amended on 2026-08-01, bringing the count to **eleven sites across eight files**.
+
 ### Per-chapter status labels
 
 Every file in this corpus carries one of two labels in a header block at its top:
@@ -69,7 +74,7 @@ A label applies to the file as a whole and is not a verdict on all of its conten
 each SUPERSEDED chapter still matches the implementation; the **Amendment Note** at the end
 of each file states specifically what does not, and — equally binding — what still holds.
 
-Chapters 09 and 15 are ASPIRATIONAL. All other files are SUPERSEDED.
+Chapter 09 is ASPIRATIONAL. All other files are SUPERSEDED.
 
 ### Scope of this amendment
 

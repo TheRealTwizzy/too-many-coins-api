@@ -184,6 +184,23 @@ now retired (see Chapter 01 §1.0):
   exist."* (Action processing) — the shipped verb set is roughly twice the size of the one
   this paragraph closes over; see Chapter 03.
 
+This file's headline claims — the ones stated in its opening paragraph and repeated in its
+Condensed Final Definition — diverge as follows:
+
+- **"Overlapping 28-day seasons that begin every 7 days, which means four active seasons
+  normally exist at once."** Seasons run 14 days on a 7-day cadence, so **two** overlap, not
+  four — `includes/config.php:64-65`. Restated at the Seasonal Structure section, at Pacing,
+  and in the Condensed Final Definition, which opens *"a deterministic four-season-overlap
+  economy competition."* Every one of those is wrong by the same factor.
+- **"Remaining Seasonal Stars convert one-to-one into Global Stars when a player
+  successfully Lock-Ins."** Natural season end is 1:1; **early Lock-In grants 65%** —
+  `includes/actions.php:678`, `includes/economy.php:1048`. The Lock-In section repeats the
+  one-to-one claim. This is the single most consequential divergence in the file: a player
+  reading it would mistime the decision the whole game turns on.
+- **"Global Stars accumulate only within the current yearly cycle […] and are wiped at
+  yearly reset."** No yearly reset runs. `yearly_state` is seeded once (`api/index.php:386`)
+  and nothing rolls it over, so Global Stars are in practice permanent.
+
 Further divergences carried forward from the chapters this file consolidates:
 
 - **The one-second tick** is not the deployed cadence — default 60
