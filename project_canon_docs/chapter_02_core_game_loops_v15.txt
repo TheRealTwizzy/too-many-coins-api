@@ -1,3 +1,14 @@
+<!-- CANON STATUS BLOCK — added 2026-07-31 -->
+> **CANON STATUS: SUPERSEDED** (amended 2026-07-31)
+>
+> This chapter records **design intent**, not shipped behavior. At least one binding rule
+> here is contradicted by the running implementation. The specific divergences are
+> enumerated in the **Amendment Note** at the end of this file.
+>
+> Where this chapter and the code disagree, the code is the record of what the game **is**;
+> this chapter is the record of what it was **meant to be**. Neither reading is automatically
+> a defect report. See Chapter 01 §1.0 for how canon now stands.
+
 ## Chapter Draft (Version 15)
 
 # CHAPTER 02 — CORE GAME LOOPS
@@ -255,3 +266,53 @@ The system MUST frame all of these outcomes as valid and non-failure (Chapter 09
 ---
 
 End of Chapter 02.
+
+
+---
+
+## Amendment Note — 2026-07-31
+
+*Added by the 2026-07-31 canon amendment. Status: **SUPERSEDED**. Divergences verified against
+`TheRealTwizzy/too-many-coins-game` @ `ca5759d`. This note records observed differences between this file and the shipped
+implementation; it is not a change request.*
+
+### Verified divergences
+
+- **§2.4 — Trade Lock Acquisition / Release Timing Semantics** specifies lock acquisition
+  order, release timing, and both-party pending-slot occupancy for a system that does not
+  exist. Trading was implemented and then removed at launch:
+  `migration_20260405_sigil_theft_no_trade_launch.sql:37` executes
+  `DROP TABLE IF EXISTS trades`. This is a **deliberate replacement**, not drift — sigil
+  theft was introduced in the same migration to take its place. Roughly half of this
+  chapter is specification for a removed feature.
+- The one-second tick assumed throughout is not the deployed cadence. See Chapter 03.
+
+### What still holds
+
+The **loop shape** survives: accrue → convert → spend → compete → exit → convert. §2.3
+(activity/connectivity sub-loop) and §2.5 (lock-in decision loop) describe the shipped game
+accurately in full.
+
+**§2.6's spend-versus-save tradeoff does not exist in the shipped game.** The section is
+built on *"Spending Seasonal Stars (Sigils/Boosts/cosmetics) […] lowers rank"*, and all
+three flows are wrong: the Star-funded Sigil Vault is inert, Boosts are bought by burning
+**Sigils** (Ch05 §5.3.1), and cosmetics are bought with **Global** Stars (Ch06 §6.2.5.1).
+
+Checked against the implementation directly: every write to `seasonal_stars` either
+increments it on purchase (`includes/actions.php:557`) or sets it to zero — at season join
+(`:77`), at Lock-In (`:728`), and at season end (`includes/tick_engine.php:940`). **There is
+no decrement anywhere.** Seasonal Stars accumulate and are destroyed; they are never spent.
+Removing the vault took the resource's only sink with it, so the sacrifice this chapter
+calls the game's central tension is currently unreachable. What survives of §2.6 is the
+Lock-In tradeoff — early conversion forfeits natural-end bonuses — which does hold.
+
+§2.1 and §2.2 hold *except* at two steps, both of which name systems this amendment records
+as absent elsewhere:
+
+- **§2.1 step 9, "Yearly reset occurs."** No yearly reset runs. The loop as shipped does not
+  close; Global Stars accumulate indefinitely. See Chapter 07.
+- **§2.2 step 2, "Make economic decisions (Stars, Sigils, Boosts, Trades)."** Trades were
+  removed at launch. The other three decision types ship.
+
+§2.4 is excluded from this inventory entirely: it specifies trade lock semantics for that
+same removed feature.

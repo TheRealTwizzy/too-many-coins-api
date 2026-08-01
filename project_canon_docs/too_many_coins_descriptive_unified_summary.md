@@ -1,3 +1,14 @@
+<!-- CANON STATUS BLOCK — added 2026-07-31 -->
+> **CANON STATUS: SUPERSEDED** (amended 2026-07-31)
+>
+> This chapter records **design intent**, not shipped behavior. At least one binding rule
+> here is contradicted by the running implementation. The specific divergences are
+> enumerated in the **Amendment Note** at the end of this file.
+>
+> Where this chapter and the code disagree, the code is the record of what the game **is**;
+> this chapter is the record of what it was **meant to be**. Neither reading is automatically
+> a defect report. See Chapter 01 §1.0 for how canon now stands.
+
 # Too Many Coins — Descriptive Unified Design Summary
 
 ## Source Basis
@@ -12,7 +23,7 @@ The game’s emotional center is not accumulation without consequence. It is ten
 
 ## Core Canon and Design Doctrine
 
-The entire game is governed by a few non-negotiable principles. Server authority is absolute over time, legality, ordering, balances, quotes, rankings, and outcomes. The simulation runs on a single global one-second tick cadence. Global timing uses `global_tick_index`, which is identical to authoritative server time in integer Unix seconds. Season-local timing uses `season_tick_index`, derived from the season’s fixed start time. Determinism is mandatory. Ordering, math, random draws, idempotency handling, and persistence behavior must replay identically from authoritative inputs. Immutable logs and snapshot chains exist because the game is intended to be auditable, not merely functional. If a rule is not explicitly defined in canon, it does not exist. That applies equally to mechanics, social affordances, moderation authority, persistence, and UI assumptions.
+The entire game is governed by a few non-negotiable principles. Server authority is absolute over time, legality, ordering, balances, quotes, rankings, and outcomes. The simulation runs on a single global one-second tick cadence. Global timing uses `global_tick_index`, which is identical to authoritative server time in integer Unix seconds. Season-local timing uses `season_tick_index`, derived from the season’s fixed start time. Determinism is mandatory. Ordering, math, random draws, idempotency handling, and persistence behavior must replay identically from authoritative inputs. Immutable logs and snapshot chains exist because the game is intended to be auditable, not merely functional. Canon records design intent; it does not enumerate the shipped game. Where canon is silent, no conclusion follows about whether the behavior exists (Chapter 01 §1.0). This replaces the former rule that anything undefined in canon did not exist.
 
 The doctrine also sharply limits what the game is not. Social systems must never transfer value, count as gameplay activity, or modify economy state. Staff cannot edit outcomes, economy values, timing, placements, rewards, cosmetics, or competitive history. Profile deletion exists, but account deletion does not; deletion is irreversible redaction of player-facing identity rather than erasure of authoritative history. Official system framing also refuses punitive language around ordinary outcomes. A player who Lock-Ins early, finishes with little value, idles, re-enters, or simply participates without placing is not considered a loser by system doctrine. The design wants pressure and consequence, but not shame-based rhetoric.
 
@@ -40,7 +51,7 @@ The game’s authoritative simulation advances on a global one-second tick. At e
 
 Requests that arrive after the commit cutoff for a tick do not slide into that tick opportunistically; they are buffered to the next intake boundary. Each player may have only one unresolved non-exempt state-changing action at a time, and trades occupy that pending slot for both parties involved. Accepted actions receive authoritative sequencing through `accept_seq`, lock their required economic surface inputs at acceptance, and carry explicit resolution and effect timing. Cross-scope action ordering is also fixed. If a player has both season-scoped and global actions pending at the same commit boundary, season actions resolve before global actions. This matters, for example, when a Lock-In and a cosmetic purchase both exist around the same boundary, because the Lock-In conversion to Global Stars must happen first before any cosmetic spend checks the updated balance.
 
-The allowed season action set is closed. It includes season join, purchase of Seasonal Stars, purchase from the Sigil Vault, boost purchase, trade actions, Lock-In confirmation, idle acknowledgment, and season-end acknowledgment. If an action is not in canon, it does not exist. Defensive invalidation is also tightly constrained. Accepted actions are not later canceled simply because conditions changed in a fuzzy way; invalidation causes are closed and replay-safe.
+The allowed season action set is closed. It includes season join, purchase of Seasonal Stars, purchase from the Sigil Vault, boost purchase, trade actions, Lock-In confirmation, idle acknowledgment, and season-end acknowledgment. Actions outside this set are outside canon's design intent; the shipped verb set is substantially larger (Chapter 01 §1.0, Chapter 03 Amendment Note). Defensive invalidation is also tightly constrained. Accepted actions are not later canceled simply because conditions changed in a fuzzy way; invalidation causes are closed and replay-safe.
 
 ## Sigil Drops, Sigil Vault, and Temporary Power
 
@@ -151,3 +162,128 @@ The result is a game where trust is as much a feature as any mechanic. Players a
 ## Condensed Final Definition
 
 Too Many Coins is a deterministic four-season-overlap economy competition in which players join one live season at a time, earn Coins only through UBI, convert those Coins into Seasonal Stars, decide whether to spend those Stars for temporary Sigil-based leverage or preserve them for rank, and then choose between early Lock-In for guaranteed one-to-one conversion into Global Stars or natural season end for additional bonus potential. All live competition is governed by a one-second authoritative server tick, immutable legality windows, replay-safe math, deterministic trade and RNG rules, and strict staff non-intervention. Seasonal power never persists. Cross-season persistence is limited to current-year Global Stars, cosmetics, and prestige badges. Yearly reset wipes the numeric prestige layer, leaving only history, cosmetics, and permanent badge recognition behind.
+
+
+---
+
+## Amendment Note — 2026-07-31
+
+*Added by the 2026-07-31 canon amendment. Status: **SUPERSEDED**. Divergences verified against
+`TheRealTwizzy/too-many-coins-game` @ `ca5759d`. This note records observed differences between this file and the shipped
+implementation; it is not a change request.*
+
+### Verified divergences
+
+This file carried the **canonical wording** of the closed-world rule, in two places, both
+now retired (see Chapter 01 §1.0):
+
+- *"If a rule is not explicitly defined in canon, it does not exist. That applies equally to
+  mechanics, social affordances, moderation authority, persistence, and UI assumptions."*
+  (Core Canon and Design Doctrine)
+- *"The allowed season action set is closed. ... If an action is not in canon, it does not
+  exist."* (Action processing) — the shipped verb set is roughly twice the size of the one
+  this paragraph closes over; see Chapter 03.
+
+This file's headline claims — the ones stated in its opening paragraph and repeated in its
+Condensed Final Definition — diverge as follows:
+
+- **"Overlapping 28-day seasons that begin every 7 days, which means four active seasons
+  normally exist at once."** Seasons run 14 days on a 7-day cadence, so **two** overlap, not
+  four — `includes/config.php:64-65`. Restated at the Seasonal Structure section, at Pacing,
+  and in the Condensed Final Definition, which opens *"a deterministic four-season-overlap
+  economy competition."* Every one of those is wrong by the same factor.
+- **"Remaining Seasonal Stars convert one-to-one into Global Stars when a player
+  successfully Lock-Ins."** Natural season end is 1:1; **early Lock-In grants 65%** —
+  `includes/actions.php:678`, `includes/economy.php:1048`. The Lock-In section repeats the
+  one-to-one claim. This is the single most consequential divergence in the file: a player
+  reading it would mistime the decision the whole game turns on.
+- **"Global Stars accumulate only within the current yearly cycle […] and are wiped at
+  yearly reset."** No yearly reset runs. `yearly_state` is seeded once (`api/index.php:386`)
+  and nothing rolls it over, so Global Stars are in practice permanent.
+
+Further divergences carried forward from the chapters this file consolidates:
+
+- **The Sigil drop rate**, stated in the Sigil Drops section as *"one in fifty thousand"*,
+  is `SIGIL_DROP_RATE = 8` — `includes/config.php:235`. One in eight, roughly a 12.5%
+  combined base rate, scaling to 1-in-16 at full sigil power. Four orders of magnitude
+  apart, and the section spells the figure out in words rather than digits, which is how it
+  escaped an earlier numeric sweep.
+- **The one-second tick** is not the deployed cadence — default 60
+  (`includes/config.php:72`), deployed 5 (`docker-compose.yml:16,39`).
+- **Trades occupying the pending slot for both parties** describes a removed system
+  (`migration_20260405_sigil_theft_no_trade_launch.sql:37`).
+- **"Profile deletion exists, but account deletion does not"** — a player-initiated
+  deletion button ships. The redaction semantics this sentence describes are accurate; the
+  availability claim is not. See Chapter 14 §14.5.
+- **Staff cannot edit economy values** — `AdminService::globalEconomyReset` /
+  `playerEconomyReset`, `includes/admin.php:30,74`.
+- **"The server must provide the relevant `can_X` and `cannot_X_reason` flags"** — six
+  `can_*` flags ship and **no `cannot_*_reason` field exists anywhere in the codebase**. See
+  Chapter 10 §10.7.
+- **"Sigil drops use a domain-separated SHA-256 based RNG stream with fixed byte encoding
+  and integer sampling contracts."** Drops do draw deterministically, but not through the
+  primitives Chapter 15 §15.3.1 mandates, and nothing references that section.
+- **"State snapshots are immutable, hash-chained, and captured at each tick commit."** The
+  snapshot hash chain is not built. See Chapter 15.
+- **"Event families are closed and include lifecycle or configuration events, season events,
+  player actions, trades, economy events […]"** The structured event taxonomy is unbuilt
+  (Chapter 15), so there is no closed family set to speak of — and the list names *trades*,
+  a removed system.
+- **The closed reason-code catalog.** The implementation emits roughly nineteen reason codes
+  declared ad hoc at their call sites, with no central registry and no closure guarantee
+  (Chapter 15). The mismatch is concrete, not just structural: canon's catalog defines
+  `dm_unavailable` and Chapter 08 §8.2.4 requires `chat_send` to reject with exactly that
+  code, while the shipped path returns **`dm_disabled`** (`api/index.php:2243-2254`). A
+  closed catalog whose own entries the code does not use is not closed.
+- **"Domain-specific logging is mandatory for trades, Sigil drop awards, and operational
+  suppression toggles."** Trades no longer exist, and the economy ledger has a single write
+  site covering sigil changes only (`includes/actions.php:238`) — Coin, Star and boost
+  mutations are unlogged. See Chapter 05 §5.16.2.
+- **"A player may acquire [Sigils] either through deterministic probabilistic drops […] or
+  by spending Seasonal Stars in the shared seasonal Sigil Vault."** Three paths ship, not
+  two: a starter grant of 5×Tier-I fires on first join — `STARTER_GRANT_COUNT`,
+  `includes/config.php:376`. See Chapter 04 §4.5.3.
+- **"[Sigils] are not progression gates."** A feature-unlock system ships —
+  `player_feature_unlocks` plus `includes/progression.php` — gating sigil tier visibility on
+  first acquisition. See Chapter 06 §6.1.4/§6.1.5.
+- **Sigils destroyed on exit.** Early Lock-In *refunds* sigil value into the conversion
+  rather than destroying it. See Chapter 04 §4.5.7.
+- **"Handle changes are player-initiated global actions subject to strict validation."** No
+  `handle_change_request` action exists and the `handle_history` table is written by
+  nothing. See Chapter 08 §8.1.3.
+- **Chat "channel kinds for Global, Season, and DM."** DMs are **deliberately disabled** —
+  `api/index.php:2243-2254` returns `reason_code: dm_disabled` with a written rationale. A
+  design decision never written back into canon. See Chapter 08 §8.2.4.
+- **"Only Global Stars […] cosmetics, seasonal top-three badges, and yearly top-ten badges
+  persist."** Seasonal placement badges are awarded and do persist
+  (`includes/tick_engine.php:951-955`), but `yearly_top10` exists only as a schema enum
+  value (`schema.sql:287`) with nothing awarding it — there is no yearly reset to award it
+  at.
+- **"The entire service is always in exactly one phase: Alpha, Beta, or Release. Phase
+  flips, feature-gate flips, and ServerMode changes take effect only at the next tick
+  boundary."** `lifecycle_phase` is written once and the API returns a hardcoded `'Release'`
+  string (`api/index.php:1407`); no transition contract executes, so the Alpha/Beta
+  workflow and its phase gates are unreachable. See Chapter 14.
+- **ServerMode as a live five-value set with transition behavior.** `staff_server_mode`
+  validates against `NORMAL` and `MAINTENANCE_LOCKDOWN` only — `api/index.php:1002`. The
+  other three modes are unreachable and every transition rule involving them is inert. See
+  Chapter 11 §11.2.3.
+- **"Admins can manage cases, moderation actions […]"** and the reporting, evidence-review
+  and 2FA workflows this file describes. None of it exists: no `report_message` or
+  `report_user` action, no cases, no evidence store, no moderation queue, no 2FA, and the
+  Moderation Queue / Evidence Viewer / Audit Log panels are absent. See Chapter 12 §12.3 and
+  §12.5.
+
+### What still holds
+
+The doctrine this file states about **server authority**, **determinism**, **social systems
+never transferring value**, and the **refusal of punitive framing** for ordinary outcomes is
+accurate and uncontradicted. Of the economic model summary, UBI as the sole faucet and the
+inflation controls match the implementation.
+
+**Sinks and scarcity need the same narrowing Chapter 05's note applies.** This file defines
+sinks to include trade fees and vault purchases, and defines scarcity through the Sigil
+Vault's finite, globally shared, non-replenishing inventory. Trading is removed and the
+vault is inert, so two of the sinks and the whole of the stated scarcity mechanism describe
+machinery that is not running. Scarcity in the shipped game comes from the drop rate and the
+sinks that do exist — Coins burned on Seasonal Star purchases, Sigils burned on Boosts.

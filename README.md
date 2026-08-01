@@ -88,7 +88,7 @@ Progression is deliberately minimal. There are no levels, XP systems, stat growt
 
 - **Single authoritative tick** — The simulation advances on a global 1-second tick (`global_tick_index` = Unix time in seconds).
 - **Determinism** — All math, ordering, RNG, and replay must be fully deterministic from authoritative inputs.
-- **Closed action set** — Only explicitly defined actions exist. No undefined or implicit behaviors.
+- **Closed action set** — The season action set is defined explicitly. Actions ship that this list does not name; the definition bounds what is specified, it does not deny what exists (canon Chapter 01 §1.0).
 - **Immutable logs** — All events are logged with hash-chained snapshots for auditability and replay.
 - **Staff non-intervention** — Staff cannot edit balances, prices, ranks, rewards, timing, or outcomes.
 - **Server modes** — `NORMAL`, `MAINTENANCE_LOCKDOWN`, `READ_ONLY_ECONOMY`, `LOCKDOWN_CONNECTIONS`, `RATE_LIMIT_ACTIONS`
@@ -151,5 +151,5 @@ Phase transitions take effect only at tick boundaries and require a defined tran
 1. **Structural fairness** — No hidden systems, tenure bonuses, or administrative interventions in competitive outcomes.
 2. **Timing over presence** — Advantage comes from strategic timing, not constant attendance.
 3. **Transparency** — All seasonal economy data and leaderboards are publicly visible in real time.
-4. **Closed rule set** — If a mechanic, social affordance, or admin capability is not explicitly defined, it does not exist.
+4. **Closed rule set** — Mechanics, social affordances, and admin capabilities are defined explicitly. Silence in the design documents means only that they do not describe a behavior; it is not evidence the behavior is absent (canon Chapter 01 §1.0).
 5. **Auditability** — Immutable hash-chained logs and deterministic replay from authoritative inputs.
